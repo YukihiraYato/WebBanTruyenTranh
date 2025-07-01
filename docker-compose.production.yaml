@@ -1,0 +1,54 @@
+version: "3.8"
+services:
+  mysql:
+    container_name: mysql
+    image: "mysql:8.0.19"
+    ports:
+      - "3306:3306"
+    env_file:
+      - env/mysql.env
+      - env/docker-compose.env
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    container_name: redis
+    image: "redis:7.0"
+    ports:
+      - "6389:6379"
+    restart: unless-stopped
+
+  springboot:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile.production
+    container_name: springboot
+    env_file:
+      - ./env/backend.production.env
+    ports:
+      - "8181:8181"
+    depends_on:
+      - mysql
+
+  nginx:
+    build:
+      context: ./front-end
+      dockerfile: Dockerfile.production
+    container_name: nginx
+    environment:
+      - DOMAIN_BACK_END=${DOMAIN_BACK_END}
+      - DOMAIN_FRONT_END=${DOMAIN_FRONT_END}
+      - VITE_API_BASE_URL=https://api.anhtuan.online
+    volumes:
+      - ${FRONTEND_FULL_CHAIN_PATH}:/etc/nginx/ssl/front-end/fullchain.pem
+      - ${FRONTEND_PRIVATE_KEY_PATH}:/etc/nginx/ssl/front-end/privkey.pem
+      - ${BACKEND_FULL_CHAIN_PATH}:/etc/nginx/ssl/back-end/fullchain.pem
+      - ${BACKEND_PRIVATE_KEY_PATH}:/etc/nginx/ssl/back-end/privkey.pem
+    ports:
+      - "443:443"
+      - "80:80"
+    depends_on:
+      - springboot
+
+volumes:
+  mysql_data:

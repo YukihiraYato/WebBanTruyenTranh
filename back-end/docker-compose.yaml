@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  mysql:
+    container_name: mysql
+    image: 'mysql:8.0.19'
+    ports:
+      - '3306:3306'
+    env_file:
+      - env/mysql.env
+      - env/docker-compose.env
+    volumes:
+      - mysql_data:/var/lib/mysql
+  redis:
+    container_name: redis
+    image: 'redis:7.0'
+    ports:
+      - '6379:6379'
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
