@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface BookCollectionItemRepository extends JpaRepository<BookCollectionItem, Long> {
-
-  List<BookCollectionItem> findAllByCollectionBookId(Long collectionId);
+//Trường hợp nếu tên biến ko chứa id thì đặt phương thức có field._nestedField
+  List<BookCollectionItem> findAllByCollection_CollectionId(Long collectionId);
+  void deleteByCollection_CollectionIdAndBook_BookId(Long collectionId, Long bookId);
 }

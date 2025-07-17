@@ -9,4 +9,5 @@ import lombok.Data;
 public class UpdateBookCollectionRequestDTO {
   private String name;
   private String description;
+  private Boolean isPublic;
 }

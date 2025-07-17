@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import nlu.com.app.dto.AppResponse;
 import nlu.com.app.dto.request.UserDetailsDTO;
+import nlu.com.app.dto.response.UserDetailsResponseDTO;
 import nlu.com.app.entity.User;
 import nlu.com.app.entity.UserDetails;
 import nlu.com.app.exception.ApplicationException;
@@ -26,15 +27,12 @@ public class UserDetailsController {
     public AppResponse<String> add(@RequestBody UserDetailsDTO userDetails) {
         User user = getUser();
         try {
-
-
-           boolean result = userDetailsService.addUserDetails(UserDetails.builder()
+            boolean result = userDetailsService.addUserDetails(UserDetails.builder()
                    .fullname(userDetails.getFullName())
                    .dob(userDetails.getDateOfBirth())
                    .phoneNum(userDetails.getPhoneNum())
                    .user(user)
                    .build(), user.getUserId());
-
            return AppResponse.<String>builder().result("Add success").build();
        }catch (Exception ex) {
             ex.printStackTrace();
@@ -45,15 +43,16 @@ public class UserDetailsController {
     }
 
     @GetMapping
-    public AppResponse<UserDetailsDTO> getUserDetails() {
+    public AppResponse<UserDetailsResponseDTO> getUserDetails() {
         User user = getUser();
         UserDetails userDetails = userDetailsService.getUserDetailsByUserId(user.getUserId());
-        UserDetailsDTO userDetailsDTO = new UserDetailsDTO();
-        userDetailsDTO.setFullName(userDetails.getFullname());
-        userDetailsDTO.setDateOfBirth(userDetails.getDob());
-        userDetailsDTO.setPhoneNum(userDetails.getPhoneNum());
-
-        return AppResponse.<UserDetailsDTO>builder().result(userDetailsDTO).build();
+        UserDetailsResponseDTO userDetailsDTO =  UserDetailsResponseDTO.builder()
+                .fullName(userDetails.getFullname())
+                .dateOfBirth(userDetails.getDob())
+                .phoneNum(userDetails.getPhoneNum())
+                .userId(user.getUserId())
+                .build();
+        return AppResponse.<UserDetailsResponseDTO>builder().result(userDetailsDTO).build();
     }
 
     @PutMapping

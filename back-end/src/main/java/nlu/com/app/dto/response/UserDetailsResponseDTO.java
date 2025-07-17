@@ -1,17 +1,24 @@
 package nlu.com.app.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data @Builder
+import java.time.LocalDate;
+@Builder
+@Getter
+@Setter
 public class UserDetailsResponseDTO {
     Long userId;
-    String fullname; // default: "Chưa thiết lập"
+    String fullName; // default: "Chưa thiết lập"
     String gender; // default: "Chưa thiết lập"
     String phoneNum; // default: "Chưa thiết lập"
     Boolean verified;
     String email; // default: "Chưa thiết lập"
     String username;
-    String createdDate; // dd-MM-YYYYY
-    String defaultAddress; // default: "Chưa thiết lập"
+    @JsonFormat(pattern = "dd-MM-yyyy")
+    LocalDate dateOfBirth;
+
 }

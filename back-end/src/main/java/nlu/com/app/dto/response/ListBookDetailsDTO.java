@@ -9,7 +9,7 @@ import nlu.com.app.dto.request.BookDetailsDTO;
 import java.util.List;
 
 /**
- * @author AnhTuan
+ *
  */
 @Data
 @NoArgsConstructor

@@ -26,6 +26,14 @@ spring:
       initialize-schema: always
     job:
       enabled: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: yukihirayato2003@gmail.com
+    password: lzrc ohon rqtz vhmo
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
 app:
   jwt-key: 1ytvns7A2HHo2GUQ2d82xS2I7dRyWWv1BTU51Ve+il0
   aws:
@@ -35,6 +43,7 @@ app:
       name: nqat.bookstore.bucket
       request-timeout: 3600 # in seconds
   temp-folder: D:\tmp
+
 
   paypal:
     client-id: ${SPRING_PAYPAL_CLIENT_ID:AXjNIAvmyN7nqjWNdYrdjoX94D4vcaJ2LWHdXqz8qular76_jCvfH-uOSdCojCK-fgpo920v7bFA3Hm1}

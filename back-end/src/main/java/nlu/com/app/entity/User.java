@@ -40,13 +40,15 @@ public class User {
   private String username;
   @Column(name = "password")
   private String password;
-  @Column(name = "email")
+  @Column(name = "email", unique = true)
   private String email;
   @Column(name = "created_date")
   private LocalDate created_date;
   @Enumerated(EnumType.STRING)
   @Column(name = "role")
   private UserRole role;
+  @Column(name = "verified")
+  private boolean verified;
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookCollection> bookCollections = new ArrayList<>();
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

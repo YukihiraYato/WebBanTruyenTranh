@@ -39,8 +39,6 @@ public class UserDetails {
   private String img;
   @Column(name = "otp")
   private String otp;
-  @Column(name = "verified")
-  private boolean verified;
   @Column(name = "otp_expiry_time")
   private LocalDate otpExpiryTime;
 

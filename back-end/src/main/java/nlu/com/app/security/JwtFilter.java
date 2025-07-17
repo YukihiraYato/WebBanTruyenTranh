@@ -5,11 +5,13 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import nlu.com.app.exception.ApplicationException;
 import nlu.com.app.service.impl.JWTService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -30,15 +32,19 @@ public class JwtFilter extends OncePerRequestFilter {
                 && authHeader.startsWith("Bearer ") ? authHeader.substring(7) : null;
         if (token != null) {
             username = jwtService.extractUsername(token);
-            var userDetails = context.getBean(UserDetailsService.class).loadUserByUsername(username);
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                if (jwtService.validateToken(token, userDetails)) {
-                    UsernamePasswordAuthenticationToken authenticationToken =
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                }
-            }
+           try{
+               var userDetails = context.getBean(UserDetailsService.class).loadUserByUsername(username);
+               if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                   if (jwtService.validateToken(token, userDetails)) {
+                       UsernamePasswordAuthenticationToken authenticationToken =
+                               new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                       authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                       SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                   }
+               }
+           }catch (ApplicationException | UsernameNotFoundException e){
+               System.out.println("User không tồn tại: " + e.getMessage());
+           }
         }
         filterChain.doFilter(request, response);
     }

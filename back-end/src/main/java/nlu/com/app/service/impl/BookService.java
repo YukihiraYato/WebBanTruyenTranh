@@ -53,9 +53,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * @author VuLuu
- */
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -246,7 +244,8 @@ public class BookService implements IBookService {
             .map(book -> {
               double totalDiscounts = promotionService.getPromotionsAppliedForCategory(book.getCategory().getCategoryId())
                       .stream().map(promotion -> promotion.getDiscountPercentage())
-                      .reduce((prev, cur) -> prev + cur).get();
+                      .reduce((prev, cur) -> prev + cur)
+                      .orElse(0f);
               double rating = userReviewService.getReviewOverall(book.getBookId()).getAvgScore();
               return bookMapper.toPageDto(book, totalDiscounts, rating);
             })

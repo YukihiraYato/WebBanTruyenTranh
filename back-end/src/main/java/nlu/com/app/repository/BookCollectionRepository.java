@@ -14,4 +14,7 @@ import org.springframework.stereotype.Repository;
 public interface BookCollectionRepository extends JpaRepository<BookCollection, Long> {
 
   Page<BookCollection> findAllByUser(User user, Pageable pageable);
+
+  Page<BookCollection> findByUser_UserIdAndNameContainingIgnoreCase(Long userId, String name, Pageable pageable);
+
 }

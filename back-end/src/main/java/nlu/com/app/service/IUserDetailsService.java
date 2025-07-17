@@ -9,4 +9,5 @@ public interface IUserDetailsService {
     boolean updateUserDetails(UserDetails userDetails, Long userId);
     boolean addUserDetails( UserDetails userDetails, Long userId);
     UserDetailsResponseDTO getUserDetails(Long userId);
+
 }

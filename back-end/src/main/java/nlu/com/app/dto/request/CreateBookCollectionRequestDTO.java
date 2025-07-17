@@ -22,5 +22,6 @@ public class CreateBookCollectionRequestDTO {
 
   private String name;
   private String description;
+  private Boolean isPublic;
   private List<Long> bookIds;
 }

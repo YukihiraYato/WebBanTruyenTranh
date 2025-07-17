@@ -4,10 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;
+import nlu.com.app.entity.User;
 
-/**
- * @author VuLuu
- */
 @Data
 @Builder
 public class BookCollectionDetailsDTO {
@@ -16,5 +14,8 @@ public class BookCollectionDetailsDTO {
   private String description;
   private LocalDate createdDate;
   private List<BookInCollectionDTO> books;
+  private String userName;
+  private Boolean isPublic;
+  private Long userId;
 }
 

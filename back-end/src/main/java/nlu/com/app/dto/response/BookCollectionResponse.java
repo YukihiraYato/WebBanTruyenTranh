@@ -3,9 +3,6 @@ package nlu.com.app.dto.response;
 import lombok.Builder;
 import lombok.Data;
 
-/**
- * @author VuLuu
- */
 @Data
 @Builder
 public class BookCollectionResponse {
@@ -13,4 +10,8 @@ public class BookCollectionResponse {
   private String name;
   private String description;
   private String coverImage;
+  private boolean isPublic;
+  private String createdDate;
+  private Integer totalBook;
+  private String fullName;
 }

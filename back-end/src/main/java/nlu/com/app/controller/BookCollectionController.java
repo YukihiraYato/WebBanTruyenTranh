@@ -54,16 +54,39 @@ public class BookCollectionController {
   }
 
   @PostMapping("/{collectionId}/books")
-  public ResponseEntity<Void> addBooksToCollection(
+  public AppResponse<String> addBooksToCollection(
       @PathVariable Long collectionId,
       @RequestBody AddBooksToCollectionRequestDTO request) {
+      String response = collectionService.addBooksToCollection(collectionId, request);
+      if(response.equals("Sách này đã tồn tại trong bộ sách. Xin hãy lưu sách khác")) {
+          return AppResponse.<String>builder().code(1000).result(response).build();
+      }
+      if(response.equals("Lưu sách thành công")) {
+          return AppResponse.<String>builder().result(response).build();
+      }
 
-    collectionService.addBooksToCollection(collectionId, request);
-    return ResponseEntity.ok().build();
+    return AppResponse.<String>builder().code(9999).result(response).build();
   }
   @GetMapping("/{collectionId}")
   public ResponseEntity<BookCollectionDetailsDTO> getCollectionDetails(@PathVariable Long collectionId) {
     BookCollectionDetailsDTO response = collectionService.getCollectionDetails(collectionId);
     return ResponseEntity.ok(response);
   }
+  @PutMapping("/{collectionId}/delete")
+  public ResponseEntity<Void> deleteCollection(@PathVariable Long collectionId) {
+    collectionService.deleteCollection(collectionId);
+    return ResponseEntity.ok().build();
+  }
+  @PutMapping("/{collectionId}/books/{bookId}/delete")
+  public ResponseEntity<Void> deleteBookFromCollectionItem(@PathVariable Long collectionId, @PathVariable Long bookId) {
+    collectionService.deleteBookFromCollectionItem(collectionId, bookId);
+    return ResponseEntity.ok().build();
+  }
+  @GetMapping("/search")
+  public ResponseEntity<Page<BookCollectionResponse>> findBookCollectionByName(
+          @RequestParam int page,
+          @RequestParam String name){
+      return ResponseEntity.ok(collectionService.findBookCollectionByName(name, page, 5));
+  }
+
 }

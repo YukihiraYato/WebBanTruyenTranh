@@ -19,7 +19,10 @@ public interface BookCollectionService {
   BookCollectionResponse updateCollection(Long collectionId,
       UpdateBookCollectionRequestDTO request);
 
-  void addBooksToCollection(Long collectionId, AddBooksToCollectionRequestDTO request);
+  String addBooksToCollection(Long collectionId, AddBooksToCollectionRequestDTO request);
 
   BookCollectionDetailsDTO getCollectionDetails(Long collectionId);
+  void deleteCollection(Long collectionId);
+  void deleteBookFromCollectionItem(Long collectionId, Long bookId);
+  Page<BookCollectionResponse> findBookCollectionByName(String name, int page, int size);
 }

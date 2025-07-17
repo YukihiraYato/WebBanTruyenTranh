@@ -65,16 +65,16 @@ public class UserDetailsService implements IUserDetailsService {
         // Ánh xạ sang DTO
         return UserDetailsResponseDTO.builder()
                 .userId(user.getUserId())
-                .fullname(StringUtils.hasText(userDetails.getFullname()) ? userDetails.getFullname() : "Chưa thiết lập")
+                .fullName(StringUtils.hasText(userDetails.getFullname()) ? userDetails.getFullname() : "Chưa thiết lập")
                 .gender(StringUtils.hasText(userDetails.getGender()) ? userDetails.getGender() : "Chưa thiết lập")
                 .phoneNum(StringUtils.hasText(userDetails.getPhoneNum()) ? userDetails.getPhoneNum() : "Chưa thiết lập")
-                .verified(userDetails.isVerified())
                 .email(StringUtils.hasText(user.getEmail()) ? user.getEmail() : "Chưa thiết lập")
                 .username(user.getUsername())
-                .createdDate(formattedDate)
-                .defaultAddress(defaultAddress)
+                .dateOfBirth(userDetails.getDob())
                 .build();
     }
+
+
 
 
     @Override

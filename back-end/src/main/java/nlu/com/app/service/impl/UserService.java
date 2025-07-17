@@ -17,6 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -26,18 +29,54 @@ public class UserService {
   private final PasswordEncoder passwordEncoder;
   private final JWTService jwtService;
   private final AuthenticationManager authenticationManager;
+  private  final UserDetailsRepository userDetailsRepository;
 
   @Transactional
-  public void registerUser(RegisterUserDTO requestDTO) {
+  public String registerUser(RegisterUserDTO requestDTO) {
     // check if user is existed
-    var oUser = userRepository.findByUsername(requestDTO.getUsername());
-    if (oUser.isPresent()) {
-      throw new ApplicationException(ErrorCode.USER_ALREADY_EXISTED);
-    }
-    var user = userMapper.toEntity(requestDTO);
-    user.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
-    user.setRole(UserRole.CUSTOMER);
-    userRepository.save(user);
+   try{
+     var oUser = userRepository.findByUsername(requestDTO.getUsername());
+     if (oUser.isPresent()) {
+       if(oUser.get().isVerified()){
+         return "Tài khoản này đã có hệ thống, vui lòng đăng ký bằng 1 tài khoản khác";
+       } else {
+         User user = oUser.get();
+         user.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
+         userRepository.save(user);
+         Optional<UserDetails> oDetails = userDetailsRepository.findById(user.getUserId());
+         UserDetails userDetails = oDetails.orElseGet(() -> UserDetails.builder().user(user).build());
+
+         userDetails.setDob(requestDTO.getDateOfBirth());
+         userDetails.setFullname(requestDTO.getFullName());
+         userDetails.setPhoneNum(requestDTO.getPhoneNum());
+         userDetailsRepository.save(userDetails);
+         return "Đăng ký tài khoản thành công. Vui lòng xác minh tài khoản";
+       }
+     }
+     User userHasSameEmail = userRepository.findByEmail(requestDTO.getEmail());
+     if (userHasSameEmail != null) {
+       return "Email này đã được sử dụng. Vui lòng sử dụng email khác";
+     }
+
+     var user = userMapper.toEntity(requestDTO);
+     user.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
+     user.setRole(UserRole.CUSTOMER);
+     user.setVerified(false);
+     user.setEmail(requestDTO.getEmail());
+     user.setCreated_date(LocalDate.now());
+     userRepository.save(user);
+     UserDetails userDetails = UserDetails.builder()
+             .dob(requestDTO.getDateOfBirth())
+             .fullname(requestDTO.getFullName())
+             .phoneNum(requestDTO.getPhoneNum())
+
+             .user(user)
+             .build();
+     userDetailsRepository.save(userDetails);
+     return "Đăng ký tài khoản thành công. Vui lòng xác minh tài khoản";
+   } catch (Exception e) {
+     throw new RuntimeException(e);
+   }
   }
 
   public String verify(LoginUserDTO requestDTO) {
