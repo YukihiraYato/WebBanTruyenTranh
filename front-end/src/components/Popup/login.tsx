@@ -12,11 +12,12 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAuthContext } from "~/context/AuthContext";
-import {getUserDetails} from "~/api/user/userDetails";
-import { login } from "~/api/login";
+import { getUserDetails } from "~/api/user/userDetails";
+import { login } from "~/api/user/login";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import "./main.css";
 interface LoginPopupProps {
   open: boolean;
   onClose: () => void;
@@ -119,16 +120,16 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ open, onClose }) => {
   const handleProccessLogin = async () => {
     try {
       const response = await login(accountInfo, password);
-      
+
       if (response.code === 1000) {
         setError("");
-         setJwtToken(response.result);
-      
+        setJwtToken(response.result);
+
         const userName = jwtDecode(JSON.stringify(response.result)).sub;
         if (userName !== undefined && userName !== "") {
           localStorage.setItem("userName", userName);
           localStorage.setItem("access_token", response.result);
-             const userDetails = await getUserDetails();
+          const userDetails = await getUserDetails();
           localStorage.setItem("userDetails", JSON.stringify(userDetails.result));
           navigate("/");
         }
@@ -147,9 +148,9 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ open, onClose }) => {
     }
   };
   // Xử lý lấy lại mật khẩu
-  const handleProccessGetPassword = () => {};
+  const handleProccessGetPassword = () => { };
   return (
-    
+
     <Dialog open={open} onClose={onClose}>
       <DialogTitle
         textAlign={"center"}
@@ -164,7 +165,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ open, onClose }) => {
             <TextField
               fullWidth
               label={t('navbar.buttonLogin.login.popup.item2')}
-             
+
               margin="dense"
               variant="outlined"
               value={accountInfo}

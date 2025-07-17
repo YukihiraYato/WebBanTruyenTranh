@@ -23,6 +23,9 @@ const API_ENDPOINTS = {
   },
   USER: {
     LOGIN: "/api/v1/auth/login",
+    REGISTER: "/api/v1/auth/register",
+    SEND_OTP : "/api/v1/auth/register/send-otp",
+    VERIFY_OTP: "/api/v1/auth/register/verify-otp",
     DETAILS: {
       GET: "/api/user-details",
       ADD: "/api/user-details/add",
@@ -38,6 +41,34 @@ const API_ENDPOINTS = {
       },
       GET: "/api/user/addresses",
     },
+    BOOKCOLLECTION :{
+      CREATE : "/api/collections",
+      GET_USER_BOOK_COLLECTIONS: (page: number, size: number) => {
+        if (page !== undefined && size !== undefined) {
+          return `/api/collections?page=${page}&size=${size}`;
+        } else {
+          return `/api/collections`;
+        }
+      },
+      GET_DETAILS_BOOK_COLLECTION: (collectionId: number) => {
+        return `/api/collections/${collectionId}`;
+      },
+      UPDATE: (collectionId: number) => {
+        return `/api/collections/${collectionId}`;
+      },
+      ADD_BOOK_TO_BOOK_COLLECTION: (collectionId: number) => {
+        return `/api/collections/${collectionId}/books`;
+      },
+      DELETE_BOOK_COLLECTION: (collectionId: number) => {
+        return `/api/collections/${collectionId}/delete`;
+      },
+      DELETE_BOOK_FROM_COLLECTIONITEM: (collectionId: number, bookId: number) => {
+        return `/api/collections/${collectionId}/books/${bookId}/delete`;
+      },
+      FIND_BOOKCOLLECTION_BY_NAME: (page: number, name: string) =>{
+        return `/api/collections/search?name=${name}&page=${page}`
+      }
+    }
   },
   CART: {
     ADD: "/api/cart/add",

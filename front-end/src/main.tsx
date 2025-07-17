@@ -7,6 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import { Providers } from "./providers";
 import { AuthProvider } from "./context/AuthContext";
 import './i18n';
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter

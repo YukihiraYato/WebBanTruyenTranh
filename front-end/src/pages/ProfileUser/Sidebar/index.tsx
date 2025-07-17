@@ -51,7 +51,7 @@ export default function SidebarMenu({
     {label: `${(t('page.profileUser.profileSection.otherItem.item6'))}`,icon: <MenuBook />, path:"book-series"},
     {label: `${(t('page.profileUser.profileSection.otherItem.item7'))}`,icon: <RateReview />, path:"review"},
   ];
-
+  const userName = JSON.parse(localStorage.getItem("userDetails") || "{}");
   return (
     <Box width={280} bgcolor="#fff" p={2}>
       <Box textAlign="center" mb={2}>
@@ -63,7 +63,7 @@ export default function SidebarMenu({
           mb={1}
         />
         <Typography variant="h6" fontWeight="bold">
-          Tuấn Hoàng Minh
+          {userName.fullName || "Tên người dùng"}
         </Typography>
         <Button
           variant="outlined"

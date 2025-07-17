@@ -10,14 +10,14 @@ import {
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 
-export interface SaveBookDialogProps {
+export   interface SaveBookDialogProps {
   open: boolean;
   onClose: () => void;
-  onClickAddBtn: () => void;
+  onSaveBookCollections: () => void;
 }
 
 export function SaveBookDialog(props: SaveBookDialogProps) {
-  const { onClose, open, onClickAddBtn } = props;
+  const { onClose, open, onSaveBookCollections } = props;
   return (
     <Dialog
       open={open}
@@ -55,11 +55,11 @@ export function SaveBookDialog(props: SaveBookDialogProps) {
             variant="contained"
             color="secondary"
             startIcon={<AddRoundedIcon />}
-            onClick={() => onClickAddBtn()}
+            onClick={() => onSaveBookCollections()}
             size="small"
             sx={{ borderRadius: 23, px: 2 }}
           >
-            Tạo bộ sách mới
+            Lưu vào bộ sách
           </Button>
         </Box>
       </DialogContent>

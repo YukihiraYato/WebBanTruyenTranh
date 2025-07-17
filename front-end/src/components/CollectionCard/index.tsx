@@ -1,28 +1,45 @@
 import { Avatar, Box, Divider, Rating, Tooltip, Typography } from "@mui/material";
 import { deepOrange, grey, red } from "@mui/material/colors";
-import collectionImage from '~/assets/collection/mockup_1.png';
-import personImage from '~/assets/person/mockup_1.png';
 import { Swiper, SwiperSlide } from "swiper/react";
 import 'swiper/swiper-bundle.css';
 import { useSwipe } from "~/context/CollectionContext";
-
-export function CollectionCard() {
+import { useNavigate } from "react-router-dom";
+export interface CollectionCardProps {
+    id: number,
+    name: string,
+    description: string,
+    coverImage: string,
+    public: boolean,
+    createdDate: string,
+    totalBook: number,
+    fullName: string
+}
+export function CollectionCard(collection: CollectionCardProps) {
+    
     const { setAllowSwipe, draggingChild, setDraggingChild } = useSwipe();
     const genres = ['Sách nhật bản', 'Shounen', 'Chiến đấu', 'Drama'];
+    const renderedGenres = genres.map((v, i) => (
+        <SwiperSlide key={i} style={{ width: 'auto' }}>
+            <Typography fontSize={'small'} fontWeight={'bold'} sx={{ whiteSpace: 'nowrap' }}>
+                {v}{i < genres.length - 1 ? ', ' : ''}
+            </Typography>
+        </SwiperSlide>
+    ));
+    const navigate = useNavigate();
     return (
         <Box
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
                 padding: 1,
-                width: 200,
+                width: 210,
                 borderRadius: 2,
                 transition: "box-shadow 0.3s ease-in-out",
                 '&:hover': {
                     boxShadow: 4,
                 },
                 gap: '2px',
-                
+
             }}
             onMouseEnter={() => {
                 setAllowSwipe(false)
@@ -30,18 +47,24 @@ export function CollectionCard() {
             onMouseLeave={() => {
                 setAllowSwipe(true)
             }}
-            >
-            <Box sx={{cursor: 'pointer'}}>
-                <img src={collectionImage} width={'100%'} height={'100%'} style={{ objectFit: "cover" }}/>
+            onClick={() => {
+                navigate(`/profileUser/book-series/${collection.id}`)
+            }}
+        >
+            <Box sx={{ cursor: 'pointer' }}>
+                <img src={collection.coverImage} width={'184px'} height={'190px'} style={{ objectFit: "cover" }} />
             </Box>
-            <Tooltip 
-                title={"Trọn bộ các tập manga World Trigger đang được tái xuất bản hiện nay (khoảng 20 tập)"}
+            <Tooltip
+                title={collection.name}
                 arrow
             >
-                <Typography fontFamily={'Segoe UI'} 
+                <Typography fontFamily={'Segoe UI'}
                     sx={{
+                        maxWidth: '200px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
                         fontSize: 15,
-                        fontWeight: 600, 
+                        fontWeight: 600,
                         color: grey['900'],
                         transition: 'color 0.4s ease-in-out',
                         '&:hover': {
@@ -50,15 +73,15 @@ export function CollectionCard() {
                         display: '-webkit-box',
                         WebkitBoxOrient: 'vertical',
                         WebkitLineClamp: 2,
-                        overflow: 'hidden',
                         textOverflow: 'ellipsis',
+
                     }}
-                    >
-                        Trọn bộ các tập manga World Trigger đang được tái xuất bản hiện nay (khoảng 20 tập)
+                >
+                    {collection.name}
                 </Typography>
             </Tooltip>
-            <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                <Avatar 
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {/* <Avatar 
                     sx={{ 
                         bgcolor: deepOrange[500], 
                         width: 35, 
@@ -66,39 +89,40 @@ export function CollectionCard() {
                         border: `solid 2px ${grey['800']}`
                     }} 
                     src={personImage}
-                />
+                /> */}
                 <Box
-                    sx={{height: '100%', flex: 1}}
+                    sx={{ height: '100%', flex: 1 }}
                 >
                     <Box display={'flex'} gap={1} alignItems={'center'}>
+                        <Typography fontSize={'small'}>Người tạo: </Typography>
                         <Typography
                             sx={{
-                                fontSize: 15,
-                                fontWeight: 600, 
+                                fontSize: 13,
+                                fontWeight: 600,
                                 color: grey['900'],
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 0.4,
                             }}
-                            >
-                                @taileee11
+                        >
+                            {collection.fullName || 'Người dùng ẩn danh'}
                         </Typography>
-                        <Typography fontSize={'small'}>đã tạo</Typography>
+
                     </Box>
-                    <Rating
+                    {/* <Rating
                         size="small"
                         name="text-feedback"
                         value={4.5}
                         readOnly
                         precision={0.5}
-                    />
+                    /> */}
                 </Box>
             </Box>
-            <Box display={'flex'} justifyContent={'space-between'}>
-                <Typography fontSize={'small'}>{`Số lượng: ${20}`}</Typography>
-                <Typography fontSize={'small'}>1 tháng trước</Typography>
+            <Box display={'flex'} flexDirection={'column'} justifyContent={'flex-start'}>
+                <Typography fontSize={'small'}>{`Số lượng: ${collection.totalBook}`}</Typography>
+                <Typography fontSize={'small'}>{`Ngày tạo: ${collection.createdDate}`}</Typography>
             </Box>
-            <Divider/>
+            <Divider />
             <Box sx={{ overflow: 'hidden', width: '100%' }}>
                 <Swiper
                     nested
@@ -120,17 +144,7 @@ export function CollectionCard() {
                     slidesPerView={'auto'}
                     resistanceRatio={1}
                 >
-                    {genres.map((v, i) => (
-                        <SwiperSlide key={i} style={{ width: 'auto' }}>
-                            <Typography 
-                                fontSize={'small'}
-                                fontWeight={'bold'} 
-                                sx={{ whiteSpace: 'nowrap' }} // Ngăn xuống dòng
-                            >
-                                {v}{i < genres.length - 1 ? ', ' : ''} {/* Thêm dấu phẩy nếu không phải phần tử cuối */}
-                            </Typography>
-                        </SwiperSlide>
-                    ))}
+                    {/* {renderedGenres} */}
                 </Swiper>
             </Box>
         </Box>

@@ -6,22 +6,26 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { verifyOtp } from "~/api/user/register";
+import "./main.css";
 interface VerifyPopupProps {
   open: boolean;
   onClose: () => void;
   onBackToRegister?: () => void;
+  onBackToLogin?: () => void; 
   email: string;
-  password: string;
+ 
 }
 const VerifyPopup: React.FC<VerifyPopupProps> = ({
   open,
   onClose,
   onBackToRegister,
+  onBackToLogin,
   email = "",
-  password = "",
+
 }) => {
-  console.log(password);
+ 
   const [codeOTP, setCodeOTP] = useState("");
   const handleChangeOTP = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCodeOTP(event.target.value);
@@ -30,7 +34,24 @@ const VerifyPopup: React.FC<VerifyPopupProps> = ({
     // Gọi API xác minh OTP ở đây
     // Nếu xác minh thành công, thực hiện các hành động cần thiết (ví dụ: chuyển hướng đến trang chính)
     // Nếu xác minh không thành công, hiển thị thông báo lỗi
+    const result = (await verifyOtp(email, codeOTP)).result;
+    
+    if (result === "Xác thực OTP thành công!") {
+      alert(result); // Hiển thị thông báo thành công
+      onClose(); // Đóng popup xác minh
+      if (onBackToLogin) {
+        onBackToLogin(); // Quay lại popup đăng ký nếu cần
+      }
+    } else {
+      alert(result); // Hiển thị thông báo lỗi nếu xác minh không thành công
+    }
+
   };
+  useEffect(() => {
+    if (!open) {
+      setCodeOTP(""); // Reset mã OTP khi popup đóng
+    }
+  }, [open]);
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm">
       <DialogTitle

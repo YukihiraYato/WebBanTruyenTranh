@@ -22,6 +22,7 @@ interface BookDetailsContextType {
   error: string | null;
   addToCart: () => void;
   reviewOverall: BookReviewOverallResponse | null;
+  bookId: number;
 }
 
 const BookDetailsContext = createContext<BookDetailsContextType>({
@@ -32,6 +33,7 @@ const BookDetailsContext = createContext<BookDetailsContextType>({
   error: null,
   addToCart: () => {},
   reviewOverall: null,
+  bookId: 0,
 });
 
 export const useBookDetailsContext = () => useContext(BookDetailsContext);
@@ -53,8 +55,10 @@ export const BookDetailsProvider = ({ children }: BookDetailsProviderProps) => {
   const [reviewOverall, setReviewOverall] =
     useState<BookReviewOverallResponse | null>(null);
   const { id } = useParams();
+  const [bookId, setBookId] = useState<number>(-1);
   useEffect(() => {
     const bookId = id ? parseInt(id, 10) : -1;
+    setBookId(bookId);
     const loadBooks = async () => {
       setIsLoading(true);
       try {
@@ -97,6 +101,7 @@ export const BookDetailsProvider = ({ children }: BookDetailsProviderProps) => {
         error,
         addToCart,
         reviewOverall,
+        bookId
       }}
     >
       {children}

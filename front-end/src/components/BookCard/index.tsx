@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "~/providers/CartProvider";
 import CustomSnackbar from "~/components/Popup/Snackbar";
 import { useState } from "react";
-
+import { Menu, MenuItem } from "@mui/material";
+import { useBookCollection } from "~/providers/BookCollectionProvider";
 export interface BookCard {
   thumbnail: string;
   title: string;
@@ -14,18 +15,58 @@ export interface BookCard {
   discountPercentage: number;
   originallPrice: number;
   bookId: number;
+  isRemoved?: boolean;
+  idBookCollection?: number;
 }
-
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 export function BookCard({ card }: { card?: BookCard }) {
   const navigate = useNavigate();
   const { increaseItem } = useCart();
+  const { deleteBookFromCollection } = useBookCollection();
+  // State menu xóa
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const openMenu = Boolean(anchorEl);
   const [initStateSnackbar, setStateSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
     duration: 800,
   });
+  // Các hàm xử lý menu xóa
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation(); // Không cho click lan ra ngoài
+    setAnchorEl(event.currentTarget);
+  };
 
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleRemove = () => {
+   const deleteBook = async () =>{
+    try {
+       if (card?.bookId && card.isRemoved) {
+      // Call api
+      await deleteBookFromCollection(card.idBookCollection!, card.bookId);
+      setStateSnackbar({
+        ...initStateSnackbar,
+        open: true,
+        message: "Xóa sách thành công",
+      });
+    }
+    } catch (error) {
+      console.error("Error deleting book from collection:", error);
+      setStateSnackbar({
+        ...initStateSnackbar,
+        open: true,
+        message: "Xóa sách thất bại",
+        severity: "error",
+      });
+    }
+   }
+   deleteBook();
+    handleMenuClose();
+  };
   return (
     <Box
       sx={{
@@ -46,11 +87,18 @@ export function BookCard({ card }: { card?: BookCard }) {
             opacity: 1,
           },
         },
+        "&:hover .more-icon": {
+          opacity: 1,
+          transform: "scale(1)",
+        },
+
         gap: "4px",
         backgroundColor: "#fff",
       }}
       onClick={() => {
-        navigate(`/details/${card?.bookId}`);
+        if (!anchorEl) {
+          navigate(`/details/${card?.bookId}`);
+        }
       }}
     >
       <CustomSnackbar
@@ -116,6 +164,56 @@ export function BookCard({ card }: { card?: BookCard }) {
             {`-${card.discountPercentage}%`}
           </Box>
         )}
+        {/* Icon 3 chấm và Menu xóa */}
+        {card?.isRemoved && (
+          <IconButton
+            size="small"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleMenuOpen(event);
+            }}
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              zIndex: 3,
+              backgroundColor: "rgba(255,255,255,0.8)",
+              opacity: 0,
+              transform: "scale(0.95)",
+              transition: "all 0.3s ease",
+              "&:hover": { backgroundColor: "rgba(255,255,255,1)" },
+            }}
+            className="more-icon"
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+        )}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          //  Căn điểm neo xuống dưới bên phải của icon
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          //  Dịch popup lệch sang phải (chỉnh vị trí hiển thị menu)
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          PaperProps={{
+            sx: {
+              mt: 1, // đẩy xuống tí
+              ml: 1.5, //  đẩy sang phải thêm 1.5 spacing unit
+              boxShadow: 4,
+            },
+          }}
+          onClick={(e) => e.stopPropagation()} // chặn click lan ra ngoài
+        >
+          <MenuItem onClick={(e) => {
+            e.stopPropagation();
+            handleRemove();
+          }}>
+            🗑️ Xóa sách
+          </MenuItem>
+        </Menu>
+
+
 
         <Tooltip title="Thêm vào giỏ">
           <IconButton

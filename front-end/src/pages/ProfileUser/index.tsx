@@ -10,6 +10,7 @@ import Privileges from "./ProfileSections/Privileges";
 import BookSeries from "./PageOther/BookSeries";
 import NotificationList from "./Nofitication";
 import OrderList from "./MyOrder";
+import BookCollectionDetailView from "./PageOther/BookSeries/BookSeriesDetails/DetailBookCollection";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 export function ProfileUser() {
   const [openAccount, setOpenAccount] = useState(true);
@@ -39,6 +40,10 @@ export function ProfileUser() {
           <Route path="info/invoice" element={<InvoiceInfo />} />
           <Route path="info/privileges" element={<Privileges />} />
           <Route path="book-series" element={<BookSeries />} />
+          <Route
+            path="book-series/:collectionId"
+            element={<BookCollectionDetailView />}
+          />
           <Route path="notifications" element={<NotificationList />} />
           <Route path="orders" element={<OrderList />} />
           <Route path="*" element={<div>Chưa có nội dung</div>} />

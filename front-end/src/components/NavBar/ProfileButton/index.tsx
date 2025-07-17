@@ -8,14 +8,17 @@ import { useState, useEffect } from "react";
 import { MenuPopper } from "~/components/Popup/menu";
 import { useAuthContext } from "~/context/AuthContext";
 import { useTranslation } from "react-i18next";
+import { register, sendOtp } from "~/api/user/register";
 export function ProfileButton() {
   const [isPopupLoginOpen, setPopupLoginOpen] = useState(false);
   const [isPopupRegisterOpen, setPopupRegisterOpen] = useState(false);
   const [isPopupVerifyOpen, setPopupVerifyOpen] = useState(false); // Thêm state cho popup xác minh
   const [email, setEmail] = useState(""); //
   const [password, setPassword] = useState("");
-   const [userName, setUserName] = useState<string | null>(localStorage.getItem("userName"));
-   const {t} = useTranslation();
+  const [userName, setUserName] = useState<string | null>(localStorage.getItem("userName"));
+  const [resultRegisterAccount, setResultRegisterAccount] = useState("");
+  const { t } = useTranslation();
+  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   // Mở popup login
   const handleOpenPopup = () => {
     setPopupLoginOpen(true);
@@ -34,6 +37,7 @@ export function ProfileButton() {
   // Đóng popup register
   const handleClosePopupRegister = () => {
     setPopupRegisterOpen(false);
+    setIsRegisterLoading(false);
   };
 
   // Mở popup xác minh tài khoản
@@ -44,18 +48,38 @@ export function ProfileButton() {
   };
 
   // Xử lý khi đăng ký thành công
-  const handleRegisterSuccess = (userEmail: string, userPassword: string) => {
-    setEmail(userEmail);
-    setPassword(userPassword);
-    setPopupRegisterOpen(false); // Đóng popup đăng ký
-    setPopupVerifyOpen(true); // Mở popup xác minh
-  };
+const handleRegisterSuccess = async (
+  username: string,
+  password: string,
+  fullName: string,
+  phoneNum: string,
+  email: string,
+  dateOfBirth: string
+) => {
+  if (username && password && fullName && phoneNum && email && dateOfBirth) {
+    const resultLocal = (await register(username, password, fullName, phoneNum, email, dateOfBirth)).result;
+    setResultRegisterAccount(resultLocal);
+    if (resultLocal === "Đăng ký tài khoản thành công. Vui lòng xác minh tài khoản") {
+      setIsRegisterLoading(true);
+      const resultSendOTP= await sendOtp(email);
+      if( resultSendOTP.result) {
+        setIsRegisterLoading(false);
+      }
+      setEmail(email);
+      setPopupRegisterOpen(false);
+      setPopupVerifyOpen(true);
+    } else {
+      alert(resultLocal);
+    }
+  }
+};
+
 
   useEffect(() => {
     const timer = setInterval(() => {
       const currentName = localStorage.getItem("userName");
       setUserName(currentName);
-    }, 100); 
+    }, 100);
 
     return () => clearInterval(timer);
   }, []);
@@ -147,7 +171,7 @@ export function ProfileButton() {
           }}
         >
           <Button variant="contained" color="error" onClick={handleOpenPopup}>
-           {t("navbar.buttonLogin.login.label")}
+            {t("navbar.buttonLogin.login.label")}
           </Button>
           <LoginPopup open={isPopupLoginOpen} onClose={handleClosePopup} />
 
@@ -162,14 +186,16 @@ export function ProfileButton() {
             open={isPopupRegisterOpen}
             onClose={handleClosePopupRegister}
             onRegisterSuccess={handleRegisterSuccess}
+            isLoading={isRegisterLoading}
           />
 
           <VerifyPopup
             open={isPopupVerifyOpen}
             onClose={handleClosePopupVerify}
             onBackToRegister={handleOpenPopupRegister}
+            onBackToLogin={handleOpenPopup}
             email={email}
-            password={password}
+
           />
         </Paper>
       ) : (

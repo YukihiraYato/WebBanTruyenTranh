@@ -43,7 +43,8 @@ const CustomizeBox = styled(Box)(({ theme }) => ({
 }));
 
 export function BookDetails() {
-  const { addToCart, categoryChain } = useBookDetailsContext();
+  const { addToCart, categoryChain, bookId } = useBookDetailsContext();
+  console.log("Có bookId ko", bookId);
   type CategoryCode = keyof typeof CATEGORY_CODE_TO_NAME;
   const breadcrumbs = (categoryChain?.list || []).map((c) => (
     <Link key={c.id} href={`/category?categoryId=${c.id}&page=1&size=12`}>
@@ -60,7 +61,7 @@ export function BookDetails() {
   });
   const { t } = useTranslation();
   const handleClickOpen = () => {
-    setOpen(true);
+    setOpenSubDialog(true);
   };
 
   const handleClose = () => {
@@ -149,17 +150,11 @@ export function BookDetails() {
           <BookRelated />
         </Box>
       </Container>
-      <SaveBookDialog
-        onClose={handleClose}
-        open={open}
-        onClickAddBtn={() => {
-          setOpen(false);
-          setOpenSubDialog(true);
-        }}
-      />
+     
       <NewBookCollectionDialog
         onClose={() => setOpenSubDialog(false)}
         open={openSubDialog}
+        bookId={bookId}
       />
     </>
   );
