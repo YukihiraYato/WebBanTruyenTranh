@@ -38,12 +38,16 @@ import { Route as AuthenticatedProductsOverviewImport } from './routes/_authenti
 import { Route as AuthenticatedProductsNewImport } from './routes/_authenticated/products/new'
 import { Route as AuthenticatedOrdersOverviewImport } from './routes/_authenticated/orders/overview'
 import { Route as AuthenticatedOrdersDetailsImport } from './routes/_authenticated/orders/details'
+import { Route as AuthenticatedDiscountsOverviewImport } from './routes/_authenticated/discounts/overview'
+import { Route as AuthenticatedDiscountsNewImport } from './routes/_authenticated/discounts/new'
 import { Route as AuthenticatedCouponsOverviewImport } from './routes/_authenticated/coupons/overview'
 import { Route as AuthenticatedCouponsNewImport } from './routes/_authenticated/coupons/new'
 import { Route as AuthenticatedCategoriesOverviewImport } from './routes/_authenticated/categories/overview'
 import { Route as AuthenticatedProductsIdEditImport } from './routes/_authenticated/products/$id/edit'
 import { Route as AuthenticatedOrdersIdDetailsImport } from './routes/_authenticated/orders/$id/details'
+import { Route as AuthenticatedDiscountsIdEditImport } from './routes/_authenticated/discounts/$id/edit'
 import { Route as AuthenticatedCustomersIdDetailsImport } from './routes/_authenticated/customers/$id/details'
+import { Route as AuthenticatedCouponsIdEditImport } from './routes/_authenticated/coupons/$id/edit'
 
 // Create/Update Routes
 
@@ -221,6 +225,19 @@ const AuthenticatedOrdersDetailsRoute = AuthenticatedOrdersDetailsImport.update(
   } as any,
 )
 
+const AuthenticatedDiscountsOverviewRoute =
+  AuthenticatedDiscountsOverviewImport.update({
+    id: '/discounts/overview',
+    path: '/discounts/overview',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
+const AuthenticatedDiscountsNewRoute = AuthenticatedDiscountsNewImport.update({
+  id: '/discounts/new',
+  path: '/discounts/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+
 const AuthenticatedCouponsOverviewRoute =
   AuthenticatedCouponsOverviewImport.update({
     id: '/coupons/overview',
@@ -255,12 +272,27 @@ const AuthenticatedOrdersIdDetailsRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
+const AuthenticatedDiscountsIdEditRoute =
+  AuthenticatedDiscountsIdEditImport.update({
+    id: '/discounts/$id/edit',
+    path: '/discounts/$id/edit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
 const AuthenticatedCustomersIdDetailsRoute =
   AuthenticatedCustomersIdDetailsImport.update({
     id: '/customers/$id/details',
     path: '/customers/$id/details',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+
+const AuthenticatedCouponsIdEditRoute = AuthenticatedCouponsIdEditImport.update(
+  {
+    id: '/coupons/$id/edit',
+    path: '/coupons/$id/edit',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any,
+)
 
 // Populate the FileRoutesByPath interface
 
@@ -378,6 +410,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCouponsOverviewImport
       parentRoute: typeof AuthenticatedRouteImport
     }
+    '/_authenticated/discounts/new': {
+      id: '/_authenticated/discounts/new'
+      path: '/discounts/new'
+      fullPath: '/discounts/new'
+      preLoaderRoute: typeof AuthenticatedDiscountsNewImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
+    '/_authenticated/discounts/overview': {
+      id: '/_authenticated/discounts/overview'
+      path: '/discounts/overview'
+      fullPath: '/discounts/overview'
+      preLoaderRoute: typeof AuthenticatedDiscountsOverviewImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/orders/details': {
       id: '/_authenticated/orders/details'
       path: '/orders/details'
@@ -476,11 +522,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsersIndexImport
       parentRoute: typeof AuthenticatedRouteImport
     }
+    '/_authenticated/coupons/$id/edit': {
+      id: '/_authenticated/coupons/$id/edit'
+      path: '/coupons/$id/edit'
+      fullPath: '/coupons/$id/edit'
+      preLoaderRoute: typeof AuthenticatedCouponsIdEditImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/customers/$id/details': {
       id: '/_authenticated/customers/$id/details'
       path: '/customers/$id/details'
       fullPath: '/customers/$id/details'
       preLoaderRoute: typeof AuthenticatedCustomersIdDetailsImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
+    '/_authenticated/discounts/$id/edit': {
+      id: '/_authenticated/discounts/$id/edit'
+      path: '/discounts/$id/edit'
+      fullPath: '/discounts/$id/edit'
+      preLoaderRoute: typeof AuthenticatedDiscountsIdEditImport
       parentRoute: typeof AuthenticatedRouteImport
     }
     '/_authenticated/orders/$id/details': {
@@ -531,6 +591,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCategoriesOverviewRoute: typeof AuthenticatedCategoriesOverviewRoute
   AuthenticatedCouponsNewRoute: typeof AuthenticatedCouponsNewRoute
   AuthenticatedCouponsOverviewRoute: typeof AuthenticatedCouponsOverviewRoute
+  AuthenticatedDiscountsNewRoute: typeof AuthenticatedDiscountsNewRoute
+  AuthenticatedDiscountsOverviewRoute: typeof AuthenticatedDiscountsOverviewRoute
   AuthenticatedOrdersDetailsRoute: typeof AuthenticatedOrdersDetailsRoute
   AuthenticatedOrdersOverviewRoute: typeof AuthenticatedOrdersOverviewRoute
   AuthenticatedProductsNewRoute: typeof AuthenticatedProductsNewRoute
@@ -540,7 +602,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
+  AuthenticatedCouponsIdEditRoute: typeof AuthenticatedCouponsIdEditRoute
   AuthenticatedCustomersIdDetailsRoute: typeof AuthenticatedCustomersIdDetailsRoute
+  AuthenticatedDiscountsIdEditRoute: typeof AuthenticatedDiscountsIdEditRoute
   AuthenticatedOrdersIdDetailsRoute: typeof AuthenticatedOrdersIdDetailsRoute
   AuthenticatedProductsIdEditRoute: typeof AuthenticatedProductsIdEditRoute
 }
@@ -551,6 +615,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCategoriesOverviewRoute: AuthenticatedCategoriesOverviewRoute,
   AuthenticatedCouponsNewRoute: AuthenticatedCouponsNewRoute,
   AuthenticatedCouponsOverviewRoute: AuthenticatedCouponsOverviewRoute,
+  AuthenticatedDiscountsNewRoute: AuthenticatedDiscountsNewRoute,
+  AuthenticatedDiscountsOverviewRoute: AuthenticatedDiscountsOverviewRoute,
   AuthenticatedOrdersDetailsRoute: AuthenticatedOrdersDetailsRoute,
   AuthenticatedOrdersOverviewRoute: AuthenticatedOrdersOverviewRoute,
   AuthenticatedProductsNewRoute: AuthenticatedProductsNewRoute,
@@ -560,7 +626,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
+  AuthenticatedCouponsIdEditRoute: AuthenticatedCouponsIdEditRoute,
   AuthenticatedCustomersIdDetailsRoute: AuthenticatedCustomersIdDetailsRoute,
+  AuthenticatedDiscountsIdEditRoute: AuthenticatedDiscountsIdEditRoute,
   AuthenticatedOrdersIdDetailsRoute: AuthenticatedOrdersIdDetailsRoute,
   AuthenticatedProductsIdEditRoute: AuthenticatedProductsIdEditRoute,
 }
@@ -585,6 +653,8 @@ export interface FileRoutesByFullPath {
   '/categories/overview': typeof AuthenticatedCategoriesOverviewRoute
   '/coupons/new': typeof AuthenticatedCouponsNewRoute
   '/coupons/overview': typeof AuthenticatedCouponsOverviewRoute
+  '/discounts/new': typeof AuthenticatedDiscountsNewRoute
+  '/discounts/overview': typeof AuthenticatedDiscountsOverviewRoute
   '/orders/details': typeof AuthenticatedOrdersDetailsRoute
   '/orders/overview': typeof AuthenticatedOrdersOverviewRoute
   '/products/new': typeof AuthenticatedProductsNewRoute
@@ -599,7 +669,9 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/coupons/$id/edit': typeof AuthenticatedCouponsIdEditRoute
   '/customers/$id/details': typeof AuthenticatedCustomersIdDetailsRoute
+  '/discounts/$id/edit': typeof AuthenticatedDiscountsIdEditRoute
   '/orders/$id/details': typeof AuthenticatedOrdersIdDetailsRoute
   '/products/$id/edit': typeof AuthenticatedProductsIdEditRoute
 }
@@ -619,6 +691,8 @@ export interface FileRoutesByTo {
   '/categories/overview': typeof AuthenticatedCategoriesOverviewRoute
   '/coupons/new': typeof AuthenticatedCouponsNewRoute
   '/coupons/overview': typeof AuthenticatedCouponsOverviewRoute
+  '/discounts/new': typeof AuthenticatedDiscountsNewRoute
+  '/discounts/overview': typeof AuthenticatedDiscountsOverviewRoute
   '/orders/details': typeof AuthenticatedOrdersDetailsRoute
   '/orders/overview': typeof AuthenticatedOrdersOverviewRoute
   '/products/new': typeof AuthenticatedProductsNewRoute
@@ -633,7 +707,9 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/coupons/$id/edit': typeof AuthenticatedCouponsIdEditRoute
   '/customers/$id/details': typeof AuthenticatedCustomersIdDetailsRoute
+  '/discounts/$id/edit': typeof AuthenticatedDiscountsIdEditRoute
   '/orders/$id/details': typeof AuthenticatedOrdersIdDetailsRoute
   '/products/$id/edit': typeof AuthenticatedProductsIdEditRoute
 }
@@ -656,6 +732,8 @@ export interface FileRoutesById {
   '/_authenticated/categories/overview': typeof AuthenticatedCategoriesOverviewRoute
   '/_authenticated/coupons/new': typeof AuthenticatedCouponsNewRoute
   '/_authenticated/coupons/overview': typeof AuthenticatedCouponsOverviewRoute
+  '/_authenticated/discounts/new': typeof AuthenticatedDiscountsNewRoute
+  '/_authenticated/discounts/overview': typeof AuthenticatedDiscountsOverviewRoute
   '/_authenticated/orders/details': typeof AuthenticatedOrdersDetailsRoute
   '/_authenticated/orders/overview': typeof AuthenticatedOrdersOverviewRoute
   '/_authenticated/products/new': typeof AuthenticatedProductsNewRoute
@@ -670,7 +748,9 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
+  '/_authenticated/coupons/$id/edit': typeof AuthenticatedCouponsIdEditRoute
   '/_authenticated/customers/$id/details': typeof AuthenticatedCustomersIdDetailsRoute
+  '/_authenticated/discounts/$id/edit': typeof AuthenticatedDiscountsIdEditRoute
   '/_authenticated/orders/$id/details': typeof AuthenticatedOrdersIdDetailsRoute
   '/_authenticated/products/$id/edit': typeof AuthenticatedProductsIdEditRoute
 }
@@ -694,6 +774,8 @@ export interface FileRouteTypes {
     | '/categories/overview'
     | '/coupons/new'
     | '/coupons/overview'
+    | '/discounts/new'
+    | '/discounts/overview'
     | '/orders/details'
     | '/orders/overview'
     | '/products/new'
@@ -708,7 +790,9 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/tasks'
     | '/users'
+    | '/coupons/$id/edit'
     | '/customers/$id/details'
+    | '/discounts/$id/edit'
     | '/orders/$id/details'
     | '/products/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -727,6 +811,8 @@ export interface FileRouteTypes {
     | '/categories/overview'
     | '/coupons/new'
     | '/coupons/overview'
+    | '/discounts/new'
+    | '/discounts/overview'
     | '/orders/details'
     | '/orders/overview'
     | '/products/new'
@@ -741,7 +827,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/users'
+    | '/coupons/$id/edit'
     | '/customers/$id/details'
+    | '/discounts/$id/edit'
     | '/orders/$id/details'
     | '/products/$id/edit'
   id:
@@ -762,6 +850,8 @@ export interface FileRouteTypes {
     | '/_authenticated/categories/overview'
     | '/_authenticated/coupons/new'
     | '/_authenticated/coupons/overview'
+    | '/_authenticated/discounts/new'
+    | '/_authenticated/discounts/overview'
     | '/_authenticated/orders/details'
     | '/_authenticated/orders/overview'
     | '/_authenticated/products/new'
@@ -776,7 +866,9 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/_authenticated/tasks/'
     | '/_authenticated/users/'
+    | '/_authenticated/coupons/$id/edit'
     | '/_authenticated/customers/$id/details'
+    | '/_authenticated/discounts/$id/edit'
     | '/_authenticated/orders/$id/details'
     | '/_authenticated/products/$id/edit'
   fileRoutesById: FileRoutesById
@@ -841,6 +933,8 @@ export const routeTree = rootRoute
         "/_authenticated/categories/overview",
         "/_authenticated/coupons/new",
         "/_authenticated/coupons/overview",
+        "/_authenticated/discounts/new",
+        "/_authenticated/discounts/overview",
         "/_authenticated/orders/details",
         "/_authenticated/orders/overview",
         "/_authenticated/products/new",
@@ -850,7 +944,9 @@ export const routeTree = rootRoute
         "/_authenticated/help-center/",
         "/_authenticated/tasks/",
         "/_authenticated/users/",
+        "/_authenticated/coupons/$id/edit",
         "/_authenticated/customers/$id/details",
+        "/_authenticated/discounts/$id/edit",
         "/_authenticated/orders/$id/details",
         "/_authenticated/products/$id/edit"
       ]
@@ -912,6 +1008,14 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/coupons/overview.tsx",
       "parent": "/_authenticated"
     },
+    "/_authenticated/discounts/new": {
+      "filePath": "_authenticated/discounts/new.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/discounts/overview": {
+      "filePath": "_authenticated/discounts/overview.tsx",
+      "parent": "/_authenticated"
+    },
     "/_authenticated/orders/details": {
       "filePath": "_authenticated/orders/details.tsx",
       "parent": "/_authenticated"
@@ -968,8 +1072,16 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/users/index.tsx",
       "parent": "/_authenticated"
     },
+    "/_authenticated/coupons/$id/edit": {
+      "filePath": "_authenticated/coupons/$id/edit.tsx",
+      "parent": "/_authenticated"
+    },
     "/_authenticated/customers/$id/details": {
       "filePath": "_authenticated/customers/$id/details.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/discounts/$id/edit": {
+      "filePath": "_authenticated/discounts/$id/edit.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/orders/$id/details": {

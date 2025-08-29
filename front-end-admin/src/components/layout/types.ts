@@ -21,6 +21,7 @@ interface BaseNavItem {
 type NavLink = BaseNavItem & {
   url: LinkProps['to']
   items?: never
+  onClick?: () => void
 }
 
 type NavCollapsible = BaseNavItem & {
@@ -32,7 +33,8 @@ type NavItem = NavCollapsible | NavLink
 
 interface NavGroup {
   title: string
-  items: NavItem[]
+  items: NavItem[],
+  onClick?: ()=>void
 }
 
 interface SidebarData {

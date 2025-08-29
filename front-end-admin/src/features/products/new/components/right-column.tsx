@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { IconFileDescription } from '@tabler/icons-react'
-import { useProductNew } from '@/hooks/UseProductNew'
+import { useProductNewContext } from '@/hooks/UseProductNew'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -19,7 +19,8 @@ import {
 } from '@/components/ui/select'
 import { CategorySelector } from './category-select'
 import { FileUploader } from './file-uploader'
-
+// import { ErrorBoundary } from 'react-error-boundary'
+// import ErrorFallback from './error-body'
 export default function RightColumn() {
   const {
     gallery,
@@ -53,10 +54,12 @@ export default function RightColumn() {
     setSupplier,
     productCode,
     setProductCode,
-  } = useProductNew()
+  } = useProductNewContext()
   const [displayValue, setDisplayValue] = useState('')
   const formatter = new Intl.NumberFormat('vi-VN')
   return (
+   
+      
     <Card className='rounded-none'>
       <CardContent className='flex flex-col gap-6'>
         <div>Thư viện hình ảnh</div>
@@ -289,5 +292,6 @@ export default function RightColumn() {
         </div>
       </CardContent>
     </Card>
+
   )
 }

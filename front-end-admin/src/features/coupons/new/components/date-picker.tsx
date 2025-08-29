@@ -4,7 +4,7 @@ import { vi } from 'date-fns/locale'
 import { CalendarIcon } from 'lucide-react'
 import { DateRange } from 'react-day-picker'
 import { cn } from '@/lib/utils'
-import { usePromotionNewContext } from '@/context/PromotionNewContext'
+import { useDiscountNewContext } from '@/context/DiscountNewContext'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -17,7 +17,7 @@ export function DatePickerWithRange({
   className,
 }: React.HTMLAttributes<HTMLDivElement>) {
   const [date, setDate] = useState<DateRange | undefined>()
-  const { setStartDate, setEndDate } = usePromotionNewContext()
+  const { setStartDate, setEndDate } = useDiscountNewContext()
   return (
     <div className={cn('grid gap-2', className)}>
       <Popover>
@@ -34,11 +34,11 @@ export function DatePickerWithRange({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, 'yyyy-MM-dd', { locale: vi })} ~{' '}
-                  {format(date.to, 'yyyy-MM-dd', { locale: vi })}
+                  {format(date.from, 'dd-MM-yyyy', { locale: vi })} ~{' '}
+                  {format(date.to, 'dd-MM-yyyy', { locale: vi })}
                 </>
               ) : (
-                format(date.from, 'yyyy-MM-dd', { locale: vi })
+                format(date.from, 'dd-MM-yyyy', { locale: vi })
               )
             ) : (
               <span>Chọn khoảng thời gian</span>
@@ -54,8 +54,8 @@ export function DatePickerWithRange({
             onSelect={(range) => {
               setDate(range)
               if (range?.from && range?.to) {
-                setStartDate(format(range.from, 'yyyy-MM-dd'))
-                setEndDate(format(range.to, 'yyyy-MM-dd'))
+                setStartDate(format(range.from, 'dd-MM-yyyy'))
+                setEndDate(format(range.to, 'dd-MM-yyyy'))
               }
             }}
             numberOfMonths={2}

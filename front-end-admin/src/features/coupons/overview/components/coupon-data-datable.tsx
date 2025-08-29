@@ -37,7 +37,8 @@ import {
 } from '@/components/ui/table'
 import { DatePickerWithRange } from './date-picker'
 import { TargetPopOver } from './target-pop-over'
-
+import { useNavigate } from '@tanstack/react-router'
+import { Route as EditCouponRoute } from '@/routes/_authenticated/coupons/$id/edit'
 export function CouponDataTable() {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -53,7 +54,7 @@ export function CouponDataTable() {
   React.useEffect(() => {
     setOpen(true)
   }, [selectedCategory])
-
+  const navigate = useNavigate()
   function PromotionDialog({ promotion }: { promotion: PromotionResponseDTO }) {
     return (
       <DropdownMenu>
@@ -69,7 +70,16 @@ export function CouponDataTable() {
             <IconPlus />
             <span>Thêm mới</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setSelectedCategory(promotion)}>
+          <DropdownMenuItem onClick={() => {
+            setSelectedCategory(promotion)
+            if(promotion) {
+              // setPromotionId(promotion.promotionId)
+              navigate({
+                to: EditCouponRoute.to,
+                params: { id: promotion.promotionId.toString() },
+              })
+            }
+          }}>
             <IconEdit />
             <span>Chỉnh sửa</span>
           </DropdownMenuItem>
@@ -140,7 +150,7 @@ export function CouponDataTable() {
         return (
           <div className='flex items-center gap-2'>
             <span className='font-manrope font-light'>
-              {discountPercentage}
+              {discountPercentage}%
             </span>
           </div>
         )

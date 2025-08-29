@@ -28,13 +28,13 @@ import {
 } from '../ui/dropdown-menu'
 import { NavCollapsible, NavItem, NavLink, type NavGroup } from './types'
 
-export function NavGroup({ title, items }: NavGroup) {
+export function NavGroup({ title, items, onClick }: NavGroup) {
   const { state } = useSidebar()
   const href = useLocation({ select: (location) => location.href })
   return (
     <SidebarGroup>
       <SidebarGroupLabel>{title}</SidebarGroupLabel>
-      <SidebarMenu>
+      <SidebarMenu onClick={onClick} >
         {items.map((item) => {
           const key = `${item.title}-${item.url}`
 

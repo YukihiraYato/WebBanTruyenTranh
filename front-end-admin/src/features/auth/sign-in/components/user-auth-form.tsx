@@ -1,4 +1,4 @@
-import { HTMLAttributes, useState } from 'react'
+import React, { HTMLAttributes, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -47,13 +47,16 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     }, 3000)
   }
 
-  const handleProccessLogin = async (username: string, password: string) => {
+  const handleProccessLogin = async (username: string, password: string, e: React.FormEvent<HTMLFormElement>) => {
     try {
       const response = await login(username, password)
-
+      console.log('Đăng nhập thành công:', response)
       if (response.code === 1000) {
-        await localStorage.setItem('access_token', response.result)
+        await localStorage.setItem('access_token_admin', response.result)
         window.location.href = '/'
+      } else {
+        alert(response.message)
+        e.preventDefault()
       }
     } catch (error) {
       console.error('Đăng nhập thất bại:', error)
@@ -102,10 +105,11 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         <Button
           className='mt-2'
           disabled={isLoading}
-          onClick={() =>
+          onClick={(e: React.FormEvent<HTMLFormElement>) =>
             handleProccessLogin(
               form.getValues('username'),
-              form.getValues('password')
+              form.getValues('password'),
+              e
             )
           }
         >

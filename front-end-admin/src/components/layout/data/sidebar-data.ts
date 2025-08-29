@@ -5,6 +5,7 @@ import {
   IconShoppingBag,
   IconDeviceDesktopAnalytics,
   IconTicket,
+  IconLogout
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 import { type SidebarData } from '../types'
@@ -90,6 +91,15 @@ export const sidebarData: SidebarData = {
           url: '/users',
           icon: IconUsers,
         },
+        {
+          title: 'Đăng xuất',
+          url: '/sign-in',
+          icon: IconLogout,
+          onClick : ()=>{
+            localStorage.clear()
+          }
+          
+        }
       ],
     },
   ],

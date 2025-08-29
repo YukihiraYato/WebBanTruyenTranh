@@ -21,7 +21,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-
+import { getUserDetails } from '@/api/user'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 const SIDEBAR_COOKIE_NAME = 'sidebar_state'
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = '16rem'
@@ -341,13 +343,45 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function SidebarFooter({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
+  const [isLoadding, setIsLoading] = React.useState(true);
+  const [fullName, setFullName] = React.useState<string | null>(null);
+  const {open} = useSidebar();
+  React.useEffect(() => {
+    const fetchUserDetails = async (): Promise<void> => {
+      try {
+        const userDetails = (await getUserDetails()).result;
+        setFullName(userDetails.fullName);
+        setIsLoading(false);
+        console.log('User details fetched:', userDetails.fullName);
+      } catch (error) {
+        console.error('Failed to fetch user details:', error);
+      }
+    }
+     fetchUserDetails();
+
+  }, [])
+ return (
     <div
       data-slot='sidebar-footer'
       data-sidebar='footer'
       className={cn('flex flex-col gap-2 p-2', className)}
       {...props}
-    />
+    >
+      <div className="text-lg font-bold mb-2 "
+        style={{
+          display: !open ? 'none' : 'block',
+        }}
+
+      >
+        {isLoadding ?(
+         <FontAwesomeIcon icon={faSpinner} />
+        ) :(
+      <div>
+            Xin chào, {fullName ? fullName : 'Admin'}
+      </div>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -566,7 +600,7 @@ function SidebarMenuAction({
         'peer-data-[size=lg]/menu-button:top-2.5',
         'group-data-[collapsible=icon]:hidden',
         showOnHover &&
-          'peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0',
+        'peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0',
         className
       )}
       {...props}

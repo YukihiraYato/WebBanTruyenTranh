@@ -13,7 +13,7 @@ const axiosInstance = axios.create({
 // Optional: Add a request interceptor (e.g. for auth token)
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token')
+    const token = localStorage.getItem('access_token_admin')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -30,12 +30,20 @@ axiosInstance.interceptors.response.use(
       const status = error.response.status
 
       if (status === 401) {
-        console.warn('Unauthorized – redirecting to sign-in')
+        console.warn('Unauthorized – redirecting to sign-in', {
+          duration: 5000,
+        })
         window.location.href = '/sign-in'
+        if (error.response.data?.message) {
+          alert(error.response.data.message)
+        }
       } else if (status === 403) {
         console.warn('Forbidden – access denied')
         // 👉 Hiển thị toast hoặc trang riêng
-        toast.error('Bạn không có quyền truy cập')
+        toast.error('Bạn không có quyền truy cập', {
+          duration: 5000,
+        })
+
 
         // Optionally redirect
         // window.location.href = '/forbidden';

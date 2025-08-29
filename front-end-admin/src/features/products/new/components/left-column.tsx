@@ -1,5 +1,5 @@
 import SunEditor from 'suneditor-react'
-import { useProductNew } from '@/hooks/UseProductNew'
+import { useProductNewContext } from '@/hooks/UseProductNew'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { FileUploader } from './file-uploader'
@@ -12,7 +12,7 @@ export default function LeftColumn() {
     setTitle,
     description,
     setDescription,
-  } = useProductNew()
+  } = useProductNewContext()
   return (
     <Card className='rounded-none'>
       <CardContent className='flex flex-col gap-6'>
@@ -27,7 +27,13 @@ export default function LeftColumn() {
           <div>
             <Input
               value={title}
-              onChange={(val) => setTitle(val.target.value)}
+              onChange={(val) => {
+                setTitle(val.target.value)
+                console.log('Title changed:', val.target.value)
+                console.log('Title of state:', title)
+              }
+
+              }
               placeholder='Nhập tên sản phẩm...'
             />
           </div>

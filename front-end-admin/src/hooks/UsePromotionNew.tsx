@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { createNewPromotion } from '@/api/promotion'
+import { createNewPromotion} from '@/api/promotion'
 
-export function usePromotionNew() {
+export function usePromotion() {
   const [promotionName, setPromotionName] = useState<string>('')
   const [discountPercentage, setDiscountPercentage] = useState<number>(10)
   const [startDate, setStartDate] = useState<string>('')
@@ -23,7 +23,7 @@ export function usePromotionNew() {
         description: 'Thêm mới khuyến mãi thành công.',
         action: {
           label: 'Xác nhận',
-          onClick: () => {},
+          onClick: () => { },
         },
         position: 'top-center',
       })
@@ -32,7 +32,7 @@ export function usePromotionNew() {
         description: `Có lỗi xảy ra: ${error.message || 'Không rõ nguyên nhân.'}`,
         action: {
           label: 'Xác nhận',
-          onClick: () => {},
+          onClick: () => { },
         },
         position: 'top-center',
       })

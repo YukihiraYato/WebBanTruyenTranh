@@ -2,8 +2,53 @@ import { useState } from 'react'
 import { Category } from '@/resources/categories'
 import { toast } from 'sonner'
 import { createNewBook } from '@/api/book'
+import { createContext, useContext} from 'react' 
 
-export function useProductNew() {
+interface ProductNewContextType {
+  thumbnail: File | null
+  setThumbnail: (file: File | null) => void
+  title: string
+  setTitle: (title: string) => void
+  description: string
+  setDescription: (description: string) => void
+  gallery: (File | null)[]
+  setGallery: (files: (File | null)[]) => void
+  category: Category | null
+  setCategory: (category: Category | null) => void
+  genre: number
+  setGenre: (genre: number) => void
+  author: string
+  setAuthor: (author: string) => void
+  age: number
+  setAge: (age: number) => void
+  price: number
+  setPrice: (price: number) => void
+  format: string
+  setFormat: (format: string) => void
+  language: string
+  setLanguage: (language: string) => void
+  pageCount: number
+  setPageCount: (pageCount: number) => void
+  weight: number
+  setWeight: (weight: number) => void
+  size: string
+  setSize: (size: string) => void
+  publishYear: string
+  setPublishYear: (publishYear: string) => void
+  translator: string
+  setTranslator: (translator: string) => void
+  publisher: string
+  setPublisher: (publisher: string) => void
+  qtyInStock: number
+  setQtyInStock: (qtyInStock: number) => void
+  supplier: string
+  setSupplier: (supplier: string) => void
+  productCode: string
+  setProductCode: (productCode: string) => void
+  uploadToServer: () => Promise<void>
+} 
+const ProductNewContext = createContext<ProductNewContextType | null>(null)
+export function ProductNewProvider({children}: {children: React.ReactNode}) {
   /* State variables for product details */
   const [thumbnail, setThumbnail] = useState<File | null>(null)
   const [title, setTitle] = useState('')
@@ -34,7 +79,9 @@ export function useProductNew() {
     }
 
     formData.append('title', title)
+     console.log('Có thấy value của titile ở custom hook ko ?:', title)
     formData.append('description', description)
+   
 
     if (category !== null) {
       formData.append('category_id', category.id.toString())
@@ -60,9 +107,9 @@ export function useProductNew() {
       .forEach((file) => {
         formData.append('gallery', file)
       })
-    if (thumbnail) {
-      formData.append('thumbnail', thumbnail)
-    }
+    // if (thumbnail) {
+    //   formData.append('thumbnail', thumbnail)
+    // }
 
     // for (const [key, value] of formData.entries()) {
     //   console.log(`${key}:`, value)
@@ -75,72 +122,89 @@ export function useProductNew() {
         label: 'Xác nhận',
         onClick: () => {},
       },
+      duration: 5000
     })
   }
 
-  return {
-    uploadToServer,
-    thumbnail,
-    setThumbnail,
-    title,
-    setTitle,
-    description,
-    setDescription,
-    gallery,
-    setGallery,
-    category,
-    setCategory,
-    genre,
-    setGenre,
-    author,
-    setAuthor,
-    age,
-    setAge,
-    price,
-    setPrice,
-    format,
-    setFormat,
-    language,
-    setLanguage,
-    pageCount,
-    setPageCount,
-    weight,
-    setWeight,
-    size,
-    setSize,
-    publishYear,
-    setPublishYear,
-    translator,
-    setTranslator,
-    publisher,
-    setPublisher,
-    qtyInStock,
-    setQtyInStock,
-    supplier,
-    setSupplier,
-    productCode,
-    setProductCode,
-    reset: () => {
-      setThumbnail(null)
-      setTitle('')
-      setDescription('')
-      setGallery([])
-      setCategory(null)
-      setGenre(1)
-      setAuthor('')
-      setAge(0)
-      setPrice(0)
-      setFormat('')
-      setLanguage('')
-      setPageCount(0)
-      setWeight(0)
-      setSize('')
-      setPublishYear('')
-      setTranslator('')
-      setPublisher('')
-      setQtyInStock(0)
-      setSupplier('')
-      setProductCode('')
-    },
+  return (
+    <ProductNewContext.Provider
+    value={{
+  thumbnail,
+  setThumbnail,
+  title,
+  setTitle,
+  description,
+  setDescription,
+  gallery,
+  setGallery,
+  category,
+  setCategory,
+  genre,
+  setGenre,
+  author,
+  setAuthor,
+  age,
+  setAge,
+  price,
+  setPrice,
+  format,
+  setFormat,
+  language,
+  setLanguage,
+  pageCount,
+  setPageCount,
+  weight,
+  setWeight,
+  size,
+  setSize,
+  publishYear,
+  setPublishYear,
+  translator,
+  setTranslator,
+  publisher,
+  setPublisher,
+  qtyInStock,
+  setQtyInStock,
+  supplier,
+  setSupplier,
+  productCode,
+  setProductCode,
+  uploadToServer,
+}}
+    >
+      {children}  
+    </ProductNewContext.Provider>
+  )
+
+    // reset: () => {
+    //   setThumbnail(null)
+    //   setTitle('')
+    //   setDescription('')
+    //   setGallery([])
+    //   setCategory(null)
+    //   setGenre(1)
+    //   setAuthor('')
+    //   setAge(0)
+    //   setPrice(0)
+    //   setFormat('')
+    //   setLanguage('')
+    //   setPageCount(0)
+    //   setWeight(0)
+    //   setSize('')
+    //   setPublishYear('')
+    //   setTranslator('')
+    //   setPublisher('')
+    //   setQtyInStock(0)
+    //   setSupplier('')
+    //   setProductCode('')
+    // },
+  
+}
+
+export const useProductNewContext = ()=>{
+  const context = useContext(ProductNewContext)
+  if (!context) {
+    throw new Error('useProductNewContext must be used within a ProductNewProvider')
   }
+  return context
 }

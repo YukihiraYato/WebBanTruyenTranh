@@ -1,7 +1,9 @@
+import { LogIn } from "lucide-react"
+
 const API_ENDPOINTS = {
   USER: {
-    LOGIN: '/api/v1/auth/login',
-    DETAILS: (userId: number) => `/admin/api/user/${userId}/details`,
+    LOGIN: '/api/v1/auth/login/admin',
+    DETAILS: `/api/user-details`,
   },
   BOOK: {
     GET_DETAILS: (id: number) => `/admin/api/book/${id}`,
@@ -14,11 +16,19 @@ const API_ENDPOINTS = {
     GET_ALL_ORDER: `/admin/api/order`,
     GET_ORDER_BY_ID: (id: number) => `/admin/api/order/${id}`,
     GET_ORDER_TIMELINE: (id: number) => `/api/orders/${id}/timeline`,
-    UPDATE_ORDER_STATUS: (id: number) => `/api/orders/${id}/status`,
+    UPDATE_ORDER_STATUS: (id: number) => `/api/orders/admin/${id}/status`,
   },
   PROMOTION: {
     GET_ALL_PROMOTION: '/admin/api/promotion/',
+    GET_DETAILS: (id: number) => `/api/promotion/get/${id}`,
     CREATE: '/admin/api/promotion/create',
+    UPDATE: `/api/promotion/update`,
+  },
+  DISCOUNT: {
+    CREATE: "/api/discount/create",
+    GET_ALL:(page: number, size: number) => "/api/discount?page=" + page + "&size=" + size,
+    UPDATE: "/api/discount/update",
+    GET_DETAILS: (id: number) => `/api/discount/detail/${id}`,
   },
   CHART: {
     GET_SALES_MONTHLY: '/admin/api/chart/monthly-sales',

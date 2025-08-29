@@ -1,4 +1,5 @@
 import { PromotionOverviewProvider } from '@/context/PromotionOverviewContext'
+import { PromotionUpdateProvider } from '@/context/PromotionUpdateContext'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
@@ -21,6 +22,7 @@ export default function CouponOverview() {
       {/* ===== Main ===== */}
       <Main>
         <PromotionOverviewProvider>
+          <PromotionUpdateProvider>
           <div className='mb-4 flex items-center justify-between'>
             <h1 className='text-2xl font-bold tracking-tight'>
               Khuyến mãi trong cửa hàng
@@ -29,6 +31,7 @@ export default function CouponOverview() {
           <div className=''>
             <CouponDataTable />
           </div>
+          </PromotionUpdateProvider>
         </PromotionOverviewProvider>
       </Main>
     </>
