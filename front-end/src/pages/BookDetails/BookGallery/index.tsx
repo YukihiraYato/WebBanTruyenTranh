@@ -77,7 +77,7 @@ export function BookGallery({ gallery }: BookGalleryProps) {
       <a
         className="gallery"
         key={index}
-        href={url}
+        href={encodeURI(url)}
         style={{ display: `${index <= 4 ? "inline-flex" : "none"}` }}
       >
         <Box
@@ -157,8 +157,8 @@ export function BookGallery({ gallery }: BookGalleryProps) {
               style={{ objectFit: "contain" }}
               src={
                 bookDetails?.imageUrls
-                  ? bookDetails.imageUrls[0]
-                  : gallery[0].href
+                  ? encodeURI(bookDetails.imageUrls[0])
+                  : encodeURI(gallery[0].src)
               }
             />
           </Box>

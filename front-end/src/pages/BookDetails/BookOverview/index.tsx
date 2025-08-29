@@ -154,7 +154,12 @@ export function BookOverview({ sx = undefined }: { sx?: SxProps<Theme> }) {
             borderRadius={1}
           >
             <Typography sx={{ fontWeight: "medium", color: "white" }}>
-              -{25}%
+              {/* using (??) to provide a default value */}
+              -{Math.round(
+                ((bookDetails?.price ?? 0) - (bookDetails?.discountedPrice ?? 0))
+                / (bookDetails?.price ?? 1) * 100
+              )}%
+
             </Typography>
           </Box>
         )}

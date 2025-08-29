@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Paper, Typography, Tabs, Tab, Box, Pagination } from "@mui/material";
 import { getOrder } from "~/api/order";
 import Order from "~/components/Order";
-
+import useWebsocket from "~/custom_hook/useWebsocket";
 const OrderList = () => {
   const [tab, setTab] = useState<string>("ALL");
   const [allOrders, setAllOrders] = useState<any[]>([]);
@@ -10,17 +10,16 @@ const OrderList = () => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
-
+  const [notificationFromWs, setNotificationFromWs] = useState<string>("");
   const userDetails = JSON.parse(localStorage.getItem("userDetails") || "{}");
-
+  useWebsocket(userDetails.userId, setNotificationFromWs);
   // API lấy đơn hàng theo trang (chỉ dùng cho tab ALL)
   const fetchOrders = async (page: number) => {
     try {
       const data = await getOrder(page);
-
       const mappedOrders = data.content.map((order: any) => ({
         orderId: order.orderId.toString(),
-        orderDateTime: order.orderDate,
+        timeFor5StatusOrder: order.timeFor5StatusOrder,
         nameUser: userDetails.fullName,
         phoneNumber: userDetails.phoneNum,
         address: order.shippingAddress.addressLine1,
@@ -53,7 +52,7 @@ const OrderList = () => {
         const data = await getOrder(page);
         const mappedOrders = data.content.map((order: any) => ({
           orderId: order.orderId.toString(),
-          orderDateTime: order.orderDate,
+          timeFor5StatusOrder: order.timeFor5StatusOrder,
           nameUser: userDetails.fullName,
           phoneNumber: userDetails.phoneNum,
           address: order.shippingAddress.addressLine1,
@@ -134,11 +133,27 @@ const OrderList = () => {
     tab === "ALL"
       ? filteredOrders
       : filteredOrders.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
-      // Tự động chuyển về tab ALL
-      const handleGoToAllTab = () => {
-  setTab("ALL");
-  setPage(0);
-};
+  // Tự động chuyển về tab ALL
+  const handleGoToAllTab = () => {
+    setTab("ALL");
+    setPage(0);
+  };
+  // Call API khi order được cập nhập bởi admin
+  useEffect(() => {
+    const fetchDataOrder = async () => {
+      if (tab === "ALL") {
+        await fetchOrders(0);
+
+      } else {
+        const orders = await fetchAllOrders();
+        const filtered = orders.filter((order) => order.status === tab);
+        setFilteredOrders(filtered);
+        setAllOrders(filtered);
+        setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+      }
+    }
+    fetchDataOrder();
+  }, [notificationFromWs])
 
   return (
     <Paper sx={{ padding: 3, minWidth: 700, margin: "auto" }}>
@@ -166,7 +181,7 @@ const OrderList = () => {
           <Order
             key={order.orderId}
             orderId={order.orderId || ""}
-            orderDateTime={order.orderDateTime}
+            timeFor5StatusOrder={order.timeFor5StatusOrder}
             status={order.status}
             titleBook={order.titleBook}
             items={order.items}
@@ -181,7 +196,7 @@ const OrderList = () => {
             note={order.note}
             img={order.img}
             refreshOrders={() => fetchOrders(page)}
-             goToAllTab={handleGoToAllTab}
+            goToAllTab={handleGoToAllTab}
           />
         ))}
       </Box>

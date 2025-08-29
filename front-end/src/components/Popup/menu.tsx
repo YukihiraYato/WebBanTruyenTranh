@@ -73,7 +73,7 @@ export function MenuPopper({ children }: { children: React.ReactNode }) {
             <ListItemButton
               onClick={() => {
                 localStorage.clear();
-                navigate("/home");
+                navigate("/");
               }}
             >
               <ListItemIcon>

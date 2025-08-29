@@ -1,9 +1,12 @@
 import { Box, Typography, Button, LinearProgress, Chip, Stack, IconButton, Tooltip } from "@mui/material";
 import DiscountIcon from '@mui/icons-material/Discount';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useTranslation } from "react-i18next";
+import { useTranslation,  } from "react-i18next";
+import { useState } from "react";
+import SelectDiscountPopup from "~/components/Popup/SelectDiscount";
 function Discount() {
   const { t } = useTranslation();
+  const [openPopup, setOpenPopup] = useState(false);
   return (
     <Box p={2} borderRadius={2} boxShadow={2} bgcolor="#fff">
       {/* Header */}
@@ -14,7 +17,9 @@ function Discount() {
             {t("page.cart.discount.title")}
           </Typography>
         </Box>
-        <Button variant="text" size="small">Xem thêm</Button>
+        <Button
+        onClick={() => setOpenPopup(true)}
+        variant="text" size="small">Xem thêm</Button>
       </Box>
 
       {/* Nội dung mã giảm giá chính */}
@@ -62,6 +67,8 @@ function Discount() {
           <InfoOutlinedIcon sx={{ fontSize: 16 }} color="disabled" />
         </Tooltip>
       </Stack>
+      {/* Popup xem thêm */}
+      <SelectDiscountPopup open={openPopup} onClose={() => setOpenPopup(false)} />
     </Box>
   );
 }

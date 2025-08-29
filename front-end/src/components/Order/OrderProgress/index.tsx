@@ -10,6 +10,7 @@ import {
 } from "@mui/icons-material";
 import { grey } from "@mui/material/colors";
 import { useTranslation } from "react-i18next";
+import {timeFor5StatusOrderObject} from "~/types/order";
 interface StepItem {
   label: string;
   timestamp: string;
@@ -18,10 +19,10 @@ interface StepItem {
 
 interface OrderProgressProps {
   status: string;
-  date?: string;
+  timeFor5StatusOrder?: timeFor5StatusOrderObject;
 }
 
-export default function OrderProgress({ status }: OrderProgressProps) {
+export default function OrderProgress({ status, timeFor5StatusOrder }: OrderProgressProps) {
   const { t } = useTranslation();
   // Format ngày giờ
   const formatDate = (date: Date) => {
@@ -50,39 +51,36 @@ export default function OrderProgress({ status }: OrderProgressProps) {
   };
 
   // Tạo các bước và gán timestamp cho tất cả các bước <= bước hiện tại
-  const getSteps = () => {
-    const currentDate = formatDate(new Date());
+const getSteps = () => {
+  if (!timeFor5StatusOrder) return [];
 
-    const stepItems: StepItem[] = [
-      {
-        label: `${t("page.profileUser.profileSection.orders.orderDetail.item3")}`,
-        timestamp: "",
-        key: "processing",
-      },
-      {
-        label: `${t("page.profileUser.profileSection.orders.orderDetail.item4")}`,
-        timestamp: "",
-        key: "isShipping",
-      },
-      {
-        label: status === "CANCELED" ? `${t("page.profileUser.profileSection.orders.orderDetail.item5")}` : `${t("page.profileUser.profileSection.orders.orderDetail.item6")}`,
-        timestamp: "",
-        key: status === "CANCELED" ? "cancelled" : "completed",
-      },
-    ];
+  const stepItems: StepItem[] = [
+    {
+      label: `${t("page.profileUser.profileSection.orders.orderDetail.item3")}`,
+      timestamp: timeFor5StatusOrder.pendingConfirmationDate || "",
+      key: "processing",
+    },
+    {
+      label: `${t("page.profileUser.profileSection.orders.orderDetail.item4")}`,
+      timestamp: timeFor5StatusOrder.shippingDate || "",
+      key: "isShipping",
+    },
+    {
+      label:
+        status === "CANCELED"
+          ? `${t("page.profileUser.profileSection.orders.orderDetail.item5")}`
+          : `${t("page.profileUser.profileSection.orders.orderDetail.item6")}`,
+      timestamp:
+        status === "CANCELED"
+          ? timeFor5StatusOrder.cancelledDate || ""
+          : timeFor5StatusOrder.deliveredDate || "",
+      key: status === "CANCELED" ? "cancelled" : "completed",
+    },
+  ];
 
-    const currentStepIndex = getCurrentStepIndex();
+  return stepItems;
+};
 
-    // Gán timestamp cho tất cả các step trước hoặc bằng bước hiện tại
-    const updatedSteps = stepItems.map((step, index) => {
-      if (index <= currentStepIndex) {
-        return { ...step, timestamp: currentDate };
-      }
-      return step;
-    });
-
-    return updatedSteps;
-  };
 
   const steps = getSteps();
   const currentStep = getCurrentStepIndex();

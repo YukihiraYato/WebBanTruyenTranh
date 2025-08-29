@@ -27,7 +27,7 @@ export interface BookBought {
 export default function Order({
   orderId,
   status,
-  orderDateTime,
+  timeFor5StatusOrder,
   imgBook,
   titleBook,
   price,
@@ -48,7 +48,7 @@ export default function Order({
     const orderData = {
       orderId,
       status,
-      orderDateTime,
+      timeFor5StatusOrder,
       imgBook,
       titleBook,
       feeShip,
@@ -73,6 +73,22 @@ export default function Order({
   const [isOpenSnackbar, setIsOpenSnackbar] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const { t } = useTranslation();
+  const showTimeOrderBaseOnStatus = (status: string) =>{
+    switch(status){
+      case "PENDING_CONFIRMATION":
+      return timeFor5StatusOrder.pendingConfirmationDate;
+      case "CONFIRMED":
+      return timeFor5StatusOrder.confirmedDate;
+      case "SHIPPING":
+      return timeFor5StatusOrder.shippingDate;
+      case "DELIVERED":
+      return timeFor5StatusOrder.deliveredDate;
+      case "CANCELED":
+      return timeFor5StatusOrder.cancelledDate;
+      default:
+        return "Lỗi không lấy được thời gian"
+      }
+     }
   // Xử lý hủy đơn
   const handleCancelOrder = async () => {
     // Ngăn chặn sự kiện click lan truyền lên Card
@@ -130,7 +146,7 @@ export default function Order({
         </Grid2>
         <Grid2>
           <Typography variant="body2" color="text.secondary">
-            {orderDateTime}
+            {showTimeOrderBaseOnStatus(status)}
           </Typography>
         </Grid2>
       </Grid2>

@@ -4,7 +4,11 @@ import API_ENDPOINTS from "../endpoint";
 
 export const createBookCollection = async (collectionData: any): Promise<any> => {
   const url = API_ENDPOINTS.USER.BOOKCOLLECTION.CREATE;
-  const res = await axiosInstance.post(url, collectionData);
+  const res = await axiosInstance.post(url, collectionData,{
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   return res.data;
 };
 export const addBookToBookCollection = async(collectionId: number, bookIds: number[]) :Promise<any> =>{

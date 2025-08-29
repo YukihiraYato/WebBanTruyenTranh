@@ -6,7 +6,6 @@ import RegisterPopup from "~/components/Popup/register";
 import VerifyPopup from "~/components/Popup/verifyOTP"; // Import popup xác minh tài khoản
 import { useState, useEffect } from "react";
 import { MenuPopper } from "~/components/Popup/menu";
-import { useAuthContext } from "~/context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { register, sendOtp } from "~/api/user/register";
 export function ProfileButton() {
@@ -15,7 +14,7 @@ export function ProfileButton() {
   const [isPopupVerifyOpen, setPopupVerifyOpen] = useState(false); // Thêm state cho popup xác minh
   const [email, setEmail] = useState(""); //
   const [password, setPassword] = useState("");
-  const [userName, setUserName] = useState<string | null>(localStorage.getItem("userName"));
+  const [userName, setUserName] = useState<string | null>(null);
   const [resultRegisterAccount, setResultRegisterAccount] = useState("");
   const { t } = useTranslation();
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
@@ -48,41 +47,51 @@ export function ProfileButton() {
   };
 
   // Xử lý khi đăng ký thành công
-const handleRegisterSuccess = async (
-  username: string,
-  password: string,
-  fullName: string,
-  phoneNum: string,
-  email: string,
-  dateOfBirth: string
-) => {
-  if (username && password && fullName && phoneNum && email && dateOfBirth) {
-    const resultLocal = (await register(username, password, fullName, phoneNum, email, dateOfBirth)).result;
-    setResultRegisterAccount(resultLocal);
-    if (resultLocal === "Đăng ký tài khoản thành công. Vui lòng xác minh tài khoản") {
-      setIsRegisterLoading(true);
-      const resultSendOTP= await sendOtp(email);
-      if( resultSendOTP.result) {
-        setIsRegisterLoading(false);
+  const handleRegisterSuccess = async (
+    username: string,
+    password: string,
+    fullName: string,
+    phoneNum: string,
+    email: string,
+    dateOfBirth: string
+  ) => {
+    if (username && password && fullName && phoneNum && email && dateOfBirth) {
+      const resultLocal = (await register(username, password, fullName, phoneNum, email, dateOfBirth)).result;
+      setResultRegisterAccount(resultLocal);
+      if (resultLocal === "Đăng ký tài khoản thành công. Vui lòng xác minh tài khoản") {
+        setIsRegisterLoading(true);
+        const resultSendOTP = await sendOtp(email);
+        if (resultSendOTP.result) {
+          setIsRegisterLoading(false);
+        }
+        setEmail(email);
+        setPopupRegisterOpen(false);
+        setPopupVerifyOpen(true);
+      } else {
+        alert(resultLocal);
       }
-      setEmail(email);
-      setPopupRegisterOpen(false);
-      setPopupVerifyOpen(true);
-    } else {
-      alert(resultLocal);
     }
-  }
-};
+  };
 
 
   useEffect(() => {
     const timer = setInterval(() => {
-      const currentName = localStorage.getItem("userName");
-      setUserName(currentName);
+      const storedData = localStorage.getItem("userDetails");
+      const userDetails = storedData?.length ? JSON.parse(storedData) : null;
+      if (userDetails) {
+        setUserName(userDetails.username);
+      }else {
+        setUserName(null);
+      }
+      
     }, 100);
 
     return () => clearInterval(timer);
   }, []);
+  useEffect(() => {
+    console.log("userName", userName);
+  }, []);
+
   return (
     <Box sx={{ position: "relative" }}>
       <Stack
@@ -100,7 +109,7 @@ const handleRegisterSuccess = async (
           },
         }}
       >
-        {localStorage.getItem("userName") !== null ? (
+        {userName !== null ? (
           <MenuPopper>
             <PersonOutlineOutlinedIcon
               sx={{
@@ -146,12 +155,12 @@ const handleRegisterSuccess = async (
           </>
         )}
       </Stack>
-      {localStorage.getItem("userName") === null ? (
+      {userName === null ? (
         <Paper
           className="account-menu"
           sx={{
             position: "absolute",
-            top: 50,
+            top: 45,
             right: 0,
             p: 1,
             width: 200,

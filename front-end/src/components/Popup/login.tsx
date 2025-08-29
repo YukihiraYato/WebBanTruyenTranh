@@ -127,15 +127,14 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ open, onClose }) => {
 
         const userName = jwtDecode(JSON.stringify(response.result)).sub;
         if (userName !== undefined && userName !== "") {
-          localStorage.setItem("userName", userName);
           localStorage.setItem("access_token", response.result);
           const userDetails = await getUserDetails();
           localStorage.setItem("userDetails", JSON.stringify(userDetails.result));
           navigate("/");
         }
-        // Lưu thông tin chi tiết người dùng vào localStorage
-        const userDetails = await getUserDetails();
-        localStorage.setItem("userDetails", JSON.stringify(userDetails.result));
+        // // Lưu thông tin chi tiết người dùng vào localStorage
+        // const userDetails = await getUserDetails();
+        // localStorage.setItem("userDetails", JSON.stringify(userDetails.result));
         onClose();
       } else {
         setError(

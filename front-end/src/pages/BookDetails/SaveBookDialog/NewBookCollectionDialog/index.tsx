@@ -17,14 +17,14 @@ import PublicRoundedIcon from "@mui/icons-material/PublicRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import { useEffect, useState } from "react";
 import { BookCollectionViewToX } from "~/pages/ProfileUser/PageOther/BookSeries/BookSeriesDetails/ListBookCollectionView/";
-import {createBookCollection} from "~/api/user/bookCollection";
+import { createBookCollection } from "~/api/user/bookCollection";
 import CustomSnackbar from "~/components/Popup/Snackbar";
 import Pagination from "@mui/material/Pagination";
 import { useBookCollection } from "~/providers/BookCollectionProvider";
 export interface NewBookCollectionDialogProps {
   open: boolean;
   onClose: () => void;
- bookId?: number; 
+  bookId?: number;
 }
 
 const VisuallyHiddenInput = styled("input")({
@@ -40,48 +40,50 @@ const VisuallyHiddenInput = styled("input")({
 });
 
 export function NewBookCollectionDialog(props: NewBookCollectionDialogProps) {
-  const {bookCollections, getBookCollectionsForUser, createBookCollectionForUser, addBookToCollection } = useBookCollection();
-    // Trạng thái bước tạo hay lưu sách vào bộ sách
+  const { bookCollections, getBookCollectionsForUser, createBookCollectionForUser, addBookToCollection } = useBookCollection();
+  // Trạng thái bước tạo hay lưu sách vào bộ sách
   const [step, setStep] = useState<"create" | "select">("create");
 
-  const { onClose, open, bookId  } = props;
+  const { onClose, open, bookId } = props;
   // Snackbar state
   const [onOpenSnackbar, setOpenSnackbar] = useState(false);
   const [messageSnackbar, setMessageSnackbar] = useState("");
-// Dữ liệu bộ sưu tập phân trang
-  const [bookCollection, setBookCollection] = useState<BookCollectionViewToX []>(bookCollections);
-    const [totalPages, setTotalPages] = useState(1);
+  // Dữ liệu bộ sưu tập phân trang
+  const [bookCollection, setBookCollection] = useState<BookCollectionViewToX[]>(bookCollections);
+  const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(0);
 
   // Local state để binding vào input
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-const [visibility, setVisibility] = useState<boolean>(true); 
-const [isLoadingCollection, setIsLoadingCollection] = useState(false);
-const [listIdBookCollection, setListIdBookCollection] = useState<number[]>([]);
+  const [visibility, setVisibility] = useState<boolean>(true);
+  const [isLoadingCollection, setIsLoadingCollection] = useState(false);
+  const [listIdBookCollection, setListIdBookCollection] = useState<number[]>([]);
+  const [image, setImage] = useState<File | null>(null);
 
   // Reset khi mở Dialog
   useEffect(() => {
     if (open) {
-  if (bookId !== undefined) {
-    setStep("select");
-    fetchBookCollections(0); 
-  }else {
+      if (bookId !== undefined) {
+        setStep("select");
+        fetchBookCollections(0);
+      } else {
         setStep("create");
-      setTitle("");
-      setDescription("");
-      setVisibility(true);
-      setCurrentPage(0);
+        setTitle("");
+        setDescription("");
+        setVisibility(true);
+        setCurrentPage(0);
+        setImage(null);
+      }
     }
-    }
-  }, [open,bookId]);
+  }, [open, bookId]);
 
   // Fetch danh sách bộ sưu tập
   const fetchBookCollections = async (page: number) => {
     try {
       setIsLoadingCollection(true);
       const res = await getBookCollectionsForUser({ pageParam: page });
-      if ( res.content) {
+      if (res.content) {
         setBookCollection(res.content);
         setTotalPages(res.totalPages);
         setCurrentPage(res.pageable.pageNumber);
@@ -92,19 +94,20 @@ const [listIdBookCollection, setListIdBookCollection] = useState<number[]>([]);
     } catch (error) {
       console.error("Lỗi khi gọi API:", error);
     } finally {
-    setIsLoadingCollection(false);
-    console.log("Đã lấy xong bộ sách");
-  }
+      setIsLoadingCollection(false);
+      console.log("Đã lấy xong bộ sách");
+    }
   };
 
   // Tạo bộ sưu tập mới
   const handleCreateCollection = async () => {
-    const data = {
-      name: title,
-      description,
-      isPublic: visibility,
-    };
-    const res = await createBookCollectionForUser(data);
+ const formData = new FormData();
+    formData.append("name", title);
+    formData.append("description", description);
+    formData.append("isPublic", visibility.toString());
+    formData.append("image", image );
+    console.log("image", image);
+    const res = await createBookCollectionForUser(formData);
     if (res.code === 1000) {
       setMessageSnackbar("Tạo bộ sách thành công!");
       setOpenSnackbar(true);
@@ -134,7 +137,7 @@ const [listIdBookCollection, setListIdBookCollection] = useState<number[]>([]);
   };
 
   return (
-     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         {step === "create" ? "Tạo bộ sách mới" : "Thêm sách vào bộ sưu tập"}
       </DialogTitle>
@@ -175,77 +178,114 @@ const [listIdBookCollection, setListIdBookCollection] = useState<number[]>([]);
                 </MenuItem>
               </Select>
             </FormControl>
+            <Box display="flex" gap={2} alignItems="center">
+              {/* Input ẩn */}
+              <input
+                accept="image/*"
+                style={{ display: "none" }}
+                id="upload-image"
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setImage(file);
+                  } else {
+                    setImage(null);
+                  }
+                }}
+              />
+
+              {/* Nút chọn ảnh */}
+              <label htmlFor="upload-image">
+                <Button variant="contained" component="span">
+                  Chọn ảnh
+                </Button>
+              </label>
+
+              {/* TextField hiện tên ảnh */}
+              <TextField
+                label="Tên file"
+                value={image?.name || ""}
+                variant="outlined"
+                size="small"
+                InputProps={{
+                  readOnly: true,
+                }}
+                sx={{ width: 300 }}
+              />
+            </Box>
           </Box>
         ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-     {isLoadingCollection ? (
-  <Typography align="center" color="textSecondary" fontStyle="italic" mt={2}>
-    Đang tải bộ sưu tập...
-  </Typography>
-) : !bookCollection || bookCollection.length === 0 ? (
-  <Typography color="error" textAlign="center" fontWeight="bold" mt={2}>
-    {typeof bookId === "number"
-      ? "Hiện chưa có bộ sách nào, hãy tạo thêm bộ sách mới để lưu"
-      : "Lưu bộ sách bị lỗi, vui lòng thử lại sau"}
-  </Typography>
-) : (
-  <>
-    <Typography fontWeight="bold" mb={1}>
-      Chọn bộ sách để thêm:
-    </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {isLoadingCollection ? (
+              <Typography align="center" color="textSecondary" fontStyle="italic" mt={2}>
+                Đang tải bộ sưu tập...
+              </Typography>
+            ) : !bookCollection || bookCollection.length === 0 ? (
+              <Typography color="error" textAlign="center" fontWeight="bold" mt={2}>
+                {typeof bookId === "number"
+                  ? "Hiện chưa có bộ sách nào, hãy tạo thêm bộ sách mới để lưu"
+                  : "Lưu bộ sách bị lỗi, vui lòng thử lại sau"}
+              </Typography>
+            ) : (
+              <>
+                <Typography fontWeight="bold" mb={1}>
+                  Chọn bộ sách để thêm:
+                </Typography>
 
-    <Box display="flex" flexDirection="column" gap={1}>
-      {bookCollection.map((item) => (
-        <FormControl key={item.id}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              type="checkbox"
-              onChange={(e) => {
-                if (e.target.checked) {
-                   setListIdBookCollection(prev => [...prev, item.id])
-                }else{
-                  setListIdBookCollection(prev => prev.filter(id => id != item.id))
-                }
-              }}
-            />
-            <Typography>{item.name}</Typography>
-          </label>
-        </FormControl>
-      ))}
-    </Box>
+                <Box display="flex" flexDirection="column" gap={1}>
+                  {bookCollection.map((item) => (
+                    <FormControl key={item.id}>
+                      <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <input
+                          type="checkbox"
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setListIdBookCollection(prev => [...prev, item.id])
+                            } else {
+                              setListIdBookCollection(prev => prev.filter(id => id != item.id))
+                            }
+                          }}
+                        />
+                        <Typography>{item.name}</Typography>
+                      </label>
+                    </FormControl>
+                  ))}
+                </Box>
 
-    {totalPages > 1 && (
-      <Box display="flex" justifyContent="center" mt={2}>
-        <Pagination
-          count={totalPages}
-          page={currentPage + 1}
-          onChange={(_, page) => fetchBookCollections(page - 1)}
-          color="primary"
-        />
-      </Box>
-    )}
-  </>
-)}
+                {totalPages > 1 && (
+                  <Box display="flex" justifyContent="center" mt={2}>
+                    <Pagination
+                      count={totalPages}
+                      page={currentPage + 1}
+                      onChange={(_, page) => fetchBookCollections(page - 1)}
+                      color="primary"
+                    />
+                  </Box>
+                )}
 
-    </Box>
+              </>
+            )}
+
+          </Box>
         )}
       </DialogContent>
 
       <DialogActions>
-       
-        {step === "select" ?(
+
+        {step === "select" ? (
           <>
-          <Button onClick={() => {
-            listIdBookCollection.forEach(id =>{
-              handleAddBookToCollection(id);
-            })
-          }}>Lưu</Button>
-          <Button onClick={onClose}>Đóng</Button>
+            <Button onClick={() => {
+              listIdBookCollection.forEach(id => {
+                handleAddBookToCollection(id);
+              })
+            }}>Lưu</Button>
+            <Button onClick={onClose}>Đóng</Button>
           </>
-        ):(
+        ) : (
           <>
-          <Button onClick={onClose}>Đóng</Button>
-          <Button onClick={handleCreateCollection}>Tạo</Button>
+            <Button onClick={onClose}>Đóng</Button>
+            <Button onClick={handleCreateCollection}>Tạo</Button>
           </>
         )}
       </DialogActions>

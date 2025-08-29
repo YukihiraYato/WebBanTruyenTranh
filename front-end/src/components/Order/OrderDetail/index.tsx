@@ -12,9 +12,10 @@ import { useEffect, useState } from "react";
 import OrderStepper from "../OrderProgress";
 import { BookBought } from "../index";
 import { useTranslation } from "react-i18next";
+import {timeFor5StatusOrderObject} from "~/types/order";
 export interface OrderDetailsProps {
   orderId: string;
-  orderDateTime: string;
+  timeFor5StatusOrder:timeFor5StatusOrderObject ;
   nameUser: string;
   phoneNumber: string;
   address: string;
@@ -37,7 +38,13 @@ export default function OrderDetail() {
   const { orderId } = useParams();
   const [order, setOrder] = useState<OrderDetailsProps>({
     orderId: "",
-    orderDateTime: "",
+    timeFor5StatusOrder: {
+      pendingConfirmationDate: "",
+      confirmedDate: "",
+      shippingDate: "",
+      deliveredDate: "",
+      cancelledDate: "",
+    },
     nameUser: "",
     phoneNumber: "",
     address: "",
@@ -54,6 +61,22 @@ export default function OrderDetail() {
      refreshOrders: () => {},
       goToAllTab: () => {}
   });
+ const showTimeOrderBaseOnStatus = (status: string) =>{
+    switch(status){
+      case "PENDING_CONFIRMATION":
+      return order.timeFor5StatusOrder.pendingConfirmationDate;
+      case "CONFIRMED":
+      return order.timeFor5StatusOrder.confirmedDate;
+      case "SHIPPING":
+      return order.timeFor5StatusOrder.shippingDate;
+      case "DELIVERED":
+      return order.timeFor5StatusOrder.deliveredDate;
+      case "CANCELED":
+      return order.timeFor5StatusOrder.cancelledDate;
+      default:
+        return "Lỗi không lấy được thời gian"
+      }
+     }
 
   useEffect(() => {
     const stored = localStorage.getItem("selectedOrder");
@@ -102,10 +125,10 @@ export default function OrderDetail() {
           </Box>
 
           <Typography color="text.secondary">
-            {t("page.profileUser.profileSection.orders.orderDetail.item1")}: {order.orderDateTime}
+            {t("page.profileUser.profileSection.orders.orderDetail.item1")}: {showTimeOrderBaseOnStatus(order.status)}
           </Typography>
         </Grid2>
-        <OrderStepper status={order.status} date={order.orderDateTime} />
+        <OrderStepper status={order.status} timeFor5StatusOrder={order.timeFor5StatusOrder} />
       </Paper>
 
       <Grid2

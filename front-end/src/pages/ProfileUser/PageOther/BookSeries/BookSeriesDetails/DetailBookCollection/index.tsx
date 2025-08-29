@@ -93,7 +93,7 @@ export default function BookCollectionDetailView() {
         // setCreator(bookCollectionDetails.creator);
         // Dùng !! để chuyển sang kiểu boolean
         setIsPublic(bookCollectionDetails.isPublic);
-        // setCoverImage(bookCollectionDetails.coverImage);
+        setCoverImage(bookCollectionDetails.image);
       } catch (error) {
         console.error("Error fetching book collection details:", error);
       }
@@ -104,6 +104,9 @@ export default function BookCollectionDetailView() {
   useEffect(() => {
     setListBook(book);
   }, [book])
+  useEffect(() => {
+  console.log("coverImage updated:", coverImage);
+}, [coverImage]);
   return (
     <Box sx={{ px: 4, py: 3, bgcolor: "#ffffff" }}>
       <Grid container spacing={4}>
@@ -117,7 +120,7 @@ export default function BookCollectionDetailView() {
                 width: 160,
                 height: 160,
                 backgroundColor: "#eee",
-                // backgroundImage: `url(${coverImage})`,
+                   backgroundImage: coverImage ? `url(${encodeURI(coverImage)})` : 'none',
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 borderRadius: 2,
