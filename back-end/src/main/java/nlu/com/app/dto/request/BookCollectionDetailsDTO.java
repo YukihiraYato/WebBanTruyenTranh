@@ -17,5 +17,6 @@ public class BookCollectionDetailsDTO {
   private String userName;
   private Boolean isPublic;
   private Long userId;
+  private String image;
 }
 

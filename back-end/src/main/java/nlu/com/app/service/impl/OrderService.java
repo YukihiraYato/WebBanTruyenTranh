@@ -31,6 +31,8 @@ import nlu.com.app.util.SecurityUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +55,7 @@ public class OrderService implements IOrderService {
   OrderMapper orderMapper;
   UserAddressRepository userAddressRepository;
   OrderTimelineRepository orderTimelineRepository;
+  private  SimpMessagingTemplate simpMessagingTemplate;
   // Định dạng ngày tháng theo mẫu: 23 th4, 2025 - 09:40 AM
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("d 'th'M, yyyy - hh:mm a");
 
@@ -114,8 +117,8 @@ public class OrderService implements IOrderService {
 
     Order order = new Order();
     order.setUser(user);
-    order.setOrderDate(LocalDate.now());
     order.setStatus(EOrderStatus.PENDING_CONFIRMATION);
+    order.setPendingConfirmationDate(LocalDateTime.now());
     double totalAmount = 0.0;
 
     List<OrderItem> orderItems = new ArrayList<>();
@@ -150,18 +153,18 @@ public class OrderService implements IOrderService {
         .orElseThrow(() -> new ApplicationException(ErrorCode.UNKNOWN_EXCEPTION));
     order.setPaymentMethod(paymentMethod);
 
-    OrderTimeline orderTimeline = OrderTimeline.builder()
-            .createdAt(LocalDateTime.now())
-            .orderStatus(EOrderStatus.PENDING_CONFIRMATION)
-            .name("Đơn hàng đã được tạo")
-            .description("Khách hàng xác nhận đơn hàng, chờ xác nhận.")
-            .order(order)
-            .build();
+//    OrderTimeline orderTimeline = OrderTimeline.builder()
+//            .createdAt(LocalDateTime.now())
+//            .orderStatus(EOrderStatus.PENDING_CONFIRMATION)
+//            .name("Đơn hàng đã được tạo")
+//            .description("Khách hàng xác nhận đơn hàng, chờ xác nhận.")
+//            .order(order)
+//            .build();
 
     // Save order
     orderRepository.save(order);
     orderItemRepository.saveAll(orderItems);
-    orderTimelineRepository.save(orderTimeline);
+//    orderTimelineRepository.save(orderTimeline);
 
     // Clear cart
     cartService.removeItemsFromCart(user.getUserId(), selectedProductIds);
@@ -197,10 +200,19 @@ public class OrderService implements IOrderService {
         .orElseThrow(() -> new ApplicationException(ErrorCode.UNKNOWN_EXCEPTION));
 
     if (order.getStatus() != EOrderStatus.PENDING_CONFIRMATION) {
-      throw new ApplicationException(ErrorCode.CANT_CANCEL_ORDER);
+      throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
     }
-
+    if(order.getConfirmedDate() == null){
+      order.setConfirmedDate(LocalDateTime.now());
+    }
+    if(order.getShippingDate() == null){
+      order.setShippingDate(LocalDateTime.now());
+    }
+    if (order.getDeliveredDate() == null){
+      order.setDeliveredDate(LocalDateTime.now());
+    }
     order.setStatus(EOrderStatus.CANCELED);
+    order.setCancelledDate(LocalDateTime.now());
     orderRepository.save(order);
   }
 
@@ -215,52 +227,208 @@ public class OrderService implements IOrderService {
     EOrderStatus newStatus = EOrderStatus.valueOf(request.getStatus());
 
     // 2. Kiểm tra logic hủy đơn hàng
-    if (newStatus == EOrderStatus.CANCELED) {
-      if (!(currentStatus == EOrderStatus.PENDING_CONFIRMATION || currentStatus == EOrderStatus.CONFIRMED)) {
-        throw new ApplicationException(ErrorCode.CANT_CANCEL_ORDER);
-      }
+//    if (newStatus == EOrderStatus.CANCELED) {
+//      if (!(currentStatus == EOrderStatus.PENDING_CONFIRMATION || currentStatus == EOrderStatus.CONFIRMED)) {
+//        throw new ApplicationException(ErrorCode.CANT_CANCEL_ORDER);
+//      }
+//    }
+    // 2. Cập nhật trạng thái mới
+    switch (newStatus){
+      case PENDING_CONFIRMATION :
+        if(currentStatus == EOrderStatus.DELIVERED || currentStatus == EOrderStatus.SHIPPING || currentStatus == EOrderStatus.CANCELED || currentStatus == EOrderStatus.CONFIRMED){
+          throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
+        }
+        order.setStatus(newStatus);
+        order.setPendingConfirmationDate(LocalDateTime.now());
+        break;
+      case CONFIRMED :
+        if(currentStatus == EOrderStatus.SHIPPING || currentStatus == EOrderStatus.CANCELED || currentStatus == EOrderStatus.DELIVERED){
+          throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
+        }
+        order.setStatus(newStatus);
+        order.setConfirmedDate(LocalDateTime.now());
+        break;
+      case SHIPPING :
+        if(currentStatus == EOrderStatus.CANCELED || currentStatus == EOrderStatus.DELIVERED){
+          throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
+        }
+        order.setStatus(newStatus);
+        order.setShippingDate(LocalDateTime.now());
+        break;
+      case DELIVERED :
+        if(currentStatus == EOrderStatus.CANCELED){
+          throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
+        }
+        order.setStatus(newStatus);
+        order.setDeliveredDate(LocalDateTime.now());
+        break;
+      case CANCELED:
+        if(currentStatus == EOrderStatus.DELIVERED){
+          throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
+        }
+        if(order.getConfirmedDate() == null){
+          order.setConfirmedDate(LocalDateTime.now());
+        }
+        if(order.getShippingDate() == null){
+          order.setShippingDate(LocalDateTime.now());
+        }
+        if (order.getDeliveredDate() == null){
+          order.setDeliveredDate(LocalDateTime.now());
+        }
+        order.setStatus(newStatus);
+        order.setCancelledDate(LocalDateTime.now());
+        break;
     }
 
-    // 3. Cập nhật trạng thái mới
-    order.setStatus(newStatus);
+
+    // 3. Lưu trạng thái mới
+
     orderRepository.save(order);
 
     // 4. Tạo timeline phù hợp với trạng thái mới
-    OrderTimeline.OrderTimelineBuilder timelineBuilder = OrderTimeline.builder()
-            .createdAt(LocalDateTime.now())
-            .orderStatus(newStatus)
-            .order(order);
+//    OrderTimeline.OrderTimelineBuilder timelineBuilder = OrderTimeline.builder()
+//            .createdAt(LocalDateTime.now())
+//            .orderStatus(newStatus)
+//            .order(order);
+//
+//    switch (newStatus) {
+//      case PENDING_CONFIRMATION:
+//        timelineBuilder
+//                .name("Đơn hàng đã được tạo")
+//                .description("Khách hàng xác nhận đơn hàng, chờ xác nhận.");
+//        break;
+//      case CONFIRMED:
+//        timelineBuilder
+//                .name("Đơn hàng đã được xác nhận")
+//                .description("Đơn hàng đã được xác nhận bởi quản trị viên.");
+//        break;
+//      case SHIPPING:
+//        timelineBuilder
+//                .name("Đơn hàng đang được vận chuyển")
+//                .description("Đơn hàng đã được giao cho đơn vị vận chuyển.");
+//        break;
+//      case DELIVERED:
+//        timelineBuilder
+//                .name("Đơn hàng đã giao thành công")
+//                .description("Khách hàng đã nhận được đơn hàng.");
+//        break;
+//      case CANCELED:
+//        timelineBuilder
+//                .name("Đơn hàng đã bị hủy")
+//                .description("Đơn hàng đã bị hủy bởi khách hàng hoặc quản trị viên.");
+//        break;
+//    }
+//
+//    orderTimelineRepository.save(timelineBuilder.build());
 
-    switch (newStatus) {
-      case PENDING_CONFIRMATION:
-        timelineBuilder
-                .name("Đơn hàng đã được tạo")
-                .description("Khách hàng xác nhận đơn hàng, chờ xác nhận.");
+    return "Cập nhật trạng thái đơn hàng thành công";
+  }
+
+  @Override
+  public String updateOrderStatusFromAdmin(Long orderId, UpdateOrderStatus request) {
+    // 1. Lấy đơn hàng
+    Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new ApplicationException(ErrorCode.ORDER_NOT_FOUND));
+
+    EOrderStatus currentStatus = order.getStatus();
+    EOrderStatus newStatus = EOrderStatus.valueOf(request.getStatus());
+
+    // 2. Kiểm tra logic hủy đơn hàng
+//    if (newStatus == EOrderStatus.CANCELED) {
+//      if (!(currentStatus == EOrderStatus.PENDING_CONFIRMATION || currentStatus == EOrderStatus.CONFIRMED)) {
+//        throw new ApplicationException(ErrorCode.CANT_CANCEL_ORDER);
+//      }
+//    }
+    // 2. Cập nhật trạng thái mới
+    switch (newStatus){
+      case PENDING_CONFIRMATION :
+        if(currentStatus == EOrderStatus.DELIVERED || currentStatus == EOrderStatus.SHIPPING || currentStatus == EOrderStatus.CANCELED || currentStatus == EOrderStatus.CONFIRMED){
+          throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
+        }
+        order.setStatus(newStatus);
+        order.setPendingConfirmationDate(LocalDateTime.now());
         break;
-      case CONFIRMED:
-        timelineBuilder
-                .name("Đơn hàng đã được xác nhận")
-                .description("Đơn hàng đã được xác nhận bởi quản trị viên.");
+      case CONFIRMED :
+        if(currentStatus == EOrderStatus.SHIPPING || currentStatus == EOrderStatus.CANCELED || currentStatus == EOrderStatus.DELIVERED){
+          throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
+        }
+        order.setStatus(newStatus);
+        order.setConfirmedDate(LocalDateTime.now());
         break;
-      case SHIPPING:
-        timelineBuilder
-                .name("Đơn hàng đang được vận chuyển")
-                .description("Đơn hàng đã được giao cho đơn vị vận chuyển.");
+      case SHIPPING :
+        if(currentStatus == EOrderStatus.CANCELED || currentStatus == EOrderStatus.DELIVERED){
+          throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
+        }
+        order.setStatus(newStatus);
+        order.setShippingDate(LocalDateTime.now());
         break;
-      case DELIVERED:
-        timelineBuilder
-                .name("Đơn hàng đã giao thành công")
-                .description("Khách hàng đã nhận được đơn hàng.");
+      case DELIVERED :
+        if(currentStatus == EOrderStatus.CANCELED){
+          throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
+        }
+        order.setStatus(newStatus);
+        order.setDeliveredDate(LocalDateTime.now());
         break;
       case CANCELED:
-        timelineBuilder
-                .name("Đơn hàng đã bị hủy")
-                .description("Đơn hàng đã bị hủy bởi khách hàng hoặc quản trị viên.");
+        if(currentStatus == EOrderStatus.DELIVERED){
+          throw new ApplicationException(ErrorCode.CANT_CHANGE_STATUS_ORDER);
+        }
+        if(order.getConfirmedDate() == null){
+          order.setConfirmedDate(LocalDateTime.now());
+        }
+        if(order.getShippingDate() == null){
+          order.setShippingDate(LocalDateTime.now());
+        }
+        if (order.getDeliveredDate() == null){
+          order.setDeliveredDate(LocalDateTime.now());
+        }
+        order.setStatus(newStatus);
+        order.setCancelledDate(LocalDateTime.now());
         break;
     }
 
-    orderTimelineRepository.save(timelineBuilder.build());
 
+    // 3. Lưu trạng thái mới
+
+    orderRepository.save(order);
+
+    // 4. Tạo timeline phù hợp với trạng thái mới
+//    OrderTimeline.OrderTimelineBuilder timelineBuilder = OrderTimeline.builder()
+//            .createdAt(LocalDateTime.now())
+//            .orderStatus(newStatus)
+//            .order(order);
+//
+//    switch (newStatus) {
+//      case PENDING_CONFIRMATION:
+//        timelineBuilder
+//                .name("Đơn hàng đã được tạo")
+//                .description("Khách hàng xác nhận đơn hàng, chờ xác nhận.");
+//        break;
+//      case CONFIRMED:
+//        timelineBuilder
+//                .name("Đơn hàng đã được xác nhận")
+//                .description("Đơn hàng đã được xác nhận bởi quản trị viên.");
+//        break;
+//      case SHIPPING:
+//        timelineBuilder
+//                .name("Đơn hàng đang được vận chuyển")
+//                .description("Đơn hàng đã được giao cho đơn vị vận chuyển.");
+//        break;
+//      case DELIVERED:
+//        timelineBuilder
+//                .name("Đơn hàng đã giao thành công")
+//                .description("Khách hàng đã nhận được đơn hàng.");
+//        break;
+//      case CANCELED:
+//        timelineBuilder
+//                .name("Đơn hàng đã bị hủy")
+//                .description("Đơn hàng đã bị hủy bởi khách hàng hoặc quản trị viên.");
+//        break;
+//    }
+//
+//    orderTimelineRepository.save(timelineBuilder.build());
+    long idUser = order.getUser().getUserId();
+    simpMessagingTemplate.convertAndSend("/notifyOrderStatus/userId/"+idUser, "Trạng thái hóa đơn có id là " + orderId+" của khách hàng có id là "+idUser+" cập nhập từ admin thành công. Trạng thái mới: " + newStatus);
     return "Cập nhật trạng thái đơn hàng thành công";
   }
 

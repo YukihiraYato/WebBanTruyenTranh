@@ -29,6 +29,7 @@ public interface OrderMapper {
   @Mapping(source = "status", target = "status", qualifiedByName = "orderStatusToString")
   @Mapping(source = "orderItems", target = "items")
   @Mapping(target = "shippingAddress", source = "address")
+  @Mapping(source ="order", target = "timeFor5StatusOrder", qualifiedByName = "mapTimeFor5StatusOrder")
   OrderResponseDTO toOrderResponseDTO(Order order);
 
   @Mapping(source = "paymentMethod.methodName", target = "paymentMethodName", qualifiedByName = "enumToString")
@@ -37,6 +38,7 @@ public interface OrderMapper {
   @Mapping(target = "shippingAddress", source = "address")
   @Mapping(target = "customer", source = "order.user", qualifiedByName = "toCustomerDTO")
   @Mapping(target = "statusCode", source = "status", qualifiedByName = "orderStatusToString_2")
+  @Mapping(source ="order", target = "timeFor5StatusOrder", qualifiedByName = "mapTimeFor5StatusOrder")
   OrderDetailsResponseDTO toOrderDetailsResponseDTO(Order order);
 
   AddressDto toAddressDTO(Address address);
@@ -58,7 +60,8 @@ public interface OrderMapper {
   @Mapping(source = "book", target = "img", qualifiedByName = "mapImage")
   @Mapping(source = "book.title", target = "bookTitle")
   @Mapping(source = "discountPercentage", target = "discount")
-  OrderDetailsResponseDTO.OrderItemDTO toOrderItemDTO_ForDetails(OrderItem orderItem);
+
+
 
   @Named("mapImage")
   default String mapImage(Book book) {
@@ -86,5 +89,15 @@ public interface OrderMapper {
   @Named("orderStatusToString_2")
   default String orderStatusToString_2(EOrderStatus status) {
     return status == null ? null : status.name();
+  }
+  @Named("mapTimeFor5StatusOrder")
+  default OrderDetailsResponseDTO.TimeFor5StatusOrder mapTimeFor5StatusOrder(Order order) {
+    OrderDetailsResponseDTO.TimeFor5StatusOrder timeFor5StatusOrder = new OrderDetailsResponseDTO.TimeFor5StatusOrder();
+    timeFor5StatusOrder.setPendingConfirmationDate(order.getPendingConfirmationDate());
+    timeFor5StatusOrder.setConfirmedDate(order.getConfirmedDate());
+    timeFor5StatusOrder.setShippingDate(order.getShippingDate());
+    timeFor5StatusOrder.setDeliveredDate(order.getDeliveredDate());
+    timeFor5StatusOrder.setCancelledDate(order.getCancelledDate());
+    return timeFor5StatusOrder;
   }
 }

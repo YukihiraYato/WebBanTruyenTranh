@@ -22,7 +22,7 @@ public class AmazonConfiguration {
         AwsBasicCredentials awsBasicCredentials =
                 AwsBasicCredentials.create(accessKeyId, accessKeySecret);
         return S3Presigner.builder()
-                .region(Region.AP_NORTHEAST_1)
+                .region(Region.AP_SOUTHEAST_2)
                 .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
                 .build();
     }
@@ -33,7 +33,7 @@ public class AmazonConfiguration {
         AwsBasicCredentials awsBasicCredentials =
                 AwsBasicCredentials.create(accessKeyId, accessKeySecret);
         return S3Client.builder()
-                .region(Region.AP_NORTHEAST_1)
+                .region(Region.AP_SOUTHEAST_2)
                 .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
                 .build();
     }

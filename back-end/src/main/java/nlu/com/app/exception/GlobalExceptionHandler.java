@@ -56,4 +56,5 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(ErrorCode.UNKNOWN_EXCEPTION.getStatusCode()).body(response);
     }
+
 }

@@ -17,10 +17,10 @@ import java.util.function.Function;
 public class JWTService {
     @Value("${app.jwt-key}")
     String jwtKey;
-    public String generateToken(String user) {
+    public String generateToken(String username) {
         return Jwts.builder()
                 .setClaims(Map.of())
-                .setSubject(user)
+                .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 30))
                 .signWith(getKey())

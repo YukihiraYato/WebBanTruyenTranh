@@ -21,9 +21,9 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
   Page<Order> findAllByUser(User user, Pageable pageable);
   List<Order> findByStatus(EOrderStatus status);
-  @Query("SELECT COUNT(o) FROM Order o WHERE MONTH(o.orderDate) = :month AND YEAR(o.orderDate) = :year")
-  int countByOrderDateMonthAndYear(@Param("month") int month, @Param("year") int year);
-  List<Order> findTop5ByStatusOrderByOrderDateDesc(EOrderStatus status);
+  @Query("SELECT COUNT(o) FROM Order o WHERE MONTH(o.deliveredDate) = :month AND YEAR(o.deliveredDate) = :year and o.status = :status")
+  int countByOrderDateMonthAndYear(@Param("month") int month, @Param("year") int year, @Param("status") EOrderStatus status);
+  List<Order> findTop5ByStatusOrderByDeliveredDateDesc(EOrderStatus status);
   // Đếm số đơn hàng đã giao thành công
   @Query("SELECT COUNT(o) FROM Order o WHERE o.user.userId = :userId AND o.status = 'DELIVERED'")
   int countDeliveredOrdersByUserId(@Param("userId") Long userId);
@@ -33,8 +33,8 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
   Double sumDeliveredTotalAmountByUserId(@Param("userId") Long userId);
 
   // Tần suất mua hàng theo tháng (chỉ tính đơn đã giao thành công)
-  @Query("SELECT FUNCTION('DATE_FORMAT', o.orderDate, '%Y-%m') as month, SUM(o.totalAmount) " +
+  @Query("SELECT FUNCTION('DATE_FORMAT', o.deliveredDate, '%Y-%m') as month, SUM(o.totalAmount) " +
           "FROM Order o WHERE o.user.userId = :userId AND o.status = 'DELIVERED' " +
-          "GROUP BY month ORDER BY month")
+          "GROUP BY month ORDER BY  MONTH(o.deliveredDate)")
   List<Object[]> sumDeliveredAmountGroupByMonth(@Param("userId") Long userId);
 }

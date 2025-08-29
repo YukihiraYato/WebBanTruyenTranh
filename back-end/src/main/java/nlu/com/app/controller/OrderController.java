@@ -16,7 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 /**
  * @author VuLuu
  */
@@ -28,6 +28,7 @@ public class OrderController {
 
   private final IOrderService orderService;
   private final IPaymentMethodService paymentMethodService;
+
 
   @PostMapping
   public AppResponse<OrderResponseDTO> createOrder(@RequestBody CreateOrderRequest request) {
@@ -60,6 +61,10 @@ public class OrderController {
   @PutMapping("/{orderId}/status")
   public AppResponse<String> updateStatus(@PathVariable Long orderId, @RequestBody UpdateOrderStatus request) {
     return AppResponse.<String>builder().result(orderService.updateOrderStatus(orderId, request)).build();
+  }
+  @PutMapping("admin/{orderId}/status")
+  public AppResponse<String> updateStatusFromAdmin(@PathVariable Long orderId, @RequestBody UpdateOrderStatus request) {
+    return AppResponse.<String>builder().result(orderService.updateOrderStatusFromAdmin(orderId, request)).build();
   }
 
   @GetMapping("/{orderId}/timeline")

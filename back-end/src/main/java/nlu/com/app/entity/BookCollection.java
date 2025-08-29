@@ -41,6 +41,9 @@ public class BookCollection {
   @Column(name = "is_public")
   private Boolean isPublic;
 
+  @Column(name = "image")
+  private String image;
+
   @OneToMany(mappedBy = "collection", cascade = CascadeType.ALL)
   private List<BookCollectionItem> items = new ArrayList<>();
 }

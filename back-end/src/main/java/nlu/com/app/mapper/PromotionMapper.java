@@ -33,6 +33,7 @@ public interface PromotionMapper {
                                            @Context PromotionRepository promotionRepository,
                                            @Context CategoryRepository categoryRepository);
 
+
   @AfterMapping
   default void afterMapping(@MappingTarget Promotion promotion,
                               CreatePromotionRequest request,

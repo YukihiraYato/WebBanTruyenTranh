@@ -17,7 +17,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
                (SELECT bi.imageUrl FROM BookImage bi WHERE bi.book.bookId = oi.book.bookId AND bi.isThumbnail = true),
                SUM(oi.quantity),
                MAX(oi.order.orderId),
-               MAX(oi.order.orderDate)
+               MAX(oi.order.deliveredDate)
         FROM OrderItem oi
         WHERE oi.order.status = 'DELIVERED'
         GROUP BY oi.book.bookId, oi.book.title

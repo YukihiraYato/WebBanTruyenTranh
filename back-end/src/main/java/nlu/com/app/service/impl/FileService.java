@@ -79,7 +79,12 @@ public class FileService implements IFileService {
                 .key(key)
                 .build();
         s3Client.putObject(putObjectRequest, RequestBody.fromFile(file));
-        return "https://cdn1.anhtuan.online/"+key;
+        return String.format(
+                "https://%s.s3.%s.amazonaws.com/%s",
+                bucketName,
+                s3Client.serviceClientConfiguration().region().id(),
+                key
+        );
     }
 
     public File writeToTempFolder(MultipartFile file, String folder) throws IOException {

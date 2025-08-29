@@ -396,7 +396,7 @@ public class BookService implements IBookService {
       // add thumbnail
       var bookImages = new ArrayList<>(List.of(BookImage.builder()
           .book(book)
-          .isThumbnail(true)
+          .isThumbnail(true).imageUrl(link_thumbnail)
           .build()
       ));
       // add gallery
@@ -405,6 +405,7 @@ public class BookService implements IBookService {
             .imageUrl(link).isThumbnail(false).build());
       });
       book.setImages(bookImages);
+
       // save book
       var savedBook = bookRepository.save(book);
       return bookMapper.toCreateBookResponse(savedBook, link_thumbnail, link_gallery);

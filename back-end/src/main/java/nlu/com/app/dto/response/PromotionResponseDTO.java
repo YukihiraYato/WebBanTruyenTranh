@@ -2,6 +2,7 @@ package nlu.com.app.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.data.annotation.AccessType;
 
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class PromotionResponseDTO {
     List<Category> categories;
 
     @Data
+
     @Builder
     public static class Category {
         String categoryName;

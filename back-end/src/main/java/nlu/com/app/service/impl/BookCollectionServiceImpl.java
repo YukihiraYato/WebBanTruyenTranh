@@ -2,11 +2,11 @@ package nlu.com.app.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -32,10 +32,15 @@ import nlu.com.app.repository.UserReviewRepository;
 import nlu.com.app.service.BookCollectionService;
 import nlu.com.app.service.IUserDetailsService;
 import nlu.com.app.util.SecurityUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 
 @Service
@@ -60,11 +65,13 @@ public class BookCollectionServiceImpl implements BookCollectionService {
     private final FileService fileService;
     private final UserReviewService userReviewService;
     private final IUserDetailsService userDetailsService;
+    private final S3Client s3Client;
+    @Value("${app.aws.bucket.name}")
+    private String bucketName;
 
     @Override
-    public BookCollectionResponse createCollection(CreateBookCollectionRequestDTO request) {
+    public BookCollectionResponse createCollection(CreateBookCollectionRequestDTO request, MultipartFile image) {
         User user = getCurrentUser();
-        System.out.println("----------adsadasdasdsadas----------"+request.getIsPublic());
         BookCollection tempCollection = BookCollection.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -75,8 +82,9 @@ public class BookCollectionServiceImpl implements BookCollectionService {
 
         BookCollection savedCollection = collectionRepo.save(tempCollection);
         String coverImage = "";
+        List<Book> books = new ArrayList<>();
         if (request.getBookIds() != null) {
-            List<Book> books = bookRepo.findAllById(request.getBookIds());
+            books = bookRepo.findAllById(request.getBookIds());
 
             List<BookCollectionItem> items = books.stream()
                     .map(book -> BookCollectionItem.builder()
@@ -87,7 +95,22 @@ public class BookCollectionServiceImpl implements BookCollectionService {
 
             itemRepo.saveAll(items);
 
-            coverImage = extractThumbnailUrl(books);
+            if(image == null){
+                coverImage ="https://www.nicepng.com/png/full/131-1310865_school-supply-list-school-book-icon-png.png";
+                savedCollection.setImage(coverImage);
+            }else {
+                coverImage = uploadFile(image, "khoAnhBoSachCuaUser");
+                savedCollection.setImage(coverImage);
+            }
+        }else {
+           if(image != null){
+               coverImage = uploadFile(image, "khoAnhBoSachCuaUser");
+               savedCollection.setImage(coverImage);
+           }else{
+               coverImage ="https://www.nicepng.com/png/full/131-1310865_school-supply-list-school-book-icon-png.png";
+               savedCollection.setImage(coverImage);
+           }
+
         }
 
         return BookCollectionResponse.builder()
@@ -105,17 +128,12 @@ public class BookCollectionServiceImpl implements BookCollectionService {
         UserDetails userDetails = userDetailsService.getUserDetailsByUserId(user.getUserId());
         Page<BookCollection> collections = collectionRepo.findAllByUser(user,
                 PageRequest.of(page, size));
-
         return collections.map(collection -> {
             List<BookCollectionItem> items = itemRepo.findAllByCollection_CollectionId(
                     collection.getCollectionId());
-            String coverImage = "https://www.nicepng.com/png/full/131-1310865_school-supply-list-school-book-icon-png.png";
-            if(!items.isEmpty()) {
-                List<Book> books = items.stream()
-                        .map(BookCollectionItem::getBook)
-                        .collect(Collectors.toList());
-                 coverImage = extractThumbnailUrl(books);
-            }
+            String coverImage = collection.getImage() != null ?
+                    collection.getImage() :
+                    "https://www.nicepng.com/png/full/131-1310865_school-supply-list-school-book-icon-png.png";
 
             return BookCollectionResponse.builder()
                     .id(collection.getCollectionId())
@@ -221,6 +239,9 @@ public class BookCollectionServiceImpl implements BookCollectionService {
                 .orElseThrow(() -> new ApplicationException(ErrorCode.UNKNOWN_EXCEPTION));
         List<BookCollectionItem> items = itemRepo.findAllByCollection_CollectionId(collectionId);
         List<Book> books = items.stream().map(BookCollectionItem::getBook).toList();
+        for(Book book :books){
+            System.out.println("-----------------------Giá của các bộ sách----------------------: "+book.getPrice());
+        }
         List<Long> bookIds = books.stream().map(Book::getBookId).toList();
 
         // Get all related categories
@@ -273,9 +294,9 @@ public class BookCollectionServiceImpl implements BookCollectionService {
             return BookInCollectionDTO.builder()
                     .bookId(book.getBookId())
                     .title(book.getTitle())
-                    .originalPrice(book.getPrice())
+                    .originalPrice(book.getPrice()*1000)
                     .discountPercentage(discount)
-                    .discountedPrice(finalPrice)
+                    .discountedPrice(finalPrice*1000)
                     .averageRating(rating)
                     .thumbnail(thumbnail)
                     .build();
@@ -292,6 +313,7 @@ public class BookCollectionServiceImpl implements BookCollectionService {
                 .userName(userDetails.getFullname())
                 .isPublic(collection.getIsPublic())
                 .userId(userCollection.getUserId())
+                .image(collection.getImage())
                 .build();
     }
 
@@ -342,4 +364,28 @@ public class BookCollectionServiceImpl implements BookCollectionService {
         }
         return ids;
     }
+    private String uploadFile(MultipartFile file, String folderName) {
+        try {
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            String keyName = folderName + "/" + fileName; // tạo "folder" trong bucket
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(keyName)
+                    .contentType(file.getContentType())
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
+            // Trả về URL public của file, s3Client.serviceClientConfiguration().region().id() mới trả ra String region
+            return String.format(
+                    "https://%s.s3.%s.amazonaws.com/%s",
+                    bucketName,
+                    s3Client.serviceClientConfiguration().region().id(),
+                    keyName
+            );
+        } catch (IOException e) {
+            throw new RuntimeException("Upload file to S3 failed", e);
+        }
+    }
+
 }

@@ -16,5 +16,6 @@ public interface BookCollectionRepository extends JpaRepository<BookCollection, 
   Page<BookCollection> findAllByUser(User user, Pageable pageable);
 
   Page<BookCollection> findByUser_UserIdAndNameContainingIgnoreCase(Long userId, String name, Pageable pageable);
+  BookCollection findBookCollectionByUser_UserId(Long userId);
 
 }

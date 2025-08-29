@@ -23,6 +23,7 @@ public interface IOrderService {
   OrderDetailsResponseDTO getOrderById(Long id);
   void cancelOrder(Long orderId);
   String updateOrderStatus(Long orderId, UpdateOrderStatus request);
+  String updateOrderStatusFromAdmin(Long orderId, UpdateOrderStatus request);
   TimelineOrderResponseDTO getTimelineOrder(Long orderId);
   Page<OrderDetailsResponseDTO> getFilteredOrders(Pageable pageable, OrderFilter filter);
 }

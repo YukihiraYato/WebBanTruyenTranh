@@ -12,4 +12,5 @@ public interface ICategoryService {
 
   List<CategoryResponseDTO> getAllCategories();
   CategoryChainDTO getBookCategoryTree(Long bookId);
+
 }

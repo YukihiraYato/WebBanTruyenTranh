@@ -51,6 +51,8 @@ public class UserDetailsController {
                 .dateOfBirth(userDetails.getDob())
                 .phoneNum(userDetails.getPhoneNum())
                 .userId(user.getUserId())
+                .username(user.getUsername())
+                .email(user.getEmail())
                 .build();
         return AppResponse.<UserDetailsResponseDTO>builder().result(userDetailsDTO).build();
     }

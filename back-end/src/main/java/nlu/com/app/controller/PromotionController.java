@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import nlu.com.app.dto.AppResponse;
 import nlu.com.app.dto.request.CreatePromotionRequest;
+import nlu.com.app.dto.request.UpdatePromotionRequestDTO;
 import nlu.com.app.dto.response.PromotionResponseDTO;
 import nlu.com.app.service.impl.PromotionService;
 import org.springframework.data.domain.Page;
@@ -33,5 +34,29 @@ public class PromotionController {
         return AppResponse.<Page<PromotionResponseDTO>>builder()
                 .result(promotionService.getActivePromotions(PageRequest.of(page, size)))
                 .build();
+    }
+    @GetMapping("get/{id}")
+    public AppResponse<PromotionResponseDTO> getPromotionDetailsById(@PathVariable Long id){
+        return AppResponse.<PromotionResponseDTO>builder()
+                .result(promotionService.getDetailsPromotion(id))
+                .build();
+    }
+    @PutMapping("/update")
+    public AppResponse<String> updatePromotion(@RequestBody UpdatePromotionRequestDTO updatePromotionRequestDTO){
+        String result = promotionService.updatePromotion(updatePromotionRequestDTO.getPromotionId(),
+                updatePromotionRequestDTO.getPromotionName(),
+                updatePromotionRequestDTO.getCategoryIds(),
+                updatePromotionRequestDTO.getStartDate(),
+                updatePromotionRequestDTO.getEndDate(),
+                updatePromotionRequestDTO.getDiscountPercentage());
+        if(result.equals("Update successfully")){
+            return AppResponse.<String>builder()
+                    .result(result)
+                    .build();
+        }else{
+            return  AppResponse.<String>builder()
+                    .result("Update failed")
+                    .build();
+        }
     }
 }

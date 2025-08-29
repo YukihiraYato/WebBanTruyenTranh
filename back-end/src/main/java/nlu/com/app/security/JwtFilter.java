@@ -6,8 +6,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import nlu.com.app.exception.ApplicationException;
+import nlu.com.app.exception.ErrorCode;
 import nlu.com.app.service.impl.JWTService;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -43,7 +45,8 @@ public class JwtFilter extends OncePerRequestFilter {
                    }
                }
            }catch (ApplicationException | UsernameNotFoundException e){
-               System.out.println("User không tồn tại: " + e.getMessage());
+               System.out.println("<----------------User không tồn tại: " + e.getMessage()+"------------------------------>");
+               throw new ApplicationException(ErrorCode.UNAUTHENTICATED);
            }
         }
         filterChain.doFilter(request, response);

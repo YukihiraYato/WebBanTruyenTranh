@@ -25,6 +25,7 @@ public class SecurityConfiguration {
   private final CustomAuthenticationProvider customAuthenticationProvider;
   private final JwtFilter jwtFilter;
   private final GlobalExceptionFilter globalExceptionFilter;
+  private final CustomAuthentication customAuthentication;
 
   @Bean
   public AuthenticationManager authenticationManager() {
@@ -39,7 +40,7 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/v1/auth/register/**",
-                "/api/v1/auth/login",
+                "/api/v1/auth/login/**",
                 "/api/v1/file/upload",
                 "/api/book/**",
                 "/api/orders/*/status",
@@ -47,7 +48,8 @@ public class SecurityConfiguration {
                 "/api/category/**",
                 "/api/review/*/overall",
                 "/api/promotion/*",
-                    "/api/collections/*"
+                    "/api/collections/*",
+                    "/ws/**"
             )
             .permitAll()
             .requestMatchers(
@@ -61,7 +63,9 @@ public class SecurityConfiguration {
             .anyRequest().authenticated()
         )
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling(ex -> ex
+            .authenticationEntryPoint(customAuthentication)
+    ).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(globalExceptionFilter, jwtFilter.getClass())
         .build();
   }

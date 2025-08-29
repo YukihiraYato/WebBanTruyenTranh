@@ -22,4 +22,5 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
         WHERE p.startDate <= :today AND p.endDate >= :today
     """)
     Page<Promotion> findActivePromotions(Pageable pageable, @Param("today") LocalDate today);
+    Promotion findPromotionByPromotionId(Long promotionId);
 }

@@ -12,7 +12,7 @@ import nlu.com.app.dto.request.AddressDto;
 public class OrderResponseDTO {
 
   private Long orderId;
-  private LocalDate orderDate;
+  public OrderDetailsResponseDTO.TimeFor5StatusOrder timeFor5StatusOrder;
   private Double totalAmount;
   private String paymentMethodName;
   private List<OrderItemDTO> items;

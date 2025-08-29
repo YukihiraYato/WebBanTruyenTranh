@@ -93,6 +93,13 @@ public class AuthController {
                 .result(token)
                 .build();
     }
+    @PostMapping("/login/admin")
+    public AppResponse<String> loginOfAdmin(@RequestBody LoginUserDTO requestDTO) {
+        var token = userService.verifyAccountAdmin(requestDTO);
+        return AppResponse.<String>builder()
+                .result(token)
+                .build();
+    }
     private String generateOtp() {
         return String.valueOf(100000 + new Random().nextInt(900000));
     }

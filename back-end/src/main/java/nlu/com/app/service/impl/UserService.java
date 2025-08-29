@@ -89,6 +89,23 @@ public class UserService {
       throw new ApplicationException(ErrorCode.USER_NOT_EXISTED);
     }
   }
+  public String verifyAccountAdmin(LoginUserDTO requestDTO) {
+    var authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(requestDTO.getUsername(),
+                    requestDTO.getPassword()));
+    if (authentication.isAuthenticated()) {
+      Optional<User> user = userRepository.findByUsername(requestDTO.getUsername());
+      if (user.isPresent() && user.get().getRole().equals(UserRole.ADMIN)) {
+        System.out.println("User role: " + user.get().getRole());
+        return jwtService.generateToken(requestDTO.getUsername());
+
+      }else {
+        throw new ApplicationException(ErrorCode.UNAUTHORIZED);
+      }
+    } else {
+      throw new ApplicationException(ErrorCode.USER_NOT_EXISTED);
+    }
+  }
 
   public User getUserByUserName(String username) {
     User user = userRepository.findByUsername(username)

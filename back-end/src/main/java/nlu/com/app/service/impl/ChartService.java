@@ -18,6 +18,7 @@ import nlu.com.app.service.IChartService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -37,7 +38,7 @@ public class ChartService implements IChartService {
         double[] monthlyTotals = new double[12];
 
         for (Order order : completedOrders) {
-            int monthIndex = order.getOrderDate().getMonthValue() - 1;
+            int monthIndex = order.getDeliveredDate().getMonthValue() - 1;
             monthlyTotals[monthIndex] += order.getTotalAmount();
         }
 
@@ -61,10 +62,10 @@ public class ChartService implements IChartService {
         int currentYear = now.getYear();
 
         // Lấy tổng số đơn hàng trong tháng hiện tại
-        int totalOrdersInMonth = orderRepository.countByOrderDateMonthAndYear(currentMonth, currentYear);
+        int totalOrdersInMonth = orderRepository.countByOrderDateMonthAndYear(currentMonth, currentYear, EOrderStatus.DELIVERED);
 
         // Lấy 5 đơn hàng gần nhất có trạng thái "Hoàn thành"
-        List<Order> recentOrders = orderRepository.findTop5ByStatusOrderByOrderDateDesc(EOrderStatus.DELIVERED);
+        List<Order> recentOrders = orderRepository.findTop5ByStatusOrderByDeliveredDateDesc(EOrderStatus.DELIVERED);
 
         List<RecentlyOrderResponseDTO.Order> dtoOrders = new ArrayList<>();
         for (Order order : recentOrders) {
@@ -100,12 +101,12 @@ public class ChartService implements IChartService {
                 .sum());
 
         long thisMonthProfit = Math.round(completedOrders.stream()
-                .filter(o -> o.getOrderDate().getMonthValue() == month && o.getOrderDate().getYear() == year)
+                .filter(o -> o.getDeliveredDate().getMonthValue() == month && o.getDeliveredDate().getYear() == year)
                 .mapToDouble(Order::getTotalAmount)
                 .sum());
 
         long prevMonthProfit = Math.round(completedOrders.stream()
-                .filter(o -> o.getOrderDate().getMonthValue() == prevMonth && o.getOrderDate().getYear() == prevYear)
+                .filter(o -> o.getDeliveredDate().getMonthValue() == prevMonth && o.getDeliveredDate().getYear() == prevYear)
                 .mapToDouble(Order::getTotalAmount)
                 .sum());
 
@@ -132,7 +133,7 @@ public class ChartService implements IChartService {
 
         // 3. Most Sold Product in Month
         List<Order> completedOrdersThisMonth = completedOrders.stream()
-                .filter(o -> o.getOrderDate().getMonthValue() == month && o.getOrderDate().getYear() == year)
+                .filter(o -> o.getDeliveredDate().getMonthValue() == month && o.getDeliveredDate().getYear() == year)
                 .toList();
 
         Map<Book, Integer> bookSoldMap = new HashMap<>();
@@ -158,11 +159,11 @@ public class ChartService implements IChartService {
         long totalOrder = completedOrders.size();
 
         long thisMonthOrder = completedOrders.stream()
-                .filter(o -> o.getOrderDate().getMonthValue() == month && o.getOrderDate().getYear() == year)
+                .filter(o -> o.getDeliveredDate().getMonthValue() == month && o.getDeliveredDate().getYear() == year)
                 .count();
 
         long prevMonthOrder = completedOrders.stream()
-                .filter(o -> o.getOrderDate().getMonthValue() == prevMonth && o.getOrderDate().getYear() == prevYear)
+                .filter(o -> o.getDeliveredDate().getMonthValue() == prevMonth && o.getDeliveredDate().getYear() == prevYear)
                 .count();
 
         float orderDiffPercent = prevMonthOrder == 0
@@ -238,7 +239,7 @@ public class ChartService implements IChartService {
             String thumbnail = (String) row[2];
             Integer quantity = ((Number) row[3]).intValue();
             Long lastOrderId = (Long) row[4];
-            LocalDate lastSellDate = (LocalDate) row[5];
+            LocalDate lastSellDate =  ((LocalDateTime)row[5]).toLocalDate();
 
             if (i < 4) {
                 elements.add(

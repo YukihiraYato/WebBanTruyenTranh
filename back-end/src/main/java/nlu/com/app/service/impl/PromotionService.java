@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,6 +69,65 @@ public class PromotionService implements IPromotionService {
                 .distinct()
                 .map(p -> promotionMapper.mapToResponseDTO(p, categoryRepository))
                 .toList();
+    }
+
+    @Override
+    public PromotionResponseDTO getDetailsPromotion(Long promotionId) {
+        Promotion promotion = promotionRepository.findById(promotionId).orElse(null);
+        if(promotion != null) {
+            return promotionMapper.mapToResponseDTO(promotion, categoryRepository);
+        }
+        return null;
+    }
+
+    @Override
+    public String updatePromotion(Long promotionId, String promotionName, Long[] categoryIds, String startDate, String endDate, Float discountPercentage) {
+        Promotion promotion = promotionRepository.findById(promotionId)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.PROMOTION_NOT_FOUND));
+
+            promotion.getPromotionCategories().clear();
+        List<Category> categories = categoryRepository.findAllById(List.of(categoryIds));
+
+        // Tạo mới PromotionCategory cho mỗi category
+        for (Category category : categories) {
+            PromotionCategories pc = new PromotionCategories();
+            pc.setPromotion(promotion);
+            pc.setCategory(category);
+            promotion.getPromotionCategories().add(pc);
+        }
+        List<DateTimeFormatter> formatters = List.of(
+                DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+                DateTimeFormatter.ofPattern("yyyy/MM/dd")
+        );
+
+        if(promotionName != null) {
+            promotion.setPromotionName(promotionName);
+        }
+        if(startDate != null) {
+            for(DateTimeFormatter formatter : formatters) {
+                try {
+                    promotion.setStartDate(LocalDate.parse(startDate, formatter));
+                    break;
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+        }
+        if(endDate != null) {
+            for(DateTimeFormatter formatter : formatters) {
+                try {
+                    promotion.setEndDate(LocalDate.parse(endDate, formatter));
+                    break;
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+        }
+        if(discountPercentage != null) {
+            promotion.setDiscountPercentage(discountPercentage);
+        }
+        promotionRepository.save(promotion);
+        return "Update successfully";
     }
 
     private Set<Long> collectAllParentCategoryIds(Long categoryId) {
