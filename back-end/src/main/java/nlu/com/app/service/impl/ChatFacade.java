@@ -41,6 +41,7 @@ public class ChatFacade {
 
         MessageResponseDTO messageOfBot = new MessageResponseDTO();
         if (user != null) {
+            chatHistory = new ChatHistory();
             chatHistory.setUser(user);
             chatHistory.setRole(ERole.USER);
             chatHistory.setMessage(messageRequestDTO.getMessage());
@@ -55,6 +56,7 @@ public class ChatFacade {
                 Conversation conversation1 = (conversationRepository.findByClient_UserId(user.getUserId())).get();
                 redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), messageRequestDTO.getMessage());
                 chatBotReply = chatService.reply(user.getUserId());
+                redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), chatBotReply);
                 chatHistory = new ChatHistory();
                 chatHistory.setUser(user);
                 chatHistory.setRole(ERole.BOT);
@@ -73,27 +75,30 @@ public class ChatFacade {
 
 
             }else {
+                if(conversation.getCurrentAdmin() != null){
+                    redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), messageRequestDTO.getMessage());
 
+                }else {
+                    redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), messageRequestDTO.getMessage());
+                    chatBotReply = chatService.reply(user.getUserId());
+                    redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), chatBotReply);
+                    chatHistory = new ChatHistory();
+                    chatHistory.setUser(user);
+                    chatHistory.setRole(ERole.BOT);
+                    chatHistory.setMessage(chatBotReply);
+                    chatHistory.setCreatedDate(LocalDateTime.now());
+                    chatHistory.setIsRead(false);
+                    chatHistory.setSenderId("BOTCHAT");
+                    chatHistory.setConversation_chat_history(conversation);
+                    conversation.getChatHistory().add(chatHistory);
+                    chatHistoryRepository.save(chatHistory);
 
-                redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), messageRequestDTO.getMessage());
-                chatBotReply = chatService.reply(user.getUserId());
-                chatHistory = new ChatHistory();
-                chatHistory.setUser(user);
-                chatHistory.setRole(ERole.BOT);
-                chatHistory.setMessage(chatBotReply);
-                chatHistory.setCreatedDate(LocalDateTime.now());
-                chatHistory.setIsRead(false);
-                chatHistory.setSenderId("BOTCHAT");
-                chatHistory.setConversation_chat_history(conversation);
-                conversation.getChatHistory().add(chatHistory);
-                chatHistoryRepository.save(chatHistory);
+                    messageOfBot.setSender("BOT");
+                    messageOfBot.setText(chatBotReply);
+                    messageOfBot.setSentAt(LocalDateTime.now());
+                    simpMessagingTemplate.convertAndSend("/receive/message/conversation/" + conversation.getId(), messageOfBot);
 
-                messageOfBot.setSender("BOT");
-                messageOfBot.setText(chatBotReply);
-                messageOfBot.setSentAt(LocalDateTime.now());
-
-                simpMessagingTemplate.convertAndSend("/receive/message/conversation/" + conversation.getId(), messageOfBot);
-
+                }
             }
 
         }else{
@@ -109,12 +114,13 @@ public class ChatFacade {
         chatHistory.setUser(admin);
         chatHistory.setRole(ERole.ADMIN);
         chatHistory.setMessage(dto.getMessage());
-        chatHistory.setCreatedDate(LocalDateTime.now()); // hoặc validate dto.getTimeSendMessage()
+        chatHistory.setCreatedDate(LocalDateTime.now());
         chatHistory.setIsRead(false);
         chatHistory.setSenderId("ADMIN");
         chatHistory.setConversation_chat_history(conversation);
 
         chatHistoryRepository.save(chatHistory);
+        redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ userId, dto.getMessage());
         MessageResponseDTO messageResponseDTO = new MessageResponseDTO();
         messageResponseDTO.setSender("ADMIN");
         messageResponseDTO.setText(dto.getMessage());
