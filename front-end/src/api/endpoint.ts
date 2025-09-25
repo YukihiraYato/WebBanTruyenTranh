@@ -68,6 +68,11 @@ const API_ENDPOINTS = {
       FIND_BOOKCOLLECTION_BY_NAME: (page: number, name: string) =>{
         return `/api/collections/search?name=${name}&page=${page}`
       }
+    },
+    CHAT :{
+      GET_CONVERSATIONS : (userId: number)=>{
+        return `/load-conversation/user/${userId}`;
+      }
     }
   },
   CART: {

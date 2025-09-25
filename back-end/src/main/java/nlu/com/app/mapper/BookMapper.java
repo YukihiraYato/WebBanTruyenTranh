@@ -42,13 +42,20 @@ public interface BookMapper {
   @Mapping(target = "category", source = "category", qualifiedByName = "stringToCategory")
   @Mapping(target = "genre", source = "genre", qualifiedByName = "stringToGenre")
   @Mapping(target = "images", source = "images", qualifiedByName = "toImageList")
+  @Mapping(target = "price", source = "price", qualifiedByName = "mappingPrice")
   Book jsonToEntity(BooksJson booksJson, @Context CategoryRepository categoryRepository,
       @Context GenreRepository genreRepository);
 
   List<Book> jsonToEntityList(List<BooksJson> booksJsonList,
       @Context CategoryRepository categoryRepository,
       @Context GenreRepository genreRepository);
-
+  @Named("mappingPrice")
+  default Double mappingPrice(String price){
+       if(price == null || price.isBlank()){
+           return 0.0;
+       }
+      return Double.parseDouble(price)*1000;
+  }
 
   @Mapping(target = "pageCount", source = "page_count")
   @Mapping(target = "qtyInStock", source = "qty_in_stock")
@@ -200,7 +207,7 @@ public interface BookMapper {
     if (book.getPrice() <= 0) {
       return 0;
     }
-    return book.getPrice() * (1 - discountPercentage / 100) * 1000;
+    return book.getPrice() * (1 - discountPercentage / 100);
   }
 
   @Named("getDiscountPercentage")
@@ -213,7 +220,7 @@ public interface BookMapper {
     if (book.getPrice() <= 0) {
       return 0;
     }
-    return book.getPrice() * 1000;
+    return book.getPrice();
   }
 
   @Mapping(source = "book.bookId", target = "bookId")

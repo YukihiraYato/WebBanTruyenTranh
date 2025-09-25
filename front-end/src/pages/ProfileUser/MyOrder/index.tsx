@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Paper, Typography, Tabs, Tab, Box, Pagination } from "@mui/material";
 import { getOrder } from "~/api/order";
 import Order from "~/components/Order";
-import useWebsocket from "~/custom_hook/useWebsocket";
+import {useWebsocket} from "~/custom_hook/useWebsocket";
 const OrderList = () => {
   const [tab, setTab] = useState<string>("ALL");
   const [allOrders, setAllOrders] = useState<any[]>([]);

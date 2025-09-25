@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +95,10 @@ public class BookService implements IBookService {
               && bookJson.getWeight() != null && !bookJson.getWeight().trim().isEmpty()).toList();
       List<Book> books = bookMapper.jsonToEntityList(booksJsonList, categoryRepository,
           genreRepository);
+      for(Book book :books){
+        book.setCreatedAt(LocalDateTime.now());
+        book.setUpdatedAt(LocalDateTime.now());
+      }
       System.out.println(books.get(0).getImages());
       bookRepository.saveAll(books);
       for (Book book : books) {
@@ -314,7 +319,7 @@ public class BookService implements IBookService {
         .max(Double::compare)
         .orElse(0D);
 
-    Double originalPrice = book.getPrice() * 1000;
+    Double originalPrice = book.getPrice();
     Double discountedPrice = originalPrice * (1 - discount / 100);
 
     return bookMapper.toBookDetailsDTO(book, imageUrls, reviews, originalPrice, discountedPrice);
@@ -405,6 +410,8 @@ public class BookService implements IBookService {
             .imageUrl(link).isThumbnail(false).build());
       });
       book.setImages(bookImages);
+      book.setCreatedAt(LocalDateTime.now());
+      book.setUpdatedAt(LocalDateTime.now());
 
       // save book
       var savedBook = bookRepository.save(book);
@@ -445,7 +452,7 @@ public class BookService implements IBookService {
           .orElseThrow(() -> new ApplicationException(ErrorCode.GENRE_NOT_FOUND));
       book.setCategory(category);
       book.setGenre(genre);
-
+      book.setUpdatedAt(LocalDateTime.now());
       // Danh sách ảnh mới sẽ ghi đè lại toàn bộ
       List<BookImage> updatedImages = new ArrayList<>();
 

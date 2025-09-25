@@ -49,7 +49,8 @@ public class SecurityConfiguration {
                 "/api/review/*/overall",
                 "/api/promotion/*",
                     "/api/collections/*",
-                    "/ws/**"
+                    "/ws/**",
+                    "/chat-box/**"
             )
             .permitAll()
             .requestMatchers(

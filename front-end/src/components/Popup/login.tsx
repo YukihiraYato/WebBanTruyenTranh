@@ -124,7 +124,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ open, onClose }) => {
       if (response.code === 1000) {
         setError("");
         setJwtToken(response.result);
-
+        
         const userName = jwtDecode(JSON.stringify(response.result)).sub;
         if (userName !== undefined && userName !== "") {
           localStorage.setItem("access_token", response.result);

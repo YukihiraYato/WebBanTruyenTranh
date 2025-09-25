@@ -17,7 +17,17 @@ interface HomeProviderProps {
 }
 
 export const AuthProvider = ({ children }: HomeProviderProps) => {
-  const [jwtToken, setJwtToken] = useState<string>("");
+    const [jwtToken, setJwtTokenState] = useState<string>(
+    () => localStorage.getItem("access_token") || ""
+  );
+  const setJwtToken = (token: string) => {
+    setJwtTokenState(token);
+    if (token !== "") {
+      localStorage.setItem("access_token", token);
+    } else {
+      localStorage.removeItem("access_token");
+    }
+  };
 
   return (
     <AuthContext.Provider value={{ jwtToken, setJwtToken }}>
