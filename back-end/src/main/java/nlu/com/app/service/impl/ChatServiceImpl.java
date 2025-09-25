@@ -32,7 +32,7 @@ public class ChatServiceImpl implements IChatService {
     public String reply(Long userId) {
         IntentResponseDTO intentResponseDTO = detectIntent(userId);
         System.out.println("--------------------------Value của intentResponseDTO--------------------------: " + intentResponseDTO);
-        List<String> userMessage = redisTemplate.opsForList().range(CHAT_KEY_PREFIX + userId, 0, 4);
+        List<String> userMessage = redisTemplate.opsForList().range(CHAT_KEY_PREFIX + userId, 0, 1);
         String message = String.join("\n", userMessage);
         Prompt prompt = new Prompt(message, OpenAiChatOptions.builder().model(OpenAiApi.ChatModel.GPT_4_O_MINI).build());
         if(intentResponseDTO == null){
@@ -61,7 +61,7 @@ public class ChatServiceImpl implements IChatService {
 
     @Override
     public IntentResponseDTO detectIntent(Long userId) {
-        List<String> userMessage = redisTemplate.opsForList().range(CHAT_KEY_PREFIX + userId, 0, 4);
+        List<String> userMessage = redisTemplate.opsForList().range(CHAT_KEY_PREFIX + userId, 0, 1);
         String message = String.join("\n", userMessage);
         String prompt = """
 Bạn là hệ thống phân tích intent cho chatbot bán sách.
@@ -160,6 +160,7 @@ và liệt kê các fields liên quan.
 3. Chỉ trả về JSON thuần, không giải thích thêm.
 4. Nếu các fields của 1 intent không tìm thấy value trong message user thì hãy gán giá trị null. 
 5. "Chỉ trả về JSON thuần, không thêm bất cứ ký tự nào khác, trừ trường hợp nếu trong message user không tìm thấy bất kì intent nào thì trả thẳng null"
+6.  Nếu tin nhắn mới nhất của User nói cảm ơn, khen ngợi, chào hỏi, trả lời xã giao, trả về null.
 Câu hỏi của user: "%s"
 """.formatted(message);
 
