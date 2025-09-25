@@ -36,7 +36,7 @@ spring:
       mail.smtp.starttls.enable: true
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY: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}
+      api-key: ${OPENAI_API_KEY:_}
   elasticsearch:
     uris: http://localhost:9200
     username: yato
@@ -44,8 +44,8 @@ spring:
 app:
   jwt-key: 1ytvns7A2HHo2GUQ2d82xS2I7dRyWWv1BTU51Ve+il0
   aws:
-    access-key-id:  ${SPRING_AWS_ACCESS_KEY_ID:AKIAVEVBQPSIKPXKZEFO}
-    secret-access-key: ${SPRING_AWS_SECRET_ACCESS_KEY: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}
+    access-key-id:  ${SPRING_AWS_ACCESS_KEY_ID:_}
+    secret-access-key: ${SPRING_AWS_SECRET_ACCESS_KEY:_}
     bucket:
       name: my-upload-for-essay
       request-timeout: 3600 # in seconds
