@@ -14,7 +14,7 @@ export function Home() {
         <Carousel />
         <LightNovel />
         <Manga />
-        <Collection />
+        {/* <Collection /> */}
         <TopWeekly />
       </Container>
     </HomeProvider>

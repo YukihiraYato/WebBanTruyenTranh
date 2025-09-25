@@ -12,10 +12,11 @@ import {
 import { Receipt, Person, MenuBook, Logout } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-
+import { useAuthContext } from "~/context/AuthContext";
 export function MenuPopper({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const {setJwtToken} = useAuthContext();
   return (
     <Tippy
       interactive
@@ -73,6 +74,7 @@ export function MenuPopper({ children }: { children: React.ReactNode }) {
             <ListItemButton
               onClick={() => {
                 localStorage.clear();
+                setJwtToken("");
                 navigate("/");
               }}
             >

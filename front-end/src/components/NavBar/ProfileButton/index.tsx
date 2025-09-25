@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { MenuPopper } from "~/components/Popup/menu";
 import { useTranslation } from "react-i18next";
 import { register, sendOtp } from "~/api/user/register";
+
 export function ProfileButton() {
   const [isPopupLoginOpen, setPopupLoginOpen] = useState(false);
   const [isPopupRegisterOpen, setPopupRegisterOpen] = useState(false);

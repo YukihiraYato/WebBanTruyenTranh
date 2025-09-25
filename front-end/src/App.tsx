@@ -11,6 +11,8 @@ import Footer from "./components/Footer";
 import Cart from "./pages/Cart";
 import Search from "./pages/Search";
 import OrderDetail from "./components/Order/OrderDetail";
+import ChatBox from "./components/Popup/Chat/ChatBox";
+
 function App() {
   const CheckoutLayout = useMemo(() => {
     return (
@@ -63,6 +65,14 @@ function App() {
           <Route path="/checkout" Component={Checkout} />
         </Route>
       </Routes>
+
+        <ChatBox
+        botAvatar="https://my-upload-for-essay.s3.ap-southeast-2.amazonaws.com/LogoWeb/Logo+Web.PNG"
+        userAvatar="https://scontent.fsgn5-5.fna.fbcdn.net/v/t39.30808-6/470603037_122095130258696709_4944030787428531367_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=YXXXbeOc9tcQ7kNvwELjeTC&_nc_oc=AdmRudJsBHkQ4szIOAxpgs168j-l0kkS77u72hCTMZhUpjiEsG8cGzueTovuCtD3yXg&_nc_zt=23&_nc_ht=scontent.fsgn5-5.fna&_nc_gid=Ashg3Zj2WucQcsEUAT7ogA&oh=00_AfYze55MgHoyyxBrpTLs41zJ-2etO_YHDvFOqz6akpujAg&oe=68D34737"
+        width={360}
+        height={500}
+      />
+    
     </>
   );
 }
