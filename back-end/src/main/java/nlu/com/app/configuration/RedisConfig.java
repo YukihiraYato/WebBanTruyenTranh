@@ -30,6 +30,7 @@ public class RedisConfig {
     return template;
   }
 
+
   @Bean
   RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
 
