@@ -70,7 +70,8 @@ public class Book {
   private LocalDateTime createdAt;
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
-
+  @Column(name = "genre", columnDefinition = "TEXT")
+  private String genre;
   @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookImage> images = new ArrayList<>();
 
@@ -78,8 +79,8 @@ public class Book {
   @JoinColumn(name = "category_id")
   private Category category;
 
-  @ManyToOne
-  @JoinColumn(name = "genre_id")
-  private Genre genre;
+//  @ManyToOne
+//  @JoinColumn(name = "genre_id")
+//  private Genre genre;
 }
 

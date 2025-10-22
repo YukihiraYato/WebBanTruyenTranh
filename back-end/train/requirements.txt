@@ -1,0 +1,8 @@
+pandas
+sqlalchemy
+pymysql
+lightfm
+scikit-learn
+numpy
+fastapi
+uvicorn

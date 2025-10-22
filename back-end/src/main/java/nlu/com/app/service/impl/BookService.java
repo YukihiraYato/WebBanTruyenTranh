@@ -93,8 +93,8 @@ public class BookService implements IBookService {
               && bookJson.getQtyInStock() != null && !bookJson.getQtyInStock().trim().isEmpty()
               && bookJson.getPageCount() != null && !bookJson.getPageCount().trim().isEmpty()
               && bookJson.getWeight() != null && !bookJson.getWeight().trim().isEmpty()).toList();
-      List<Book> books = bookMapper.jsonToEntityList(booksJsonList, categoryRepository,
-          genreRepository);
+      List<Book> books = bookMapper.jsonToEntityList(booksJsonList, categoryRepository
+          );
       for(Book book :books){
         book.setCreatedAt(LocalDateTime.now());
         book.setUpdatedAt(LocalDateTime.now());
@@ -393,10 +393,8 @@ public class BookService implements IBookService {
       Long categoryId = metadata.getCategory_id();
       var category = categoryRepository.findById(categoryId)
           .orElseThrow(() -> new ApplicationException(ErrorCode.CATEGORY_NOT_FOUND));
-      var genre = genreRepository.findById(metadata.getGenre_id())
-          .orElseThrow(() -> new ApplicationException(ErrorCode.GENRE_NOT_FOUND));
       var book = bookMapper.metadataToEntity(metadata);
-      book.setGenre(genre);
+//      book.setGenre(genre);
       book.setCategory(category);
       // add thumbnail
       var bookImages = new ArrayList<>(List.of(BookImage.builder()
@@ -445,13 +443,11 @@ public class BookService implements IBookService {
       book.setPublishYear(metadata.getPublish_year() + "");
       book.setWeight(metadata.getWeight());
       book.setProductCode(metadata.getProduct_code());
-
+     book.setGenre(metadata.getGenre());
       var category = categoryRepository.findById(metadata.getCategory_id())
           .orElseThrow(() -> new ApplicationException(ErrorCode.CATEGORY_NOT_FOUND));
-      var genre = genreRepository.findById(metadata.getGenre_id())
-          .orElseThrow(() -> new ApplicationException(ErrorCode.GENRE_NOT_FOUND));
-      book.setCategory(category);
-      book.setGenre(genre);
+
+
       book.setUpdatedAt(LocalDateTime.now());
       // Danh sách ảnh mới sẽ ghi đè lại toàn bộ
       List<BookImage> updatedImages = new ArrayList<>();

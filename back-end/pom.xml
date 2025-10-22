@@ -109,11 +109,11 @@
 			<version>${jjwt-jackson.version}</version>
 			<scope>runtime</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
-			<scope>runtime</scope>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>com.mysql</groupId>-->
+<!--			<artifactId>mysql-connector-j</artifactId>-->
+<!--			<scope>runtime</scope>-->
+<!--		</dependency>-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
@@ -182,6 +182,28 @@
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-model-openai</artifactId>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.grouplens.lenskit/lenskit-core -->
+		<dependency>
+			<groupId>org.grouplens.lenskit</groupId>
+			<artifactId>lenskit-core</artifactId>
+			<version>3.0-T2</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<version>8.3.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>5.9</version>
+		</dependency>
+
+
 
 	</dependencies>
 	<dependencyManagement>

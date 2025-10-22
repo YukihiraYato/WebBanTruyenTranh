@@ -67,7 +67,7 @@ public interface CartMapper {
 
   @Named("mapPrice")
   default double mapPrice(CartItem cartItem, @Context BookRepository bookRepository) {
-    return getBook(cartItem, bookRepository).map(book -> book.getPrice() * 1000).orElse(0.0);
+    return getBook(cartItem, bookRepository).map(book -> book.getPrice()).orElse(0.0);
   }
 
   @Named("mapDiscountedPrice")
@@ -82,7 +82,7 @@ public interface CartMapper {
     double discountPercentage = discountMap.getOrDefault(productId, 0.0);
 
     return getBook(cartItem, bookRepository)
-        .map(book -> book.getPrice() * (1 - discountPercentage / 100.0) * 1000)
+        .map(book -> book.getPrice() * (1 - discountPercentage / 100.0))
         .orElse(0.0);
   }
 

@@ -35,7 +35,7 @@ public class BookDetailsDTO {
   private double discountedPrice;
   private List<String> imageUrls;
   private List<ReviewDTO> reviews;
-
+  private String genre;
   @Data
   @NoArgsConstructor
   @AllArgsConstructor

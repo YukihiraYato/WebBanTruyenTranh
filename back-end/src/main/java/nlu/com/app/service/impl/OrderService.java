@@ -136,11 +136,11 @@ public class OrderService implements IOrderService {
       orderItem.setOrder(order);
       orderItem.setBook(book);
       orderItem.setQuantity(quantity);
-      orderItem.setPrice(price * 1000);
+      orderItem.setPrice(price);
       orderItem.setDiscountPercentage(discount);
       orderItem.setFinalPrice(totalFinalPrice);
 
-      totalAmount += (totalFinalPrice * 1000);
+      totalAmount += (totalFinalPrice);
       orderItems.add(orderItem);
     }
 

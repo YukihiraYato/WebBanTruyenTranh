@@ -3,6 +3,7 @@ package nlu.com.app.init_data;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import nlu.com.app.service.RedeemRewardService;
 import nlu.com.app.service.impl.BookService;
 import nlu.com.app.service.impl.CategoryService;
 import nlu.com.app.service.impl.GenreService;
@@ -23,7 +24,7 @@ public class DataInitializer {
   BookService bookService;
   GenreService genreService;
   PaymentService paymentService;
-
+  RedeemRewardService redeemRewardService;
   @Bean
   public CommandLineRunner demo() {
     return (args) -> {
@@ -35,6 +36,7 @@ public class DataInitializer {
         paymentService.initData();
         bookService.initData();
       }
+      redeemRewardService.initData();
     };
   }
 }
