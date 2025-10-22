@@ -4,6 +4,7 @@ import { CartProvider } from "./CartProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import BookCollectionProvider from "./BookCollectionProvider";
 import { AuthProvider } from "~/context/AuthContext";
+import { DiscountProvider } from "./DiscountProvider";
 const queryClient = new QueryClient();
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +13,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <BookCollectionProvider>
           <SearchProvider>
             <CartProvider>
+              <DiscountProvider>
               {children}
+              </DiscountProvider>
             </CartProvider>
           </SearchProvider>
         </BookCollectionProvider>

@@ -4,7 +4,11 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useTranslation,  } from "react-i18next";
 import { useState } from "react";
 import SelectDiscountPopup from "~/components/Popup/SelectDiscount";
-function Discount() {
+interface DiscountProps {
+  totalPrice?: number;
+  setTotalPrice?: (price: number) => void;
+}
+function Discount({totalPrice = 0, setTotalPrice}: DiscountProps) {
   const { t } = useTranslation();
   const [openPopup, setOpenPopup] = useState(false);
   return (
@@ -68,7 +72,7 @@ function Discount() {
         </Tooltip>
       </Stack>
       {/* Popup xem thêm */}
-      <SelectDiscountPopup open={openPopup} onClose={() => setOpenPopup(false)} />
+      <SelectDiscountPopup open={openPopup} onClose={() => setOpenPopup(false) } totalPrice={totalPrice} setTotalPrice={setTotalPrice}  />
     </Box>
   );
 }

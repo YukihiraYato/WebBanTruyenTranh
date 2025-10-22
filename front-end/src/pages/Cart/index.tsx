@@ -88,9 +88,9 @@ useEffect(() => {
 
       {/* Bên phải - Khuyến mãi, quà tặng, tổng */}
       <Box flex={1} display="flex" flexDirection="column" gap={2}>
-        <Discount />
+        <Discount totalPrice={totalPrice} setTotalPrice={setTotalPrice}  />
         <Gift />
-        <Sumary totalPrice={totalPrice} selectedBooks={selectedBooks}  />
+        <Sumary totalPrice={totalPrice}  selectedBooks={selectedBooks}  />
       </Box>
     </Box>
   );

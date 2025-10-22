@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 interface SumaryProps {
   totalPrice: number;
   selectedBooks?: CartItemPropertyResponseDTO[];
+ 
 }
 function Sumary({ totalPrice,selectedBooks = []  }: SumaryProps) {
   const navigate = useNavigate();

@@ -13,11 +13,12 @@ import { CategoryChainDTO } from "~/types/category";
 import { useCart } from "~/providers/CartProvider";
 import { BookReviewOverallResponse } from "~/types/review";
 import { getBookReviewOverall } from "~/api/review";
-
+import { getRecommendBooks } from "~/api/user/recommendBooks";
 interface BookDetailsContextType {
   bookDetails: BookDetailsDTO | null;
   categoryChain: CategoryChainDTO | null;
   relatedBooks: PageBookResponseDTO[] | null;
+  recommendBooks: PageBookResponseDTO[] | null;
   isLoading: boolean;
   error: string | null;
   addToCart: () => void;
@@ -29,6 +30,7 @@ const BookDetailsContext = createContext<BookDetailsContextType>({
   bookDetails: null,
   categoryChain: null,
   relatedBooks: null,
+  recommendBooks: null,
   isLoading: false,
   error: null,
   addToCart: () => {},
@@ -48,6 +50,9 @@ export const BookDetailsProvider = ({ children }: BookDetailsProviderProps) => {
     null
   );
   const [relatedBooks, setRelatedBooks] = useState<
+    PageBookResponseDTO[] | null
+  >(null);
+  const [recommendBooks, setRecommendBooks] = useState<
     PageBookResponseDTO[] | null
   >(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,7 +76,9 @@ export const BookDetailsProvider = ({ children }: BookDetailsProviderProps) => {
           categoryId: chainRes.result.list[chainRes.result.list.length - 1].id,
           context: " ",
         });
+        const recommendRes = await getRecommendBooks();
         setRelatedBooks(relatedRes.result.content);
+        setRecommendBooks(recommendRes.result);
         const overall = await getBookReviewOverall(Number(id));
         setReviewOverall(overall.result);
       } catch (err) {
@@ -96,6 +103,7 @@ export const BookDetailsProvider = ({ children }: BookDetailsProviderProps) => {
       value={{
         bookDetails,
         relatedBooks,
+        recommendBooks,
         categoryChain,
         isLoading,
         error,
