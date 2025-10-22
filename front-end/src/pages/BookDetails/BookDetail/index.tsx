@@ -24,6 +24,7 @@ import { BookPreview } from "../BookPreview";
 import { BookRating } from "../BookRating";
 import { BookComment } from "../BookComment";
 import { BookRelated } from "../BookRelated";
+import  BookRecommend  from "../BookRecommend";
 import { useState } from "react";
 import { SaveBookDialog } from "../SaveBookDialog";
 import { NewBookCollectionDialog } from "../SaveBookDialog/NewBookCollectionDialog";
@@ -148,6 +149,9 @@ export function BookDetails() {
         </Stack>
         <Box mt={2}>
           <BookRelated />
+        </Box>
+        <Box mt={2}>
+          <BookRecommend />
         </Box>
       </Container>
      

@@ -21,5 +21,5 @@ public class CreateBookRequest {
     private String translator;
     private double weight;
     private long category_id;
-    private long genre_id;
+    private String genre;
 }

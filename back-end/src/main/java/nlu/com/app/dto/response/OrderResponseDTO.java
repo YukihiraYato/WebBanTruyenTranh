@@ -2,6 +2,8 @@ package nlu.com.app.dto.response;
 
 import java.time.LocalDate;
 import java.util.List;
+
+import lombok.Builder;
 import lombok.Data;
 import nlu.com.app.dto.request.AddressDto;
 

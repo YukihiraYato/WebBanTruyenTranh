@@ -23,5 +23,5 @@ public class DiscountResponseDTO {
     private int useCount;
     private String startDate;
     private String endDate;
-    private Boolean isActive = true;
+    private Boolean isActive ;
 }

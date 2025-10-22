@@ -41,10 +41,15 @@ public class User {
   private UserRole role;
   @Column(name = "verified")
   private boolean verified;
+
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookCollection> bookCollections = new ArrayList<>();
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Order> orders = new ArrayList<>();
   @OneToMany(mappedBy = "currentAdmin")
   private List<Conversation> conversations = new ArrayList<>();
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<UserSearchHistory> userSearchHistories = new ArrayList<>();
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<UserDiscountUsage> usedDiscounts = new ArrayList<>();
 }

@@ -12,7 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -53,5 +53,13 @@ public class DiscountServiceImpl implements IDiscountService {
        }catch (Exception e){
            return null;
        }
+    }
+
+    @Override
+    public List<DiscountResponseDTO> getDiscountsByUserId(Long userId) {
+        List<Discount> discountList = discountRepository.findAvailableDiscountsForUser(userId);
+        List<DiscountResponseDTO> discountResponseDTOS = discountMapper.mapToListDTO(discountList);
+        return discountResponseDTOS;
+
     }
 }

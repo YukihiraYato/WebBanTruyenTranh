@@ -15,7 +15,7 @@ import nlu.com.app.repository.DiscountRepository;
 import nlu.com.app.service.IDiscountService;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.List;
 import java.time.LocalDate;
 
 @RestController
@@ -48,6 +48,15 @@ public class DiscountController {
        } catch (Exception e) {
            throw new RuntimeException(e);
        }
+    }
+    @GetMapping("/user/{userId}")
+    public AppResponse<List<DiscountResponseDTO>> getAllDiscountsByUserId(@PathVariable Long userId) {
+        try{
+            List<DiscountResponseDTO> discounts = discountService.getDiscountsByUserId(userId);
+            return AppResponse.<List<DiscountResponseDTO>>builder().result(discounts).build();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
     @GetMapping("/detail/{id}")
     public AppResponse<DiscountResponseDTO> getDetailDiscount(@PathVariable Long id) {

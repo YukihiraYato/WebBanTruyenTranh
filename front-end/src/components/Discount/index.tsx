@@ -4,19 +4,42 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useState, useEffect } from "react";
 interface DiscountProps {
     discountId: number;
+    code: string;
     title: string;
-    condition: string;
-    expire: string;
-    applied?: boolean;
+    description: string;
+    discountType: string;
+    value: number;
+    targetType: string;
+    minOrderAmount: number;
+    usageLimit: number;
+    useCount: number;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    totalPrice?: number;
+    setTotalPrice?: (price: number) => void;
+    apply?: boolean;
+    setApplied: (apply: boolean) => void;
 }
 
 export default function DiscountCard({
     title,
-    condition,
-    expire,
-    applied = false,
+    description,
+    code,
+    value,
+    startDate,
+    endDate,
+    isActive,
+    discountId,
+    minOrderAmount,
+    discountType,
+    totalPrice,
+    setTotalPrice,
+    apply,
+    setApplied
+
 }: DiscountProps) {
-    const [apply, setApplied] = useState(applied);
+    
 
     return (
         <Card
@@ -83,40 +106,75 @@ export default function DiscountCard({
 
             {/* Nội dung */}
             <CardContent sx={{ flex: 1, p: "0 !important" }}>
-                <Typography variant="subtitle1" fontWeight="bold" noWrap>
+                <Typography style={{
+                    whiteSpace: "break-spaces",
+                    maxWidth: "100%",
+                    wordWrap: "break-word",
+                }} variant="subtitle1" fontWeight="bold" noWrap>
                     {title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" noWrap>
-                    {condition}
+                <Typography
+                    style={{
+                        whiteSpace: "break-spaces",
+                        maxWidth: "100%",
+                        wordWrap: "break-word",
+                    }}
+                    variant="body2" color="text.secondary" noWrap>
+                    <span style={{ fontWeight: 'bold' }}>Chi tiết: </span> {description}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                    HSD: {expire}
+                    <span style={{ fontWeight: 'bold' }}>Hạn sử dụng: </span> {startDate} <span style={{ fontWeight: 'bold' }}> đến </span> {endDate}
                 </Typography>
             </CardContent>
 
             {/* Trạng thái áp dụng */}
-            {apply ? (
-                <Chip
-                    onClick={() => setApplied(false)}
-                    icon={<CheckCircleIcon sx={{ color: "green !important"}} />}
-                    label="ĐÃ ÁP DỤNG"
-                    sx={{
-                        fontWeight: "bold",
-                        color: "green",
-                        border: "1px solid green",
-                        backgroundColor: "transparent",
-                    }}
-                />
-            ) : (
-                <Button
-                    variant="outlined"
-                    size="small"
-                    sx={{ borderRadius: 2 }}
-                    onClick={() => setApplied(true)}
-                >
-                    Áp dụng
-                </Button>
-            )}
+            {
+                apply ? (
+                    <Chip
+                        onClick={() => {
+                            if (totalPrice !== undefined && totalPrice > 0 && setTotalPrice !== undefined) {
+                                if (discountType === "PERCENT") {
+                                    setTotalPrice(totalPrice/(1-value))
+                                }
+                                if (discountType === "FIXED") {
+                                    setTotalPrice(totalPrice + value)
+                                }
+                            }
+                            setApplied(false)
+                        }}
+                        icon={<CheckCircleIcon sx={{ color: "green !important" }} />}
+                        label="ĐÃ ÁP DỤNG"
+                        sx={{
+                            fontWeight: "bold",
+                            color: "green",
+                            border: "1px solid green",
+                            backgroundColor: "transparent",
+                        }}
+                    />
+                ) : (
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{ borderRadius: 2 }}
+                        onClick={() => {
+                            if (totalPrice !== undefined && totalPrice > 0 && setTotalPrice !== undefined) {
+                                if (discountType === "PERCENT") {
+                                    setTotalPrice(totalPrice - (totalPrice * value))
+                                    
+                                }
+                                if (discountType === "FIXED") {
+                                    setTotalPrice(totalPrice - value)
+                                }
+
+                                setApplied(true);
+
+                            }
+                        }}
+                    >
+                        Áp dụng
+                    </Button>
+                )
+            }
 
             {/* Góc trên bên phải */}
             <Chip
@@ -134,6 +192,6 @@ export default function DiscountCard({
                 }}
             />
 
-        </Card>
+        </Card >
     );
 }

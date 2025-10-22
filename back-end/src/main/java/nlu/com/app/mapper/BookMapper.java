@@ -40,15 +40,13 @@ import org.mapstruct.Named;
 public interface BookMapper {
 
   @Mapping(target = "category", source = "category", qualifiedByName = "stringToCategory")
-  @Mapping(target = "genre", source = "genre", qualifiedByName = "stringToGenre")
   @Mapping(target = "images", source = "images", qualifiedByName = "toImageList")
   @Mapping(target = "price", source = "price", qualifiedByName = "mappingPrice")
-  Book jsonToEntity(BooksJson booksJson, @Context CategoryRepository categoryRepository,
-      @Context GenreRepository genreRepository);
+  Book jsonToEntity(BooksJson booksJson, @Context CategoryRepository categoryRepository);
 
   List<Book> jsonToEntityList(List<BooksJson> booksJsonList,
-      @Context CategoryRepository categoryRepository,
-      @Context GenreRepository genreRepository);
+      @Context CategoryRepository categoryRepository
+      );
   @Named("mappingPrice")
   default Double mappingPrice(String price){
        if(price == null || price.isBlank()){
@@ -145,6 +143,7 @@ public interface BookMapper {
   @Mapping(target = "publish_year", source = "book.publishYear")
   @Mapping(target = "thumbnail", source = "thumbnail")
   @Mapping(target = "gallery", source = "gallery")
+  @Mapping(target = "genre", source = "book.genre")
   CreateBookResponse toCreateBookResponse(Book book, String thumbnail, List<String> gallery);
 
   @Mapping(target = "page_count", source = "book.pageCount")
@@ -154,6 +153,7 @@ public interface BookMapper {
   @Mapping(target = "category_id", source = "book.category.categoryId")
   @Mapping(target = "thumbnail", source = "book.images", qualifiedByName = "bookImagesToThumbnailURL")
   @Mapping(target = "gallery", source = "book.images", qualifiedByName = "bookImagesToGalleryURLs")
+  @Mapping(target = "genre", source = "book.genre")
   UpdateBookResponse toUpdateBookResponse(Book book);
 
 
@@ -168,6 +168,7 @@ public interface BookMapper {
             .quantityInStock(book.getQtyInStock())
             .avgRate(rvStats.getAvgScore())
             .rvCounts(Math.toIntExact(rvStats.getTotal()))
+            .genre(book.getGenre())
             .thumbnail(thumbnail.getImageUrl())
             .bookId(book.getBookId())
             .build();
@@ -243,6 +244,7 @@ public interface BookMapper {
   @Mapping(source = "discountedPrice", target = "discountedPrice")
   @Mapping(source = "imageUrls", target = "imageUrls")
   @Mapping(source = "reviews", target = "reviews")
+  @Mapping(source = "book.genre", target ="genre" )
   BookDetailsDTO toBookDetailsDTO(Book book,
       List<String> imageUrls,
       List<ReviewDTO> reviews,

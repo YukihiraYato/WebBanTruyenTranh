@@ -24,7 +24,7 @@ const API_ENDPOINTS = {
   USER: {
     LOGIN: "/api/v1/auth/login",
     REGISTER: "/api/v1/auth/register",
-    SEND_OTP : "/api/v1/auth/register/send-otp",
+    SEND_OTP: "/api/v1/auth/register/send-otp",
     VERIFY_OTP: "/api/v1/auth/register/verify-otp",
     DETAILS: {
       GET: "/api/user-details",
@@ -41,8 +41,8 @@ const API_ENDPOINTS = {
       },
       GET: "/api/user/addresses",
     },
-    BOOKCOLLECTION :{
-      CREATE : "/api/collections",
+    BOOKCOLLECTION: {
+      CREATE: "/api/collections",
       GET_USER_BOOK_COLLECTIONS: (page: number, size: number) => {
         if (page !== undefined && size !== undefined) {
           return `/api/collections?page=${page}&size=${size}`;
@@ -65,15 +65,27 @@ const API_ENDPOINTS = {
       DELETE_BOOK_FROM_COLLECTIONITEM: (collectionId: number, bookId: number) => {
         return `/api/collections/${collectionId}/books/${bookId}/delete`;
       },
-      FIND_BOOKCOLLECTION_BY_NAME: (page: number, name: string) =>{
+      FIND_BOOKCOLLECTION_BY_NAME: (page: number, name: string) => {
         return `/api/collections/search?name=${name}&page=${page}`
       }
     },
-    CHAT :{
-      GET_CONVERSATIONS : (userId: number)=>{
+    CHAT: {
+      GET_CONVERSATIONS: (userId: number) => {
         return `/load-conversation/user/${userId}`;
       }
+    },
+    KEYWORD_HISTORY: {
+      SAVE: "/api/search-history/save",
+      GET: "/api/search-history/get",
+      DELETE: () => `/api/search-history/delete`,
+    },
+    RECOMMEND_BOOKS: {
+      GET: () => `/recommend`,
+    },
+    DISCOUNT: {
+      GET: (userId: number) => `/api/discount/user/${userId}`,
     }
+
   },
   CART: {
     ADD: "/api/cart/add",

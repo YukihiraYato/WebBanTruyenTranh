@@ -9,33 +9,37 @@ import {
     Divider,
 } from "@mui/material";
 import DiscountCard from "~/components/Discount"; // component ở trên
-
+import { useDiscount } from "~/providers/DiscountProvider";
+import { useState } from "react";
 interface SelectDiscountProps {
     open: boolean;
     onClose: () => void;
+    totalPrice: number;
+    setTotalPrice?: (price: number) => void;
 }
-
-export default function SelectDiscountPopup({ open, onClose }: SelectDiscountProps) {
+type Discount = {
+  discountId: number;
+  code: string;
+  title: string;
+  description: string;
+  discountType: string;
+  value: number;
+  targetType: string;
+  minOrderAmount: number;
+  usageLimit: number;
+  useCount: number;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+};
+export default function SelectDiscountPopup({ open, onClose, totalPrice, setTotalPrice }: SelectDiscountProps) {
+    const { listDiscount } = useDiscount();
+     const [apply, setApplied] = useState(false);
     // Demo dữ liệu
-    const orderDiscounts = [
-        { title: "Mã Giảm 20K - Toàn Sàn", condition: "Đơn hàng từ 249k", expire: "31/08/2025" },
-        { title: "Mã Giảm 10K - Toàn Sàn", condition: "Đơn hàng từ 130k", expire: "31/08/2025" },
-        { title: "Mã Giảm 30K - Toàn Sàn", condition: "Đơn hàng từ 399k", expire: "31/08/2025" },
-        { title: "Mã Giảm 50K - Toàn Sàn", condition: "Đơn hàng từ 699k", expire: "31/08/2025" },
-    ];
+    const orderDiscounts = listDiscount.filter((d: Discount) => d.targetType === "ORDER");
+    const categoryDiscounts = listDiscount.filter((d: Discount) => d.targetType === "CATEGORY");
+    const bookDiscounts = listDiscount.filter((d: Discount) => d.targetType === "BOOK");
 
-    const categoryDiscounts = [
-        { title: "Giảm 15K - Manga", condition: "Đơn hàng manga từ 200k", expire: "31/08/2025" },
-        { title: "Giảm 20K - Light Novel", condition: "Đơn hàng light novel từ 250k", expire: "31/08/2025" },
-        { title: "Giảm 30K - Sách Văn Học", condition: "Đơn hàng văn học từ 400k", expire: "31/08/2025" },
-    ];
-
-    const bookDiscounts = [
-        { title: "Giảm 10% - Sản phẩm A", condition: "Áp dụng cho sản phẩm A", expire: "31/08/2025" },
-        { title: "Giảm 15% - Sản phẩm B", condition: "Áp dụng cho sản phẩm B", expire: "31/08/2025" },
-        { title: "Giảm 20% - Sản phẩm C", condition: "Áp dụng cho sản phẩm C", expire: "31/08/2025" },
-        { title: "Giảm 25% - Sản phẩm D", condition: "Áp dụng cho sản phẩm D", expire: "31/08/2025" },
-    ];
 
     // Render 1 section
     const renderSection = (title: string, items: any[]) => (
@@ -62,7 +66,7 @@ export default function SelectDiscountPopup({ open, onClose }: SelectDiscountPro
                 }}
             >
                 {items.map((d, i) => (
-                    <DiscountCard key={i} {...d} />
+                    <DiscountCard key={i} {...d} totalPrice={totalPrice} setTotalPrice={setTotalPrice} apply={apply} setApplied={setApplied} />
                 ))}
             </Box>
         </Box>

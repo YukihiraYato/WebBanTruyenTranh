@@ -1,13 +1,17 @@
 package nlu.com.app.controller;
 
 import lombok.RequiredArgsConstructor;
+import nlu.com.app.constant.EDiscountTarget;
+import nlu.com.app.constant.EDiscountType;
 import nlu.com.app.dto.AppResponse;
 import nlu.com.app.dto.request.LoginUserDTO;
 import nlu.com.app.dto.request.RegisterUserDTO;
 import nlu.com.app.dto.request.VerifyOTPRequestDTO;
+import nlu.com.app.entity.Discount;
 import nlu.com.app.entity.User;
 import nlu.com.app.repository.UserRepository;
 import nlu.com.app.service.EmailService;
+import nlu.com.app.service.IDiscountService;
 import nlu.com.app.service.OtpRedisService;
 import nlu.com.app.service.impl.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +32,7 @@ public class AuthController {
     private OtpRedisService otpService;
     @Autowired
     private UserRepository userRepository;
+
 
     @PostMapping("/register")
     public AppResponse<String> register(@RequestBody RegisterUserDTO requestDTO) {

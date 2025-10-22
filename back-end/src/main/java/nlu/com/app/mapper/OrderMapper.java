@@ -1,30 +1,23 @@
 package nlu.com.app.mapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import com.paypal.sdk.models.Customer;
 import nlu.com.app.constant.EOrderStatus;
 import nlu.com.app.constant.EPaymentMethod;
-import nlu.com.app.dto.request.AddressDto;
 import nlu.com.app.dto.response.OrderDetailsResponseDTO;
 import nlu.com.app.dto.response.OrderResponseDTO;
 import nlu.com.app.entity.*;
-import org.mapstruct.Builder;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
+import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
-/**
- * @author VuLuu
- */
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-    builder = @Builder(disableBuilder = true))
+        builder = @Builder(disableBuilder = true))
 public interface OrderMapper {
 
   OrderMapper INSTANCE = Mappers.getMapper(OrderMapper.class);
 
+  // ========== BASIC ORDER DTO ==========
   @Mapping(source = "paymentMethod.methodName", target = "paymentMethodName", qualifiedByName = "enumToString")
   @Mapping(source = "status", target = "status", qualifiedByName = "orderStatusToString")
   @Mapping(source = "orderItems", target = "items")
@@ -32,53 +25,60 @@ public interface OrderMapper {
   @Mapping(source ="order", target = "timeFor5StatusOrder", qualifiedByName = "mapTimeFor5StatusOrder")
   OrderResponseDTO toOrderResponseDTO(Order order);
 
+  // ========== ORDER ITEM MAPPING ==========
+  @Named("mapToOrderItemsDTO")
+  default List<OrderDetailsResponseDTO.OrderItemDTO> mapOrderItemsDTO(List<OrderItem> orderItems) {
+    List<OrderDetailsResponseDTO.OrderItemDTO> orderItemDTOS = new ArrayList<>();
+    for (OrderItem orderItem : orderItems) {
+      OrderDetailsResponseDTO.OrderItemDTO dto = new OrderDetailsResponseDTO.OrderItemDTO();
+      dto.setImg(orderItem.getBook().getImages().stream()
+              .filter(img -> img.isThumbnail() && img.getImageUrl() != null && !img.getImageUrl().isEmpty())
+              .map(BookImage::getImageUrl)
+              .findFirst()
+              .orElse(null));
+      dto.setBookTitle(orderItem.getBook().getTitle());
+      dto.setPrice(orderItem.getPrice());
+      dto.setQuantity(orderItem.getQuantity());
+      dto.setDiscount(orderItem.getDiscountPercentage());
+      orderItemDTOS.add(dto);
+    }
+    return orderItemDTOS;
+  }
+
+  // ========== ORDER DETAILS DTO ==========
   @Mapping(source = "paymentMethod.methodName", target = "paymentMethodName", qualifiedByName = "enumToString")
   @Mapping(source = "status", target = "status", qualifiedByName = "orderStatusToString")
-  @Mapping(source = "orderItems", target = "items")
+  @Mapping(source = "orderItems", target = "items", qualifiedByName = "mapToOrderItemsDTO")
   @Mapping(target = "shippingAddress", source = "address")
-  @Mapping(target = "customer", source = "order.user", qualifiedByName = "toCustomerDTO")
+  @Mapping(target = "customer", source = "user", qualifiedByName = "toCustomerDTO")
   @Mapping(target = "statusCode", source = "status", qualifiedByName = "orderStatusToString_2")
   @Mapping(source ="order", target = "timeFor5StatusOrder", qualifiedByName = "mapTimeFor5StatusOrder")
   OrderDetailsResponseDTO toOrderDetailsResponseDTO(Order order);
 
-  AddressDto toAddressDTO(Address address);
-
-  List<OrderDetailsResponseDTO.OrderItemDTO> toOrderItemDTOList_ForDetails(List<OrderItem> orderItems);
-  List<OrderResponseDTO.OrderItemDTO> toOrderItemDTOList(List<OrderItem> orderItems);
-
+  // ========== CUSTOMER ==========
   @Named("toCustomerDTO")
-  @Mapping(target = "user_id", source = "user.userId")
-  @Mapping(target = "username", source = "user.username")
+  @Mapping(target = "user_id", source = "userId")
+  @Mapping(target = "username", source = "username")
   @Mapping(target = "email", expression = "java(user.getEmail() == null ? \"Người dùng này chưa set email \" : user.getEmail())")
   OrderDetailsResponseDTO.CustomerDTO toCustomerDTO(User user);
 
-  @Mapping(source = "book", target = "img", qualifiedByName = "mapImage")
-  @Mapping(source = "book.title", target = "bookTitle")
-  @Mapping(source = "discountPercentage", target = "discount")
-  OrderResponseDTO.OrderItemDTO toOrderItemDTO(OrderItem orderItem);
-
-  @Mapping(source = "book", target = "img", qualifiedByName = "mapImage")
-  @Mapping(source = "book.title", target = "bookTitle")
-  @Mapping(source = "discountPercentage", target = "discount")
-
-
-
+  // ========== IMAGE ==========
   @Named("mapImage")
   default String mapImage(Book book) {
     if (book.getImages() == null || book.getImages().isEmpty()) {
       return null;
     }
     return book.getImages().stream()
-        .filter(image -> image.isThumbnail() && image.getImageUrl() != null && !image.getImageUrl().isEmpty())
-        .map(BookImage::getImageUrl)
-        .findFirst()
-        .orElse(null);
+            .filter(img -> img.isThumbnail() && img.getImageUrl() != null && !img.getImageUrl().isEmpty())
+            .map(BookImage::getImageUrl)
+            .findFirst()
+            .orElse(null);
   }
 
+  // ========== ENUMS ==========
   @Named("enumToString")
   default String enumToString(EPaymentMethod method) {
-    return method == null ? null
-        : method.getDescription();
+    return method == null ? null : method.getDescription();
   }
 
   @Named("orderStatusToString")
@@ -90,14 +90,16 @@ public interface OrderMapper {
   default String orderStatusToString_2(EOrderStatus status) {
     return status == null ? null : status.name();
   }
+
+  // ========== TIME ==========
   @Named("mapTimeFor5StatusOrder")
   default OrderDetailsResponseDTO.TimeFor5StatusOrder mapTimeFor5StatusOrder(Order order) {
-    OrderDetailsResponseDTO.TimeFor5StatusOrder timeFor5StatusOrder = new OrderDetailsResponseDTO.TimeFor5StatusOrder();
-    timeFor5StatusOrder.setPendingConfirmationDate(order.getPendingConfirmationDate());
-    timeFor5StatusOrder.setConfirmedDate(order.getConfirmedDate());
-    timeFor5StatusOrder.setShippingDate(order.getShippingDate());
-    timeFor5StatusOrder.setDeliveredDate(order.getDeliveredDate());
-    timeFor5StatusOrder.setCancelledDate(order.getCancelledDate());
-    return timeFor5StatusOrder;
+    var time = new OrderDetailsResponseDTO.TimeFor5StatusOrder();
+    time.setPendingConfirmationDate(order.getPendingConfirmationDate());
+    time.setConfirmedDate(order.getConfirmedDate());
+    time.setShippingDate(order.getShippingDate());
+    time.setDeliveredDate(order.getDeliveredDate());
+    time.setCancelledDate(order.getCancelledDate());
+    return time;
   }
 }

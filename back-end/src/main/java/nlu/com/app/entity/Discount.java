@@ -50,6 +50,9 @@ public class Discount {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserDiscountUsage> userUsages ;
+
     @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DiscountOrders> discountOrders;
 

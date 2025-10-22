@@ -12,6 +12,8 @@ import org.springframework.data.domain.Page;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
         builder = @Builder(disableBuilder = true))
@@ -60,6 +62,9 @@ public interface DiscountMapper {
     DiscountResponseDTO mapToDiscountResponseDTO(Discount discount);
     default Page<DiscountResponseDTO> maptoPageDTO(Page<Discount> discountPage){
         return discountPage.map(this :: mapToDiscountResponseDTO);
+    }
+    default List<DiscountResponseDTO> mapToListDTO(List<Discount> discounts){
+        return discounts.stream().map(this :: mapToDiscountResponseDTO).collect(Collectors.toList());
     }
     @Named("fromDateToString")
     default String fromDateToString(LocalDate date){
