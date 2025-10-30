@@ -36,7 +36,10 @@ import { useState, useEffect } from "react";
 import { addUserAddress, getUserAddresses } from "~/api/user/userAddress";
 import { AddressResponseDTO } from "~/types/user";
 import { useTranslation } from "react-i18next";
-import {addUserDetails, getUserDetails} from "~/api/user/userDetails";
+import { addUserDetails, getUserDetails } from "~/api/user/userDetails";
+import { useDiscount } from "~/providers/DiscountProvider";
+import DiscountCard from "~/components/Discount";
+import { DiscountType } from "~/providers/DiscountProvider";
 const Section = styled(Box)(({ theme }) => ({
   backgroundColor: "white",
   padding: `0 ${theme.spacing(2)}`,
@@ -82,9 +85,11 @@ export function Checkout() {
   const [listAddress, setListAddress] = useState<AddressResponseDTO[]>([]);
   const { t } = useTranslation();
   const [userDetails, setUserDetails] = useState(() => {
-  return JSON.parse(localStorage.getItem("userDetails") || "{}");
-});
-
+    return JSON.parse(localStorage.getItem("userDetails") || "{}");
+  });
+  const { listDiscountChosen } = useDiscount();
+  const discountObject = listDiscountChosen?.[0] ?? {};
+  const listDiscount = Object.values(discountObject) as DiscountType[];
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -124,29 +129,29 @@ export function Checkout() {
       region: formData.get("region") as string,
       postalCode: formData.get("postalCode") as string,
     };
-  try {
-    console.log("Data sắp gửi lên API:", address);
-    await addUserAddress(address);
-    await fetchAddresses();
+    try {
+      console.log("Data sắp gửi lên API:", address);
+      await addUserAddress(address);
+      await fetchAddresses();
 
-    await addUserDetails(
-      formData.get("fullName") as string,
-      formData.get("phoneNumber") as string,
-      null
-    );
+      await addUserDetails(
+        formData.get("fullName") as string,
+        formData.get("phoneNumber") as string,
+        null
+      );
 
-    const userDetailsResponse = await getUserDetails();
-    localStorage.setItem("userDetails", JSON.stringify(userDetailsResponse.result));
-    setUserDetails(userDetailsResponse.result); // ⚡ Cập nhật lại state userDetails để re-render
+      const userDetailsResponse = await getUserDetails();
+      localStorage.setItem("userDetails", JSON.stringify(userDetailsResponse.result));
+      setUserDetails(userDetailsResponse.result); // ⚡ Cập nhật lại state userDetails để re-render
 
-    handleClose();
-  } catch (error) {
-    console.error("Lỗi khi thêm địa chỉ:", error);
-  }
-      
+      handleClose();
+    } catch (error) {
+      console.error("Lỗi khi thêm địa chỉ:", error);
+    }
+
   };
   // Lưu id của các book được mua vào localStorage
-  const selectedBooksId= selectBooks.map(
+  const selectedBooksId = selectBooks.map(
     (book: CartItemPropertyResponseDTO) => book.productId
   );
   localStorage.setItem(
@@ -163,33 +168,33 @@ export function Checkout() {
                 {t("page.checkout.content.address.section")}
               </Typography>
             </UnderlineBox>
-            <RadioGroup  name="radio-buttons-group">
+            <RadioGroup name="radio-buttons-group">
               {listAddress?.length > 0
                 ? listAddress?.map((address) => (
-                    <Box
-                      display={"flex"}
-                      alignItems={"center"}
-                      justifyContent={"space-between"}
-                    >
-                      <FormControlLabel
-                        value={address.address.addressLine1}
-                        sx={{
-                          width: "fit-content",
-                        }}
-                        control={<SmallRadio />}
-                        label={
-                          <RadioLabel>
-                            {userDetails.fullName} |{" "}
-                            {address.address.addressLine1} |{" "}
-                            {userDetails.phoneNum}
-                          </RadioLabel>
-                        }
-                      />
-                      <Link marginRight={5} sx={{ cursor: "pointer" }}>
-                        {t("page.checkout.content.address.button")}
-                      </Link>
-                    </Box>
-                  ))
+                  <Box
+                    display={"flex"}
+                    alignItems={"center"}
+                    justifyContent={"space-between"}
+                  >
+                    <FormControlLabel
+                      value={address.address.addressLine1}
+                      sx={{
+                        width: "fit-content",
+                      }}
+                      control={<SmallRadio />}
+                      label={
+                        <RadioLabel>
+                          {userDetails.fullName} |{" "}
+                          {address.address.addressLine1} |{" "}
+                          {userDetails.phoneNum}
+                        </RadioLabel>
+                      }
+                    />
+                    <Link marginRight={5} sx={{ cursor: "pointer" }}>
+                      {t("page.checkout.content.address.button")}
+                    </Link>
+                  </Box>
+                ))
                 : null}
             </RadioGroup>
             <FormControlLabel
@@ -204,7 +209,7 @@ export function Checkout() {
           <Section>
             <UnderlineBox>
               <Typography sx={{ textTransform: "uppercase", fontWeight: 700 }}>
-               {t("page.checkout.content.payment.section")}
+                {t("page.checkout.content.payment.section")}
               </Typography>
             </UnderlineBox>
             <RadioGroup name="payment-method" sx={{ py: 1 }}>
@@ -283,45 +288,45 @@ export function Checkout() {
                 <TableBody>
                   {selectBooks.length > 0
                     ? selectBooks.map((book: CartItemPropertyResponseDTO) => (
-                        <TableRow
-                          key={book.productId}
-                          sx={{
-                            "&:last-child td, &:last-child th": { border: 0 },
-                          }}
-                        >
-                          <TableCell component="th" scope="row">
-                            <Box sx={{ width: 150 }}>
-                              <img width={"100%"} src={book.imageUrl} alt="" />
-                            </Box>
-                          </TableCell>
-                          <TableCell align="left">{book.title}</TableCell>
-                          <TableCell align="left">
-                            <Stack>
-                              <Typography>
-                                {book.discountedPrice.toLocaleString("vi-VN") +
-                                  "đ"}
-                              </Typography>
-                              <Typography
-                                sx={{
-                                  textDecoration: "line-through",
-                                  fontSize: 14,
-                                  color: grey["500"],
-                                }}
-                              >
-                                {book.price.toLocaleString("vi-VN") + "đ"}
-                              </Typography>
-                            </Stack>
-                          </TableCell>
-                          <TableCell align="left">{book.quantity}</TableCell>
-                          <TableCell align="left">
-                            <Typography fontWeight={"bold"} color="error">
-                              {(
-                                book.discountedPrice * book.quantity
-                              ).toLocaleString("vi-Vn") + "đ"}
+                      <TableRow
+                        key={book.productId}
+                        sx={{
+                          "&:last-child td, &:last-child th": { border: 0 },
+                        }}
+                      >
+                        <TableCell component="th" scope="row">
+                          <Box sx={{ width: 150 }}>
+                            <img width={"100%"} src={book.imageUrl} alt="" />
+                          </Box>
+                        </TableCell>
+                        <TableCell align="left">{book.title}</TableCell>
+                        <TableCell align="left">
+                          <Stack>
+                            <Typography>
+                              {book.discountedPrice.toLocaleString("vi-VN") +
+                                "đ"}
                             </Typography>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                            <Typography
+                              sx={{
+                                textDecoration: "line-through",
+                                fontSize: 14,
+                                color: grey["500"],
+                              }}
+                            >
+                              {book.price.toLocaleString("vi-VN") + "đ"}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell align="left">{book.quantity}</TableCell>
+                        <TableCell align="left">
+                          <Typography fontWeight={"bold"} color="error">
+                            {(
+                              book.discountedPrice * book.quantity
+                            ).toLocaleString("vi-Vn") + "đ"}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))
                     : null}
                 </TableBody>
               </Table>
@@ -340,27 +345,70 @@ export function Checkout() {
               </Typography>
             </UnderlineBox>
             <Box display={"flex"} alignItems={"center"} gap={2} my={1}>
-              <Typography>{t("page.checkout.content.discount.section")}</Typography>
-              <Paper sx={{ p: "4px 8px" }} variant="outlined">
-                <InputBase />
-                <Button
-                  sx={{ marginLeft: 1 }}
-                  size="small"
-                  variant="contained"
-                  type="submit"
-                  disableFocusRipple
-                  disableTouchRipple
-                  disableRipple
-                >
-                  {t("page.checkout.content.discount.section")}
-                </Button>
-              </Paper>
-              <Link
-                sx={{ cursor: "pointer" }}
-                onClick={() => setOpenDiscount(true)}
-              >
-                {t("page.checkout.content.discount.item2")}
-              </Link>
+              {/* Import Discount Card */}
+              {listDiscount.length > 0 ? (
+                console.log("listDiscount:", listDiscount),
+                listDiscount.map((discount, index) => (
+                  
+                  <Paper
+                    key={index}
+                    elevation={2}
+                    sx={{ paddingY: 1, paddingX: 2, display: "inline-flex", gap: 3 }}
+                  >
+                    <Box
+                      sx={{
+                        width: "fit-content",
+                        paddingRight: 2,
+                        borderRight: `2px dashed ${grey["400"]}`,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: 100,
+                          width: 100,
+                          backgroundColor: yellow["50"],
+                          alignItems: "center",
+                          justifyContent: "center",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1,
+                          borderRadius: 1,
+                        }}
+                      >
+                        <img src={discountIcon} />
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: 14,
+                            color: grey["A700"],
+                          }}
+                        >
+                          Mã giảm
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontWeight: 600 }}>
+                        {discount.title}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "-webkit-box",
+                        
+                          maxWidth: 300,
+                        }}
+                      >
+                        <Typography sx={{ fontSize: 14 }}>
+                          {discount.description}
+                        </Typography>
+                      </Box>
+                      <Typography sx={{ marginTop: 2 }} fontSize="small">
+                       {"HSD: "} {discount.startDate} {" - "} {discount.endDate}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                ))
+              ) : (null)}
             </Box>
           </Section>
         </Container>

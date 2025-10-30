@@ -22,6 +22,8 @@ import {
 } from "@mui/icons-material";
 import { red } from "@mui/material/colors";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
+import { Fragment } from "react";
 export default function SidebarMenu({
   selected,
   setSelected,
@@ -31,6 +33,7 @@ export default function SidebarMenu({
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [openWbpoint, setOpenWbpoint] = useState(false);
   const handleClick = (path: string) => {
     navigate(`/profileUser/${path}`);
   };
@@ -41,15 +44,20 @@ export default function SidebarMenu({
     { label: `${(t('page.profileUser.profileSection.acccountItem.item4'))}`, path: "info/invoice" },
     { label: `${(t('page.profileUser.profileSection.acccountItem.item5'))}`, path: "info/privileges" },
   ];
-
+  //  submenu cho account-wbpoint
+  const wbpointItems = [
+    { label: "Trang chủ", path: "account-wbpoint/overview" },
+    { label: "Lịch sử sử dụng Wb-Point", path: "account-wbpoint/history" },
+    // { label: t('page.profileUser.profileSection.wbpointItem.item3'), path: "account-wbpoint/redeem" },
+  ];
   const otherItems = [
-    {label: `${(t('page.profileUser.profileSection.otherItem.item1'))}`,icon: <LocalShipping />, path:"orders"},
-    {label: `${(t('page.profileUser.profileSection.otherItem.item2'))}`,icon: <CardGiftcard />, path:"vouchers"},
-    {label: `${(t('page.profileUser.profileSection.otherItem.item3'))}`,icon: <LocalOffer />, path:"account-fpoint"},
-    {label: `${(t('page.profileUser.profileSection.otherItem.item4'))}`,icon: <Notifications />, path:"notifications"},
-    {label: `${(t('page.profileUser.profileSection.otherItem.item5'))}`,icon: <Favorite />, path:"wishlist"},
-    {label: `${(t('page.profileUser.profileSection.otherItem.item6'))}`,icon: <MenuBook />, path:"book-series"},
-    {label: `${(t('page.profileUser.profileSection.otherItem.item7'))}`,icon: <RateReview />, path:"review"},
+    { label: `${(t('page.profileUser.profileSection.otherItem.item1'))}`, icon: <LocalShipping />, path: "orders" },
+    { label: `${(t('page.profileUser.profileSection.otherItem.item2'))}`, icon: <CardGiftcard />, path: "vouchers" },
+    { label: `${(t('page.profileUser.profileSection.otherItem.item3'))}`, icon: <LocalOffer /> },
+    { label: `${(t('page.profileUser.profileSection.otherItem.item4'))}`, icon: <Notifications />, path: "notifications" },
+    { label: `${(t('page.profileUser.profileSection.otherItem.item5'))}`, icon: <Favorite />, path: "wishlist" },
+    { label: `${(t('page.profileUser.profileSection.otherItem.item6'))}`, icon: <MenuBook />, path: "book-series" },
+    { label: `${(t('page.profileUser.profileSection.otherItem.item7'))}`, icon: <RateReview />, path: "review" },
   ];
   const userName = JSON.parse(localStorage.getItem("userDetails") || "{}");
   return (
@@ -131,25 +139,73 @@ export default function SidebarMenu({
             ))}
           </List>
         </Collapse>
-        {/* Other menu */}
-        {otherItems.map((item, idx) => (
-          <ListItemButton
-            key={idx}
-            sx={{ pl: 1.5 }}
-            onClick={() => {
-                setSelected(item.label)
-                handleClick(item.path)
-            }}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText
-              primary={item.label}
-              primaryTypographyProps={{
-                color: selected === item.label ? red[700] : "inherit",
+        {/* --- Other section --- */}
+        {otherItems.map((item, idx) => {
+          if (item.label === t('page.profileUser.profileSection.otherItem.item3')) {
+            // 👇 nhóm xổ xuống cho account-wbpoint
+            return (
+              <Fragment key={idx}>
+                <ListItemButton onClick={() => setOpenWbpoint(!openWbpoint)} sx={{ pl: 1.5 }}>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontWeight: "medium",
+                      color: openWbpoint ? red[700] : "inherit",
+                    }}
+                  />
+                  {openWbpoint ? (
+                    <ExpandLess sx={{ color: "#d70018" }} />
+                  ) : (
+                    <ExpandMore />
+                  )}
+                </ListItemButton>
+                <Collapse in={openWbpoint} timeout="auto" unmountOnExit>
+                  <List disablePadding sx={{ pl: 4 }}>
+                    {wbpointItems.map((sub) => (
+                      <ListItemButton
+                        key={sub.path}
+                        sx={{ py: 0.5 }}
+                        onClick={() => {
+                          setSelected(sub.label);
+                          handleClick(sub.path);
+                        }}
+                      >
+                        <ListItemText
+                          primary={sub.label}
+                          primaryTypographyProps={{
+                            fontSize: 14,
+                            color: selected === sub.label ? red[700] : "inherit",
+                          }}
+                        />
+                      </ListItemButton>
+                    ))}
+                  </List>
+                </Collapse>
+              </Fragment>
+            );
+          }
+
+          // còn lại render bình thường
+          return (
+            <ListItemButton
+              key={idx}
+              sx={{ pl: 1.5 }}
+              onClick={() => {
+                setSelected(item.label);
+                handleClick(item.path);
               }}
-            />
-          </ListItemButton>
-        ))}
+            >
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText
+                primary={item.label}
+                primaryTypographyProps={{
+                  color: selected === item.label ? red[700] : "inherit",
+                }}
+              />
+            </ListItemButton>
+          );
+        })}
       </List>
     </Box>
   );

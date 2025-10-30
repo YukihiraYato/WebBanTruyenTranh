@@ -20,13 +20,20 @@ export interface DiscountType {
   startDate: string;
   endDate: string;
   isActive: boolean;
-}
 
+}
+export type DiscountSelections = {
+  ORDER?: DiscountType;
+  CATEGORY?: DiscountType;
+  BOOK?: DiscountType;
+  [key: string]: DiscountType | undefined;
+
+};
 interface DiscountContextType {
   listDiscount: DiscountType[];
-  listDiscountChosen?: DiscountType[];
+  listDiscountChosen?: DiscountSelections[];
   fetchDiscount: () => void;
-  setListDiscountChosen?: (discounts: DiscountType[]) => void;
+  setListDiscountChosen?: (discounts: DiscountSelections[]) => void;
 }
 
 const DiscountContext = createContext<DiscountContextType | null>(null);
@@ -39,7 +46,7 @@ export const useDiscount = () => {
 
 export function DiscountProvider({ children }: { children: React.ReactNode }) {
   const [listDiscount, setListDiscount] = useState<DiscountType[]>([]);
-  const [listDiscountChosen, setListDiscountChosen] = useState<DiscountType[]>([]);
+  const [listDiscountChosen, setListDiscountChosen] = useState<DiscountSelections[]>([]);
   const fetchDiscount = async () => {
     try {
       const resUserDetails = await getUserDetails();

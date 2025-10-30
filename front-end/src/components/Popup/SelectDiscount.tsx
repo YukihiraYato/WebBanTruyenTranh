@@ -6,52 +6,83 @@ import {
     Button,
     Typography,
     Box,
-    Divider,
 } from "@mui/material";
-import DiscountCard from "~/components/Discount"; // component ở trên
+import DiscountCard from "~/components/Discount";
 import { useDiscount } from "~/providers/DiscountProvider";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { DiscountSelections } from "~/providers/DiscountProvider";
 interface SelectDiscountProps {
     open: boolean;
     onClose: () => void;
     totalPrice: number;
     setTotalPrice?: (price: number) => void;
+
 }
+
 type Discount = {
-  discountId: number;
-  code: string;
-  title: string;
-  description: string;
-  discountType: string;
-  value: number;
-  targetType: string;
-  minOrderAmount: number;
-  usageLimit: number;
-  useCount: number;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
+    discountId: number;
+    code: string;
+    title: string;
+    description: string;
+    discountType: string;
+    value: number;
+    targetType: string;
+    minOrderAmount: number;
+    usageLimit: number;
+    useCount: number;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+
 };
-export default function SelectDiscountPopup({ open, onClose, totalPrice, setTotalPrice }: SelectDiscountProps) {
-    const { listDiscount } = useDiscount();
-     const [apply, setApplied] = useState(false);
-    // Demo dữ liệu
-    const orderDiscounts = listDiscount.filter((d: Discount) => d.targetType === "ORDER");
-    const categoryDiscounts = listDiscount.filter((d: Discount) => d.targetType === "CATEGORY");
-    const bookDiscounts = listDiscount.filter((d: Discount) => d.targetType === "BOOK");
 
 
-    // Render 1 section
-    const renderSection = (title: string, items: any[]) => (
+
+export default function SelectDiscountPopup({
+    open,
+    onClose,
+    totalPrice,
+    setTotalPrice,
+}: SelectDiscountProps) {
+    const { listDiscount, setListDiscountChosen } = useDiscount();
+    const [selectedDiscounts, setSelectedDiscounts] = useState<DiscountSelections>({});
+
+    const groupedDiscounts = {
+        ORDER: listDiscount.filter(d => d.targetType === "ORDER"),
+        CATEGORY: listDiscount.filter(d => d.targetType === "CATEGORY"),
+        BOOK: listDiscount.filter(d => d.targetType === "BOOK"),
+    };
+
+    const handleSelectDiscount = (discount: Discount) => {
+        setSelectedDiscounts(prev => {
+            const isSelected = prev[discount.targetType] === discount;
+            return {
+                ...prev,
+                [discount.targetType]: isSelected ? undefined : discount
+            };
+        });
+    };
+
+    useEffect(() => {
+        const selectedList: DiscountSelections[] = [];
+
+        Object.entries(selectedDiscounts).forEach(([type, discount]) => {
+            const all = [...groupedDiscounts.ORDER, ...groupedDiscounts.CATEGORY, ...groupedDiscounts.BOOK];
+            const found = all.find(d => d === discount);
+            if (found) selectedList.push({
+                [found.targetType]: found
+            });
+        });
+
+        setListDiscountChosen(selectedList);
+
+    }, [selectedDiscounts]);
+
+    const renderSection = (title: string, items: Discount[], type: keyof DiscountSelections) => (
         <Box mb={3}>
-            <Typography variant="subtitle1" fontWeight="bold" mb={1} >
+            <Typography variant="subtitle1" fontWeight="bold" mb={1}>
                 {title}
-                <Typography
-                    component="span"
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ marginLeft: 1, fontWeight: "normal" }}
-                >
+                <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
                     (Áp dụng tối đa: 1)
                 </Typography>
             </Typography>
@@ -60,13 +91,20 @@ export default function SelectDiscountPopup({ open, onClose, totalPrice, setTota
                     display: "flex",
                     flexDirection: "column",
                     gap: 1.5,
-                    maxHeight: 300, // chỉ cho thấy khoảng 3 cái
+                    maxHeight: 300,
                     overflowY: "auto",
                     pr: 1,
                 }}
             >
                 {items.map((d, i) => (
-                    <DiscountCard key={i} {...d} totalPrice={totalPrice} setTotalPrice={setTotalPrice} apply={apply} setApplied={setApplied} />
+                    <DiscountCard
+                        key={i}
+                        {...d}
+                        totalPrice={totalPrice}
+                        setTotalPrice={setTotalPrice}
+                        isSelected={selectedDiscounts[type] === d}
+                        onSelect={() => handleSelectDiscount(d)}
+                    />
                 ))}
             </Box>
         </Box>
@@ -74,26 +112,25 @@ export default function SelectDiscountPopup({ open, onClose, totalPrice, setTota
 
     return (
         <Dialog
+            open={open}
+            onClose={onClose}
+            fullWidth
             PaperProps={{
                 sx: {
-                    borderRadius: "15px", // bo góc rõ ràng
-                    overflow: "hidden",   // tránh content tràn ra
-
+                    borderRadius: "15px",
+                    overflow: "hidden",
                 },
             }}
-            open={open} onClose={onClose} fullWidth >
+        >
             <DialogTitle>CHỌN MÃ KHUYẾN MÃI</DialogTitle>
-
             <DialogContent>
-                {/* Ô nhập mã */}
-                <Box display="flex" gap={1} >
+                <Box display="flex" gap={1} mb={2}>
                     <TextField sx={{ minWidth: "420px" }} size="small" placeholder="Nhập mã khuyến mãi/Quà tặng" />
                     <Button variant="contained">Áp dụng</Button>
                 </Box>
-                {/* Các section */}
-                {renderSection("Mã giảm giá cho Đơn hàng", orderDiscounts)}
-                {renderSection("Mã giảm giá theo Danh mục", categoryDiscounts)}
-                {renderSection("Mã giảm giá theo Sách", bookDiscounts)}
+                {renderSection("Mã giảm giá cho Đơn hàng", groupedDiscounts.ORDER, "ORDER")}
+                {renderSection("Mã giảm giá theo Danh mục", groupedDiscounts.CATEGORY, "CATEGORY")}
+                {renderSection("Mã giảm giá theo Sách", groupedDiscounts.BOOK, "BOOK")}
             </DialogContent>
         </Dialog>
     );

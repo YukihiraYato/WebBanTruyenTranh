@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { createPaypalOrder, capturePaypalOrder } from "../../api/paypal/paypal";
-import {useCart} from "~/providers/CartProvider";
-import {  CartItemPropertyResponseDTO } from "~/types/cart";
+import { createPaypalOrder, capturePaypalOrder } from "../../../api/paypal/paypalWbPoint";
+import { CreatePaypalWbPointOrderRequest } from "../../../api/paypal/paypalWbPoint";
 import { useNavigate } from "react-router-dom";
 // Renders errors or successfull transactions on the screen.
 
 
-function PaypalButton() {
+function PaypalButtonForWbPoint() {
   const initialOptions = {
     clientId:
       "Aa-9ggxNwr1hDP9KlMnVuCvFKjtdVbqNCQh7gFgkux5JKAQRC1q-y248PZTbbjpXi2OuZW0bJPKb8gLU",
@@ -24,22 +23,25 @@ function PaypalButton() {
 
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
-  const { removeItem } = useCart();
-  const selectBooks = JSON.parse(localStorage.getItem("selectedBooks") || "[]");
+  const selectedTopUp = JSON.parse(localStorage.getItem("selectedTopUp") || "{}");
   return (
     <div className="App">
       <PayPalScriptProvider options={initialOptions}>
         <PayPalButtons
           fundingSource="paypal"
+
           style={{
-            shape: "rect",
-            layout: "vertical",
+            shape: "pill",
+            layout: "horizontal",
             color: "gold",
             label: "paypal",
+            disableMaxWidth: false,
+            height: 40,
+
           }}
           createOrder={async () => {
             try {
-              const orderData = await createPaypalOrder(selectBooks);
+              const orderData = await createPaypalOrder(selectedTopUp as CreatePaypalWbPointOrderRequest);
               console.log("Order data:", orderData);
               if (orderData.id) {
                 return orderData.id;
@@ -58,7 +60,7 @@ function PaypalButton() {
           }}
           onApprove={async (data, actions) => {
             try {
-              const orderData = await capturePaypalOrder(data.orderID);
+              const orderData = await capturePaypalOrder(selectedTopUp as CreatePaypalWbPointOrderRequest, data.orderID);
               console.log("Capture result", orderData);
               // Three cases to handle:
               //   (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
@@ -79,12 +81,9 @@ function PaypalButton() {
               } else {
                 // (3) Successful transaction -> Show confirmation or thank you message
                 // Or go to another URL:  actions.redirect('thank_you.html');
-               selectBooks.forEach((book: CartItemPropertyResponseDTO) => {
-                  removeItem?.(book.productId.toString());
-                });
-                localStorage.removeItem("selectedBooks");
 
-                navigate("/profileUser/orders")
+                localStorage.removeItem("selectedTopUp");
+                window.location.href = "/profileUser/account-wbpoint";
               }
             } catch (error) {
               console.error(error);
@@ -95,9 +94,9 @@ function PaypalButton() {
           }}
         />
       </PayPalScriptProvider>
-     
+
     </div>
   );
 }
 
-export default PaypalButton;
+export default PaypalButtonForWbPoint;
