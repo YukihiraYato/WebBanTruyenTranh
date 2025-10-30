@@ -84,7 +84,10 @@ const API_ENDPOINTS = {
     },
     DISCOUNT: {
       GET: (userId: number) => `/api/discount/user/${userId}`,
-    }
+    },
+    WB_POINT: {
+      GET: (userId: number) => `/user-point/get/user?userId=${userId}`,
+    },
 
   },
   CART: {
@@ -95,6 +98,10 @@ const API_ENDPOINTS = {
   PAYPAL: {
     CREATE_ORDER: "/paypal/api/orders",
     CAPTURE_ORDER: (orderId: string) => `/paypal/api/orders/${orderId}/capture`,
+    WB_POINT:{
+      CREATE_ORDER: "/user-point-paypal/orders",
+      CAPTURE_ORDER:(orderId: string) => `/user-point-paypal/orders/${orderId}/capture`,
+    }
   },
   ORDER: {
     CREATE: "/api/orders",
@@ -107,6 +114,11 @@ const API_ENDPOINTS = {
     },
     CANCEL: (orderId: string) => `/api/orders/${orderId}/cancel`,
   },
+  REDEEM_REWARD:{
+      GET: (page: number, size: number) => {
+        return `/api/redeem-reward?page=${page}&size=${size}`;
+      },
+  }
 };
 
 export default API_ENDPOINTS;

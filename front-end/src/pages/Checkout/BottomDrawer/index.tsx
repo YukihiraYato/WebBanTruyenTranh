@@ -20,7 +20,8 @@ import { useCart } from "~/providers/CartProvider";
 import { CartItemPropertyResponseDTO } from "~/types/cart";
 import { useTranslation } from "react-i18next";
 import { AddressResponseDTO } from "~/types/user";
-
+import { useDiscount } from "~/providers/DiscountProvider";
+import { DiscountType } from "~/providers/DiscountProvider";
 export function BottomDrawer({
   sx = undefined,
   totalPrice = 0,
@@ -32,6 +33,15 @@ export function BottomDrawer({
   paymentMethod?: string;
   listAddress?: AddressResponseDTO[];
 }) {
+  const { listDiscountChosen } = useDiscount();
+  const discountObject = listDiscountChosen?.[0] ?? {};
+  const listDiscount = Object.values(discountObject) as DiscountType[];
+  const discountId = listDiscount.reduce((acc, discount) => {
+    if (discount?.discountId) {
+      acc.push(discount.discountId);
+    }
+    return acc;
+  }, [] as number[]);
   const selectedBooksId = JSON.parse(
     localStorage.getItem("selectedBooksId") || "[]"
   );
@@ -42,7 +52,7 @@ export function BottomDrawer({
   const { t } = useTranslation();
 
   const [showPaypal, setShowPaypal] = useState(false);
-
+  const amountDiscounted = localStorage.getItem("amountDiscounted");
   function handelCreateOrder() {
     if (!listAddress || listAddress.length === 0) {
       alert(
@@ -56,6 +66,7 @@ export function BottomDrawer({
     createOrder({
       paymentMethodId: 1,
       selectedProductIds: selectedBooksId,
+      listDiscountIds: discountId 
     })
       .then(() => {
         selectBooks.forEach((book: CartItemPropertyResponseDTO) => {
@@ -105,18 +116,20 @@ export function BottomDrawer({
               </Typography>
             </Box>
           </Box>
-          <Box display={"flex"} justifyContent={"flex-end"}>
-            <Box width={400} textAlign={"right"}>
-              <Typography sx={{ fontSize: 14 }}>
-                {t("page.checkout.content.bottomDrawer.item2")}
-              </Typography>
+          {amountDiscounted && (
+            <Box display={"flex"} justifyContent={"flex-end"}>
+              <Box width={400} textAlign={"right"}>
+                <Typography sx={{ fontSize: 14 }}>
+                  {t("page.checkout.content.bottomDrawer.item2")}
+                </Typography>
+              </Box>
+              <Box width={200} textAlign={"right"}>
+                <Typography sx={{ fontSize: 14 }}>
+                  {"-"}{amountDiscounted + " đ"}
+                </Typography>
+              </Box>
             </Box>
-            <Box width={200} textAlign={"right"}>
-              <Typography sx={{ fontSize: 14 }}>
-                {(32000).toLocaleString("vi-VN") + " đ"}
-              </Typography>
-            </Box>
-          </Box>
+          )}
           <Box display={"flex"} justifyContent={"flex-end"}>
             <Box width={400} textAlign={"right"}>
               <Typography sx={{ fontWeight: 700 }}>
@@ -127,7 +140,11 @@ export function BottomDrawer({
               <Typography
                 sx={{ fontWeight: 700, fontSize: 18, color: red["900"] }}
               >
-                {(totalPrice + 32000).toLocaleString("vi-VN") + " đ"}
+                {amountDiscounted
+                  ? (
+                      totalPrice - parseInt(amountDiscounted, 10)
+                    ).toLocaleString("vi-VN") + " đ"
+                  : totalPrice.toLocaleString("vi-VN") + " đ"}
               </Typography>
             </Box>
           </Box>

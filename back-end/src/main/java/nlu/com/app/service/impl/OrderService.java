@@ -55,13 +55,14 @@ public class OrderService implements IOrderService {
   OrderMapper orderMapper;
   UserAddressRepository userAddressRepository;
   OrderTimelineRepository orderTimelineRepository;
+  DiscountRepository discountRepository;
   private  SimpMessagingTemplate simpMessagingTemplate;
   // Định dạng ngày tháng theo mẫu: 23 th4, 2025 - 09:40 AM
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("d 'th'M, yyyy - hh:mm a");
 
   @Override
   @Transactional
-  public OrderResponseDTO createOrderFromCart(List<Long> selectedProductIds, Long paymentMethodId) {
+  public OrderResponseDTO createOrderFromCart(List<Long> selectedProductIds, Long paymentMethodId, List<Long> listDiscountIds) {
     String username = SecurityUtils.getCurrentUsername();
     if (username == null) {
       throw new ApplicationException(ErrorCode.UNAUTHENTICATED);
@@ -120,7 +121,7 @@ public class OrderService implements IOrderService {
     order.setStatus(EOrderStatus.PENDING_CONFIRMATION);
     order.setPendingConfirmationDate(LocalDateTime.now());
     double totalAmount = 0.0;
-
+    double amountDecrease = 0.0;
     List<OrderItem> orderItems = new ArrayList<>();
     for (CartItem cartItem : cart.getItems()) {
       Long productId = Long.parseLong(cartItem.getProductId());
@@ -131,7 +132,7 @@ public class OrderService implements IOrderService {
 
       double finalPricePerItem = price * (1 - discount / 100.0);
       double totalFinalPrice = finalPricePerItem * quantity;
-
+// Sẽ xử lý discount theo Book sau
       OrderItem orderItem = new OrderItem();
       orderItem.setOrder(order);
       orderItem.setBook(book);
@@ -143,11 +144,36 @@ public class OrderService implements IOrderService {
       totalAmount += (totalFinalPrice);
       orderItems.add(orderItem);
     }
+//    Check discount nếu người dùng có xài
+//    Th discount theo order
+      if(listDiscountIds != null && listDiscountIds.size() > 0){
+        List<UserDiscountUsage> userDiscountUsages = user.getUsedDiscounts();
+        for(Long discountId : listDiscountIds){
+          Discount discount = discountRepository.findById(discountId).get();
+            switch (discount.getDiscountType()){
+              case PERCENT:
+                double discountPercent = discount.getValue();
+                amountDecrease = totalAmount*discountPercent;
+                totalAmount = totalAmount - totalAmount*discountPercent;
+                break;
+              case FIXED:
+                double discountAmount = discount.getValue();
+                amountDecrease = discountAmount;
+                totalAmount = totalAmount - discountAmount;
+                break;
+            }
+            UserDiscountUsage userDiscountUsage = new UserDiscountUsage();
+            userDiscountUsage.setUser(user);
+            userDiscountUsage.setDiscount(discount);
+            userDiscountUsages.add(userDiscountUsage);
+        }
 
+      }
+      userRepository.save(user);
+    order.setAmountDecrease(amountDecrease);
     order.setOrderItems(orderItems);
     order.setTotalAmount(totalAmount);
     order.setAddress(defaultAddressOpt.get().getAddress());
-
     // Set payment method
     PaymentMethod paymentMethod = paymentMethodRepository.findById(paymentMethodId)
         .orElseThrow(() -> new ApplicationException(ErrorCode.UNKNOWN_EXCEPTION));

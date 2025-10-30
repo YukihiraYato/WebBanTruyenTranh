@@ -34,7 +34,7 @@ public class OrderController {
   public AppResponse<OrderResponseDTO> createOrder(@RequestBody CreateOrderRequest request) {
     return AppResponse.<OrderResponseDTO>builder().result(
         orderService.createOrderFromCart(request.getSelectedProductIds(),
-            request.getPaymentMethodId())).build();
+            request.getPaymentMethodId(), request.getListDiscountIds())).build();
   }
 
   @GetMapping()

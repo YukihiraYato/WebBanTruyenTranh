@@ -7,6 +7,7 @@ import nlu.com.app.constant.EDiscountType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -51,12 +52,13 @@ public class Discount {
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UserDiscountUsage> userUsages ;
+    private List<UserDiscountUsage> userUsages = new ArrayList<>();
 
     @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<DiscountOrders> discountOrders;
+    private List<DiscountOrders> discountOrders = new ArrayList<>();
 
-
+    @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<DiscountBooks> discountBooks = new ArrayList<>();
 
 
 

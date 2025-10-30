@@ -6,7 +6,7 @@ import AddressBook from "./ProfileSections/AddressBook";
 import ChangePassword from "./ProfileSections/ChangePassword";
 import InvoiceInfo from "./ProfileSections/InvoiceInfo";
 import Privileges from "./ProfileSections/Privileges";
-
+import WbPoint from "./WbPoint";
 import BookSeries from "./PageOther/BookSeries";
 import NotificationList from "./Nofitication";
 import OrderList from "./MyOrder";
@@ -46,6 +46,7 @@ export function ProfileUser() {
           />
           <Route path="notifications" element={<NotificationList />} />
           <Route path="orders" element={<OrderList />} />
+          <Route path="account-wbpoint/overview" element={<WbPoint />} />
           <Route path="*" element={<div>Chưa có nội dung</div>} />
         </Routes>
       </Box>

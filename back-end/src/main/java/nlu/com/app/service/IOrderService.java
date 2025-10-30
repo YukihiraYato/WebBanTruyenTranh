@@ -16,7 +16,7 @@ import org.springframework.data.domain.Pageable;
  */
 public interface IOrderService {
 
-  OrderResponseDTO createOrderFromCart(List<Long> selectedProductIds, Long paymentMethodId);
+  OrderResponseDTO createOrderFromCart(List<Long> selectedProductIds, Long paymentMethodId, List<Long> listDiscountIds);
 
   Page<OrderResponseDTO> getOrdersWithPagination(Pageable pageable);
   Page<OrderDetailsResponseDTO> getOrdersWithPagination_ForAdmin(Pageable pageable);

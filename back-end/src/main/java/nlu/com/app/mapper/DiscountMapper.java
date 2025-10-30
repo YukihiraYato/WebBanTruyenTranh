@@ -4,7 +4,9 @@ import nlu.com.app.constant.EDiscountTarget;
 import nlu.com.app.constant.EDiscountType;
 import nlu.com.app.dto.request.CreateDiscountRequestDTO;
 import nlu.com.app.dto.response.DiscountResponseDTO;
+import nlu.com.app.entity.Book;
 import nlu.com.app.entity.Discount;
+import nlu.com.app.entity.DiscountBooks;
 import org.mapstruct.*;
 import org.springframework.boot.autoconfigure.web.format.DateTimeFormatters;
 import org.springframework.data.domain.Page;
@@ -59,6 +61,7 @@ public interface DiscountMapper {
     @Mapping(target = "usageLimit", source = "discount.usageLimit")
     @Mapping(target = "useCount", source = "discount.useCount")
     @Mapping(target = "isActive", source = "discount.isActive")
+    @Mapping(target = "booksId", source = "discount.discountBooks", qualifiedByName = "convertToBookId")
     DiscountResponseDTO mapToDiscountResponseDTO(Discount discount);
     default Page<DiscountResponseDTO> maptoPageDTO(Page<Discount> discountPage){
         return discountPage.map(this :: mapToDiscountResponseDTO);
@@ -78,6 +81,10 @@ public interface DiscountMapper {
     @Named("mapDiscountTargetTypeToString")
     default String mapDiscountTargetTypeToString(EDiscountTarget discountType){
         return discountType.toString();
+    }
+    @Named("convertToBookId")
+    default List<Long> convertToBookId(List<DiscountBooks> discountBooks){
+        return discountBooks.stream().map(DiscountBooks::getBook).map(Book::getBookId).collect(Collectors.toList());
     }
 
 }

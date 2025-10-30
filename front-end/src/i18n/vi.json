@@ -189,13 +189,13 @@
           "section": "Kiểm tra lại đơn hàng"
         },
         "discount": {
-          "section": " Mã khuyến mãi / mã quà tặng",
+          "section": " Mã khuyến mãi / mã quà tặng đã áp dụng nếu có",
           "item1": "Mã KM / Quà tặng",
           "item2": "Chọn mã khuyến mãi"
         },
         "bottomDrawer": {
           "item1": "Thành tiền",
-          "item2": "Phí vận chuyển",
+          "item2": "Số tiền giảm giá",
           "item3": "Tổng tiền",
           "item4": "Tôi đồng ý với điều khoản sử dụng của trang web",
           "item5": " Xác nhận thanh toán"
@@ -215,7 +215,7 @@
           "item0": "Thông tin tài khoản",
           "item1": "Đơn hàng của tôi",
           "item2": "Ví voucher",
-          "item3": "Tài khoản F-Point / Freeship",
+          "item3": "Tài khoản Wb-Point",
           "item4": "Thông Báo",
           "item5": "Sản phẩm yêu thích",
           "item6": "Sách theo bộ",

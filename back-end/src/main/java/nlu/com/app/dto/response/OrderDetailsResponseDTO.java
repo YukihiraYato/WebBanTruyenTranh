@@ -23,7 +23,7 @@ public class OrderDetailsResponseDTO {
   String status;
   private AddressDto shippingAddress;
   private CustomerDTO customer;
-
+  private Double amountDecrease;
   @Data
   public static class CustomerDTO {
     private String user_id;

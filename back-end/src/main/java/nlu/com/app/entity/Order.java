@@ -44,6 +44,8 @@ public class Order {
   private double totalAmount;
   @Column(name = "note")
   private  String note;
+  @Column(name = "amountDecrease")
+  private Double amountDecrease;
   @ManyToOne
   @JoinColumn(name = "user_id")
   private User user;
