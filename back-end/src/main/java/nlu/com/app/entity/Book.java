@@ -1,15 +1,6 @@
 package nlu.com.app.entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -72,6 +63,8 @@ public class Book {
   private LocalDateTime updatedAt;
   @Column(name = "genre", columnDefinition = "TEXT")
   private String genre;
+  @Column(name = "wb_point")
+  private Double wbPoint;
   @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookImage> images = new ArrayList<>();
 
@@ -82,5 +75,7 @@ public class Book {
 //  @ManyToOne
 //  @JoinColumn(name = "genre_id")
 //  private Genre genre;
+
+
 }
 

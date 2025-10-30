@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.Setter;
-
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Getter
@@ -24,4 +24,5 @@ public class DiscountResponseDTO {
     private String startDate;
     private String endDate;
     private Boolean isActive ;
+    private List<Long> booksId;
 }

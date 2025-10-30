@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -19,26 +20,22 @@ public class UserPointHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
-    // ===== Quan hệ tới order (có thể null) =====
-    @Column(name = "order_id")
-    private Long orderId;
-
     // ===== Số điểm thay đổi (có thể âm hoặc dương) =====
     @Column(name = "points_change", nullable = false)
-    private Integer pointsChange;
+    private Double pointsChange;
 
     // ===== Mô tả lý do thay đổi điểm =====
     @Column(name = "description", length = 255)
     private String description;
 
     // ===== Thời điểm tạo =====
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
 
     // ===== Quan hệ tới user =====
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "user_point_id", nullable = false)
+    private UserPoint userPoint;
 }

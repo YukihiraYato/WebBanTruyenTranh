@@ -1,13 +1,10 @@
-package nlu.com.app.controller;
+package nlu.com.app.controller.paypal;
 
-import aj.org.objectweb.asm.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paypal.sdk.PaypalServerSdkClient;
-import com.paypal.sdk.controllers.OrdersController;
 import com.paypal.sdk.exceptions.ApiException;
 import com.paypal.sdk.http.response.ApiResponse;
 import com.paypal.sdk.models.*;
-import lombok.RequiredArgsConstructor;
 import nlu.com.app.dto.paypal.ListBookChosenPayPalRequestDTO;
 import nlu.com.app.entity.Discount;
 import nlu.com.app.repository.DiscountRepository;
@@ -19,8 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 @RestController
 @RequestMapping("/paypal")

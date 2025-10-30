@@ -6,11 +6,15 @@ import jakarta.persistence.Table;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import nlu.com.app.dto.json.RedeemRewardJson;
+import nlu.com.app.dto.response.RedeemRewardResponseDTO;
 import nlu.com.app.entity.RedeemReward;
 import nlu.com.app.entity.RedeemRewardImages;
+import nlu.com.app.mapper.RedeemRewardMapper;
 import nlu.com.app.repository.RedeemRepository;
 import nlu.com.app.service.RedeemRewardService;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +28,7 @@ import java.util.List;
 public class RedeemRewardServiceImpl implements RedeemRewardService {
     private final ObjectMapper objectMapper;
     private final RedeemRepository redeemRepository;
+    private final RedeemRewardMapper redeemRewardMapper;
     @Override
     public void initData() {
 
@@ -84,5 +89,19 @@ public class RedeemRewardServiceImpl implements RedeemRewardService {
             throw new RuntimeException("❌ Failed to read RedeemReward.json", e);
         }
     }
+
+    @Override
+    public Page<RedeemRewardResponseDTO> getRedeemRewards(int page, int size) {
+    try{
+        Page<RedeemReward> listRedeemReward = redeemRepository.findAll(PageRequest.of(page, size));
+        Page<RedeemRewardResponseDTO> redeemRewardResponseDTOS = listRedeemReward.map(reward ->{
+            return redeemRewardMapper.toRedeemRewardResponseDTO(reward);
+        });
+        return redeemRewardResponseDTOS;
+    } catch (Exception e) {
+        throw new RuntimeException(e);
+    }
+    }
+
 
 }

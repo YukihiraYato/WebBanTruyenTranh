@@ -8,7 +8,8 @@ import lombok.NoArgsConstructor;
 import nlu.com.app.constant.EUserRank;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,7 +24,7 @@ public class UserPoint {
     @Column(name = "user_point_id")
     private Long userPointId;
     @Column(name = "total_point")
-    private Long totalPoint;
+    private Double totalPoint;
     @Column(name = "user_rank")
     @Enumerated(EnumType.STRING)
     private EUserRank userRank;
@@ -39,4 +40,8 @@ public class UserPoint {
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToMany(mappedBy = "userPoint", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserPointHistory> userPointHistories = new ArrayList<>();
+    
 }

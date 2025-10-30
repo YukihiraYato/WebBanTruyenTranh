@@ -20,14 +20,32 @@ public interface OrderMapper {
   // ========== BASIC ORDER DTO ==========
   @Mapping(source = "paymentMethod.methodName", target = "paymentMethodName", qualifiedByName = "enumToString")
   @Mapping(source = "status", target = "status", qualifiedByName = "orderStatusToString")
-  @Mapping(source = "orderItems", target = "items")
+  @Mapping(source = "orderItems", target = "items", qualifiedByName = "mapToOrderItemsDTO")
   @Mapping(target = "shippingAddress", source = "address")
   @Mapping(source ="order", target = "timeFor5StatusOrder", qualifiedByName = "mapTimeFor5StatusOrder")
   OrderResponseDTO toOrderResponseDTO(Order order);
 
   // ========== ORDER ITEM MAPPING ==========
   @Named("mapToOrderItemsDTO")
-  default List<OrderDetailsResponseDTO.OrderItemDTO> mapOrderItemsDTO(List<OrderItem> orderItems) {
+  default List<OrderResponseDTO.OrderItemDTO> mapOrderItemsDTO(List<OrderItem> orderItems) {
+    List<OrderResponseDTO.OrderItemDTO> orderItemDTOS = new ArrayList<>();
+    for (OrderItem orderItem : orderItems) {
+      OrderResponseDTO.OrderItemDTO dto = new OrderResponseDTO.OrderItemDTO();
+      dto.setImg(orderItem.getBook().getImages().stream()
+              .filter(img -> img.isThumbnail() && img.getImageUrl() != null && !img.getImageUrl().isEmpty())
+              .map(BookImage::getImageUrl)
+              .findFirst()
+              .orElse(null));
+      dto.setBookTitle(orderItem.getBook().getTitle());
+      dto.setPrice(orderItem.getPrice());
+      dto.setQuantity(orderItem.getQuantity());
+      dto.setDiscount(orderItem.getDiscountPercentage());
+      orderItemDTOS.add(dto);
+    }
+    return orderItemDTOS;
+  }
+  @Named("mapToOrderItemsDTOForOrderDetails")
+  default List<OrderDetailsResponseDTO.OrderItemDTO> mapOrderItemsDTOForDetails(List<OrderItem> orderItems) {
     List<OrderDetailsResponseDTO.OrderItemDTO> orderItemDTOS = new ArrayList<>();
     for (OrderItem orderItem : orderItems) {
       OrderDetailsResponseDTO.OrderItemDTO dto = new OrderDetailsResponseDTO.OrderItemDTO();
@@ -48,10 +66,11 @@ public interface OrderMapper {
   // ========== ORDER DETAILS DTO ==========
   @Mapping(source = "paymentMethod.methodName", target = "paymentMethodName", qualifiedByName = "enumToString")
   @Mapping(source = "status", target = "status", qualifiedByName = "orderStatusToString")
-  @Mapping(source = "orderItems", target = "items", qualifiedByName = "mapToOrderItemsDTO")
+  @Mapping(source = "orderItems", target = "items", qualifiedByName = "mapToOrderItemsDTOForOrderDetails")
   @Mapping(target = "shippingAddress", source = "address")
   @Mapping(target = "customer", source = "user", qualifiedByName = "toCustomerDTO")
   @Mapping(target = "statusCode", source = "status", qualifiedByName = "orderStatusToString_2")
+  @Mapping(target = "amountDecrease" , source = "amountDecrease")
   @Mapping(source ="order", target = "timeFor5StatusOrder", qualifiedByName = "mapTimeFor5StatusOrder")
   OrderDetailsResponseDTO toOrderDetailsResponseDTO(Order order);
 

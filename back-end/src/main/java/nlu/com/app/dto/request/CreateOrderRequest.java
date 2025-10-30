@@ -22,4 +22,5 @@ public class CreateOrderRequest {
 
   Long paymentMethodId;
   List<Long> selectedProductIds;
+  List<Long> listDiscountIds;
 }

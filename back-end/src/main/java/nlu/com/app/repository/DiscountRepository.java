@@ -23,4 +23,5 @@ public interface DiscountRepository extends JpaRepository<Discount, Long> {
     """, nativeQuery = true)
     List<Discount> findAvailableDiscountsForUser(@Param("userId") Long userId);
   List<Discount> findAllBy();
+  Optional<Discount> findByDiscountId(Long discountId);
 }
