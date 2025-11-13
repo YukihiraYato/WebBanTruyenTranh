@@ -15,5 +15,6 @@ import lombok.NoArgsConstructor;
 public class CartItem {
   private String productId;
   private int quantity;
+  private String typePurchase;
 }
 

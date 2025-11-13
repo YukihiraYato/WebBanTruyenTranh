@@ -6,6 +6,9 @@ import com.paypal.sdk.exceptions.ApiException;
 import com.paypal.sdk.http.response.ApiResponse;
 import com.paypal.sdk.models.*;
 import nlu.com.app.dto.paypal.ListBookChosenPayPalRequestDTO;
+import nlu.com.app.dto.request.CartItemRequestDTO;
+import nlu.com.app.dto.request.CreateOrderRequest;
+import nlu.com.app.dto.response.CartItemResponseDTO;
 import nlu.com.app.entity.Discount;
 import nlu.com.app.repository.DiscountRepository;
 import nlu.com.app.service.IOrderService;
@@ -34,20 +37,11 @@ public class PaypalController {
     }
 
     @PostMapping("/api/orders")
-    public ResponseEntity<Order> createOrder(@RequestBody Map<String, Object> requestBody) {
+    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {
         try {
-            List<ListBookChosenPayPalRequestDTO> listBookChosen =
-                    objectMapper.convertValue(
-                            requestBody.get("items"),
-                            new com.fasterxml.jackson.core.type.TypeReference<List<ListBookChosenPayPalRequestDTO>>() {}
-                    );
 
-            List<Long> listDiscountId = objectMapper.convertValue(
-                    requestBody.get("discountIds"),
-                    new com.fasterxml.jackson.core.type.TypeReference<List<Long>>() {}
-            );
 
-            Order order = createOrderForPaypal(listBookChosen, listDiscountId);
+            Order order = createOrderForPaypal(request);
             return new ResponseEntity<>(order, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
@@ -55,16 +49,24 @@ public class PaypalController {
         }
     }
 
-    private Order createOrderForPaypal(List<ListBookChosenPayPalRequestDTO> listBookChosen, List<Long> listDiscountId) throws IOException, ApiException {
-        bookIds = listBookChosen.stream().map(ListBookChosenPayPalRequestDTO::getProductId).toList();
-
-        List<Discount> discounts = discountRepository.findAllById(listDiscountId);
-
+    private Order createOrderForPaypal(CreateOrderRequest request) throws IOException, ApiException {
+        List<Discount> discounts = discountRepository.findAllById(request.getListDiscountIds());
+        List<CartItemResponseDTO.BookItemResponseDTO> listRequestBook = new ArrayList<>();
+        List<CartItemResponseDTO.RewardItemResponseDTO> listRequestRedeem = new ArrayList<>();
+        for (CartItemRequestDTO item : request.getItems()) {
+            if (item.getTypePurchase().equals("BOOK")) {
+                CartItemResponseDTO.BookItemResponseDTO book = objectMapper.convertValue(item.getItem(), CartItemResponseDTO.BookItemResponseDTO.class);
+                listRequestBook.add(book);
+            } else {
+                CartItemResponseDTO.RewardItemResponseDTO redeem = objectMapper.convertValue(item.getItem(), CartItemResponseDTO.RewardItemResponseDTO.class);
+                listRequestRedeem.add(redeem);
+            }
+        }
         // Danh sách các item đã chuyển đổi sang USD và làm tròn 2 chữ số sau dấu phẩy
         List<Item> items = new ArrayList<>();
         double itemTotalUSD = 0.0;
 
-        for (ListBookChosenPayPalRequestDTO item : listBookChosen) {
+        for (CartItemResponseDTO.BookItemResponseDTO item : listRequestBook) {
 //            Cần giới hạn lại đồ dài của tên sách do yêu cầu của Paypal khong cho phep quá 127 ky tự
             String itemName = item.getTitle();
             if (itemName.length() > 127) {
@@ -87,33 +89,65 @@ public class PaypalController {
                     .category(ItemCategory.PHYSICAL_GOODS)
                     .build());
         }
+        for (CartItemResponseDTO.RewardItemResponseDTO item : listRequestRedeem) {
+//            Cần giới hạn lại đồ dài của tên sách do yêu cầu của Paypal khong cho phep quá 127 ky tự
+            String itemName = item.getTitle();
+            if (itemName.length() > 127) {
+                itemName = itemName.substring(0, 124) + "...";
+            }
+            double unitPriceUSD = item.getPrice() / 26040.0;
+            unitPriceUSD = Math.round(unitPriceUSD * 100.0) / 100.0; // làm tròn 2 chữ số
 
-        itemTotalUSD = Math.round(itemTotalUSD * 100.0) / 100.0;
-        if(discounts.size() > 0 && discounts != null) {
+            double totalItemUSD = unitPriceUSD * item.getQuantity();
+            itemTotalUSD += totalItemUSD;
+
+            items.add(new Item.Builder(
+                    itemName,
+                    new Money("USD", String.format(Locale.US, "%.2f", unitPriceUSD)),
+
+                    String.valueOf(item.getQuantity())
+            )
+                    .sku(String.valueOf(item.getProductId()))
+                    .description(item.getTitle())
+                    .category(ItemCategory.PHYSICAL_GOODS)
+                    .build());
+        }
+        double amountDecreased = 0.0;
+        //        Kiểm tra có giảm giá theo ORDER ko
+        if (discounts != null && !discounts.isEmpty()) {
             for(Discount discount : discounts) {
-                Double disconutValue = discount.getValue();
+                Double discountValue = discount.getValue();
                 switch (discount.getDiscountType()) {
                     case PERCENT:
-                        itemTotalUSD = itemTotalUSD - (itemTotalUSD * discount.getValue());
+                        amountDecreased= (itemTotalUSD * discountValue);
                         break;
                     case FIXED:
-                        disconutValue = Math.round((disconutValue/ 26040.0) * 100.0) / 100.0;
-                        itemTotalUSD = itemTotalUSD - disconutValue;
+                        amountDecreased = Math.round((discountValue/ 26040.0) * 100.0) / 100.0;
                         break;
                 }
             }
+            amountDecreased = Math.round(amountDecreased * 100.0) / 100.0;
+       
+
         }
 
-        Money totalMoney = new Money("USD", String.format(Locale.US, "%.2f", itemTotalUSD));
+
+        double finalAmountUSD = itemTotalUSD -amountDecreased;
+
+
+
+        Money totalMoney = new Money("USD", String.format(Locale.US, "%.2f", finalAmountUSD));
 
         AmountBreakdown breakdown = new AmountBreakdown.Builder()
-                .itemTotal(totalMoney)
+                .itemTotal(new Money("USD", String.format(Locale.US, "%.2f", itemTotalUSD))) // tổng trước giảm
+                .discount(new Money("USD", String.format(Locale.US, "%.2f", amountDecreased))) // số tiền giảm
                 .build();
 
-        AmountWithBreakdown amount = new AmountWithBreakdown.Builder("USD", String.format(Locale.US, "%.2f", itemTotalUSD))
 
+        AmountWithBreakdown amount = new AmountWithBreakdown.Builder("USD", String.format(Locale.US, "%.2f", finalAmountUSD))
                 .breakdown(breakdown)
                 .build();
+
 
         PurchaseUnitRequest unit = new PurchaseUnitRequest.Builder(amount)
                 .items(items)
@@ -157,12 +191,10 @@ public class PaypalController {
     }
 
     @PostMapping("/api/orders/{orderID}/capture")
-    public ResponseEntity<Order> captureOrder(@PathVariable String orderID, @RequestBody Map<String, Object> requestBody) {
+    public ResponseEntity<Order> captureOrder(@PathVariable String orderID, @RequestBody CreateOrderRequest request) {
         try {
-            List<Long> listDiscountId = objectMapper.convertValue(requestBody.get("discountIds"),
-                    new com.fasterxml.jackson.core.type.TypeReference<List<Long>>() {})
-                    ;
-            Order order = captureOrders(orderID, listDiscountId);
+
+            Order order = captureOrders(orderID, request);
             return new ResponseEntity<>(order, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
@@ -170,10 +202,10 @@ public class PaypalController {
         }
     }
 
-    private Order captureOrders(String orderID, List<Long> listDiscountId) throws IOException, ApiException {
+    private Order captureOrders(String orderID , CreateOrderRequest request) throws IOException, ApiException {
         CaptureOrderInput input = new CaptureOrderInput.Builder(orderID, null).build();
         ApiResponse<Order> response = client.getOrdersController().captureOrder(input);
-        orderService.createOrderFromCart(bookIds, 4L, listDiscountId);
+        orderService.createOrderFromCart(request.getItems(), 4L, request.getListDiscountIds());
         return response.getResult();
     }
 }

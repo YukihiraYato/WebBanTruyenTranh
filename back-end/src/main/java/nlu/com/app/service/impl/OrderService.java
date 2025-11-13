@@ -8,18 +8,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import nlu.com.app.constant.EOrderStatus;
+import nlu.com.app.constant.EPaymentMethod;
 import nlu.com.app.dto.cart.Cart;
 import nlu.com.app.dto.cart.CartItem;
 import nlu.com.app.dto.filter.OrderFilter;
+import nlu.com.app.dto.request.CartItemRequestDTO;
 import nlu.com.app.dto.request.UpdateOrderStatus;
-import nlu.com.app.dto.response.OrderDetailsResponseDTO;
-import nlu.com.app.dto.response.OrderResponseDTO;
-import nlu.com.app.dto.response.TimelineOrderResponseDTO;
-import nlu.com.app.dto.response.TopSellingProductDTO;
+import nlu.com.app.dto.response.*;
 import nlu.com.app.dto.spec.OrderSpecifications;
 import nlu.com.app.entity.*;
 import nlu.com.app.exception.ApplicationException;
@@ -56,17 +58,44 @@ public class OrderService implements IOrderService {
   UserAddressRepository userAddressRepository;
   OrderTimelineRepository orderTimelineRepository;
   DiscountRepository discountRepository;
-  private  SimpMessagingTemplate simpMessagingTemplate;
+  UserPointRepository userPointRepository;
+  UserPointHistoryRepository userPointHistoryRepository;
+    SimpMessagingTemplate simpMessagingTemplate;
   // Định dạng ngày tháng theo mẫu: 23 th4, 2025 - 09:40 AM
-  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("d 'th'M, yyyy - hh:mm a");
-
+   static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("d 'th'M, yyyy - hh:mm a");
+  ObjectMapper objectMapper;
+  RedeemRepository redeemRepository;
+  @NonFinal
+  double totalAmount = 0.0;
+  @NonFinal
+  double totalAmountForProductIsNotRedeemReward = 0.0;
+  @NonFinal
+  double amountDecrease = 0.0;
   @Override
   @Transactional
-  public OrderResponseDTO createOrderFromCart(List<Long> selectedProductIds, Long paymentMethodId, List<Long> listDiscountIds) {
+  public OrderResponseDTO createOrderFromCart(List<CartItemRequestDTO> items, Long paymentMethodId, List<Long> listDiscountIds) {
     String username = SecurityUtils.getCurrentUsername();
     if (username == null) {
       throw new ApplicationException(ErrorCode.UNAUTHENTICATED);
     }
+    if (items == null || items.isEmpty()) {
+      throw new ApplicationException(ErrorCode.NULL_CART_ITEM_REQUEST);
+    }
+    List<CartItemResponseDTO.BookItemResponseDTO> listRequestBook = new ArrayList<>();
+    List<CartItemResponseDTO.RewardItemResponseDTO> listRequestRedeem = new ArrayList<>();
+    for (CartItemRequestDTO item : items) {
+      if (item.getTypePurchase().equals("BOOK")) {
+        CartItemResponseDTO.BookItemResponseDTO book = objectMapper.convertValue(item.getItem(), CartItemResponseDTO.BookItemResponseDTO.class);
+        listRequestBook.add(book);
+      } else {
+        CartItemResponseDTO.RewardItemResponseDTO redeem = objectMapper.convertValue(item.getItem(), CartItemResponseDTO.RewardItemResponseDTO.class);
+        listRequestRedeem.add(redeem);
+      }
+    }
+    List<Long> listIdRequestBook = listRequestBook.stream()
+        .map(CartItemResponseDTO.BookItemResponseDTO::getProductId)
+        .collect(Collectors.toList());
+
     User user = userRepository.findByUsername(username).get();
 
     Cart cart = cartService.getCart(user.getUserId())
@@ -78,19 +107,8 @@ public class OrderService implements IOrderService {
       throw new ApplicationException(ErrorCode.NO_DEFAULT_ADDRESS);
     }
 
-    List<CartItem> selectedItems = cart.getItems().stream()
-        .filter(item -> selectedProductIds.contains(Long.parseLong(item.getProductId())))
-        .collect(Collectors.toList());
 
-    if (selectedItems.isEmpty()) {
-      throw new ApplicationException(ErrorCode.UNKNOWN_EXCEPTION);
-    }
-
-    List<Long> productIds = selectedItems.stream()
-        .map(item -> Long.parseLong(item.getProductId()))
-        .collect(Collectors.toList());
-
-    List<Book> books = bookRepository.findAllById(productIds);
+    List<Book> books = bookRepository.findAllById(listIdRequestBook);
 
     // Map ProductId -> Book
     Map<Long, Book> bookMap = books.stream()
@@ -120,58 +138,41 @@ public class OrderService implements IOrderService {
     order.setUser(user);
     order.setStatus(EOrderStatus.PENDING_CONFIRMATION);
     order.setPendingConfirmationDate(LocalDateTime.now());
-    double totalAmount = 0.0;
-    double amountDecrease = 0.0;
-    List<OrderItem> orderItems = new ArrayList<>();
-    for (CartItem cartItem : cart.getItems()) {
-      Long productId = Long.parseLong(cartItem.getProductId());
-      Book book = bookMap.get(productId);
-      int quantity = cartItem.getQuantity();
-      double discount = productDiscountMap.getOrDefault(productId, 0.0);
-      double price = book.getPrice();
 
-      double finalPricePerItem = price * (1 - discount / 100.0);
-      double totalFinalPrice = finalPricePerItem * quantity;
-// Sẽ xử lý discount theo Book sau
-      OrderItem orderItem = new OrderItem();
-      orderItem.setOrder(order);
-      orderItem.setBook(book);
-      orderItem.setQuantity(quantity);
-      orderItem.setPrice(price);
-      orderItem.setDiscountPercentage(discount);
-      orderItem.setFinalPrice(totalFinalPrice);
-
-      totalAmount += (totalFinalPrice);
-      orderItems.add(orderItem);
-    }
-//    Check discount nếu người dùng có xài
+    List<OrderItem> bookOrderItems = calculateBookItems(listRequestBook, bookMap, productDiscountMap, order, user);
+    List<OrderItem> redeemOrderItems = calculateRedeemRewardItems(listRequestRedeem, redeemRepository, order, user);
+    totalAmount = totalAmount+totalAmountForProductIsNotRedeemReward;
+    //    Check discount nếu người dùng có xài
 //    Th discount theo order
-      if(listDiscountIds != null && listDiscountIds.size() > 0){
-        List<UserDiscountUsage> userDiscountUsages = user.getUsedDiscounts();
-        for(Long discountId : listDiscountIds){
-          Discount discount = discountRepository.findById(discountId).get();
-            switch (discount.getDiscountType()){
-              case PERCENT:
-                double discountPercent = discount.getValue();
-                amountDecrease = totalAmount*discountPercent;
-                totalAmount = totalAmount - totalAmount*discountPercent;
-                break;
-              case FIXED:
-                double discountAmount = discount.getValue();
-                amountDecrease = discountAmount;
-                totalAmount = totalAmount - discountAmount;
-                break;
-            }
-            UserDiscountUsage userDiscountUsage = new UserDiscountUsage();
-            userDiscountUsage.setUser(user);
-            userDiscountUsage.setDiscount(discount);
-            userDiscountUsages.add(userDiscountUsage);
+    if(listDiscountIds != null && listDiscountIds.size() > 0){
+      List<UserDiscountUsage> userDiscountUsages = user.getUsedDiscounts();
+      for(Long discountId : listDiscountIds){
+        Discount discount = discountRepository.findById(discountId).get();
+        switch (discount.getDiscountType()){
+          case PERCENT:
+            double discountPercent = discount.getValue();
+            amountDecrease = totalAmount*discountPercent;
+            totalAmount = totalAmount - totalAmount*discountPercent;
+            break;
+          case FIXED:
+            double discountAmount = discount.getValue();
+            amountDecrease = discountAmount;
+            totalAmount = totalAmount - discountAmount;
+            break;
         }
-
+        UserDiscountUsage userDiscountUsage = new UserDiscountUsage();
+        userDiscountUsage.setUser(user);
+        userDiscountUsage.setDiscount(discount);
+        userDiscountUsages.add(userDiscountUsage);
       }
-      userRepository.save(user);
-    order.setAmountDecrease(amountDecrease);
-    order.setOrderItems(orderItems);
+
+    }
+    userRepository.save(user);
+
+    List<OrderItem> listOrderItems = order.getOrderItems();
+    listOrderItems.addAll(bookOrderItems);
+    listOrderItems.addAll(redeemOrderItems);
+    order.setOrderItems(listOrderItems);
     order.setTotalAmount(totalAmount);
     order.setAddress(defaultAddressOpt.get().getAddress());
     // Set payment method
@@ -189,11 +190,25 @@ public class OrderService implements IOrderService {
 
     // Save order
     orderRepository.save(order);
-    orderItemRepository.saveAll(orderItems);
+    orderItemRepository.saveAll(order.getOrderItems());
 //    orderTimelineRepository.save(orderTimeline);
 
     // Clear cart
-    cartService.removeItemsFromCart(user.getUserId(), selectedProductIds);
+    cartService.removeItemsFromCart(user.getUserId(),  items);
+    if(paymentMethod.getMethodName()== EPaymentMethod.WB_POINT){
+      UserPoint userPoint = userPointRepository.findByUser_UserId(user.getUserId()).orElseThrow(() -> new ApplicationException(ErrorCode.UNKNOWN_EXCEPTION));
+      if(userPoint.getTotalPoint() < totalAmount){
+        throw new ApplicationException(ErrorCode.NOT_ENOUGH_WB_POINT);
+      }
+      userPoint.setTotalPoint(userPoint.getTotalPoint() - totalAmount);
+      userPointRepository.save(userPoint);
+
+      UserPointHistory userPointHistory = new UserPointHistory();
+      userPointHistory.setUserPoint(userPoint);
+      userPointHistory.setPointsChange(totalAmount);
+      userPointHistory.setDescription("Khác hàng đã thanh toán đơn hàng mã " + order.getOrderId() + " với phương thức thanh toán WB_POINT: -"+ totalAmount);
+      userPointHistoryRepository.save(userPointHistory);
+    }
 
     return orderMapper.toOrderResponseDTO(order);
   }
@@ -482,5 +497,60 @@ public class OrderService implements IOrderService {
     Specification<Order> spec = OrderSpecifications.combineFilters(filter);
     Page<Order> ordersPage = orderRepository.findAll(spec, pageable);
     return ordersPage.map(orderMapper::toOrderDetailsResponseDTO);
+  }
+  public List<OrderItem> calculateBookItems(List<CartItemResponseDTO.BookItemResponseDTO> bookItems, Map<Long, Book> bookMap, Map<Long, Double> productDiscountMap, Order order, User user) {
+    List<OrderItem> orderItems = new ArrayList<>();
+    if(bookItems.size() == 0){
+      return orderItems;
+    }else {
+      for (CartItemResponseDTO.BookItemResponseDTO cartItem : bookItems) {
+        Book book = bookMap.get(cartItem.getProductId());
+        int quantity = cartItem.getQuantity();
+        double discount = productDiscountMap.getOrDefault(book.getBookId(), 0.0);
+        double price = book.getPrice();
+
+        double finalPricePerItem = price * (1 - discount / 100.0);
+        double totalFinalPrice = finalPricePerItem * quantity;
+
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(order);
+        orderItem.setBook(book);
+        orderItem.setQuantity(quantity);
+        orderItem.setPrice(price);
+        orderItem.setDiscountPercentage(discount);
+        orderItem.setFinalPrice(totalFinalPrice);
+
+        totalAmountForProductIsNotRedeemReward += (totalFinalPrice);
+        orderItems.add(orderItem);
+
+      }
+
+
+      return orderItems;
+    }
+  }
+  public List<OrderItem> calculateRedeemRewardItems(List<CartItemResponseDTO.RewardItemResponseDTO> redeemRewardItems, RedeemRepository redeemRepository, Order order, User user) {
+    List<OrderItem> orderItems = new ArrayList<>();
+   if(redeemRewardItems.size() == 0){
+     return orderItems;
+   }else {
+     for (CartItemResponseDTO.RewardItemResponseDTO cartItem : redeemRewardItems) {
+       RedeemReward redeemReward = redeemRepository.findByRewardId(cartItem.getProductId()).get();
+       int quantity = cartItem.getQuantity();
+       double price = redeemReward.getPrice();
+
+       OrderItem orderItem = new OrderItem();
+       orderItem.setOrder(order);
+       orderItem.setRedeemReward(redeemReward);
+       orderItem.setQuantity(quantity);
+       orderItem.setPrice(price);
+       orderItem.setFinalPrice(price * quantity);
+
+       totalAmount += (price * quantity);
+       orderItems.add(orderItem);
+     }
+     return orderItems;
+   }
+
   }
 }

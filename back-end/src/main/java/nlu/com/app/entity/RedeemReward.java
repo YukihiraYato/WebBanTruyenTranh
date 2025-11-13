@@ -16,13 +16,14 @@ import java.util.ArrayList;
 @NoArgsConstructor
 @ToString(exclude = "redeemRewardImages")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RedeemReward {
+
+public class RedeemReward  {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reward_id")
     Long rewardId;
     String title;
-    String price;
+    Double price;
     @Column(columnDefinition = "TEXT")
     String description;
     String supplier;
@@ -32,8 +33,9 @@ public class RedeemReward {
     String material;
     String size;
     String weight;
-    Long qty_in_stock;
-
+    int qty_in_stock;
+    @Column(name = "type_purchase")
+    String typePurchase;
     @CreationTimestamp
     @Column(name = "created_date", updatable = false)
     LocalDateTime createdDate;

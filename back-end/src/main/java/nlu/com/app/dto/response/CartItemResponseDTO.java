@@ -20,12 +20,35 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CartItemResponseDTO {
+    String typePurchase;
+    Object item;
 
-  Long productId;
-  int quantity;
-  String title;
-  double price;
-  double discountedPrice;
-  double discountPercentage;
-  String imageUrl;
+    @Data
+    @Builder
+    @Getter
+    @Setter
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    @NoArgsConstructor
+    public static class BookItemResponseDTO {
+      Long productId;
+      Integer quantity;
+      String title;
+      Double price;
+      Double discountedPrice;
+      Double discountPercentage;
+      String imageUrl;
+    }
+    @Data
+    @Builder
+    @Getter
+    @Setter
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    @NoArgsConstructor
+  public static class RewardItemResponseDTO {
+      Long productId;
+      Integer quantity;
+      Double price;
+      String title;
+      String imageUrl;
+    }
 }

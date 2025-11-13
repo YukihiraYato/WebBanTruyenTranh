@@ -1,8 +1,9 @@
 package nlu.com.app.dto.response;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-
+import java.util.List;
 @Getter
 @Setter
 public class RedeemRewardResponseDTO {
@@ -24,11 +25,20 @@ public class RedeemRewardResponseDTO {
 
     private String origin;
 
-    private String price;
+    private Double price;
 
     private Long qtyInStock;
 
     private String weight;
+    private String typePurchase;
 
+    private List<RedeemRewardImageResponseDTO> images;
+    @Builder
+    @Getter
+    @Setter
+    public static class RedeemRewardImageResponseDTO{
+        private String imageUrl;
+        private Boolean isThumbnail;
+    }
 
 }

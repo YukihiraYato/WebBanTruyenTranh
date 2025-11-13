@@ -19,17 +19,35 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-
+import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
     private final JWTService jwtService;
     private final ApplicationContext context;
-
+    private static final List<String> PUBLIC_ENDPOINTS = List.of(
+            "/api/v1/auth/register",
+            "/api/v1/auth/login",
+            "/api/file/upload",
+            "/api/book",
+            "/api/book/",
+            "/api/category",
+            "/api/review",
+            "/api/promotion",
+            "/api/collections",
+            "/chat-box",
+            "/redeem-reward/**",
+            "/ws"
+    );
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
         String username = null;
+        String path = request.getRequestURI();
+        if (isPublicEndpoint(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         String token = authHeader != null
                 && authHeader.startsWith("Bearer ") ? authHeader.substring(7) : null;
         if (token != null) {
@@ -50,5 +68,8 @@ public class JwtFilter extends OncePerRequestFilter {
            }
         }
         filterChain.doFilter(request, response);
+    }
+    private boolean isPublicEndpoint(String path) {
+        return PUBLIC_ENDPOINTS.stream().anyMatch(path::startsWith);
     }
 }

@@ -14,13 +14,13 @@ import lombok.NoArgsConstructor;
  * @author VuLuu
  */
 @Entity
-@Table(name = "books")
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Book {
-
+@Table(name = "books")
+public class Book  {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "book_id")
@@ -56,7 +56,7 @@ public class Book {
   @Column(name = "qty_in_stock")
   private int qtyInStock;
   @Column(name = "price")
-  private double price;
+  private Double price;
   @Column(name = "created_at")
   private LocalDateTime createdAt;
   @Column(name = "updated_at")
@@ -65,6 +65,8 @@ public class Book {
   private String genre;
   @Column(name = "wb_point")
   private Double wbPoint;
+  @Column(name = "type_purchase")
+  private String typePurchase;
   @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookImage> images = new ArrayList<>();
 
@@ -75,6 +77,7 @@ public class Book {
 //  @ManyToOne
 //  @JoinColumn(name = "genre_id")
 //  private Genre genre;
+
 
 
 }

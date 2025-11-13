@@ -21,6 +21,6 @@ import lombok.experimental.SuperBuilder;
 public class CreateOrderRequest {
 
   Long paymentMethodId;
-  List<Long> selectedProductIds;
+  List<CartItemRequestDTO> items;
   List<Long> listDiscountIds;
 }

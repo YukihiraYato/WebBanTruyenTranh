@@ -27,4 +27,5 @@ public class CreateBookResponse {
     private String thumbnail;
     private String description;
     private List<String> gallery;
+    private String typePurchase;
 }

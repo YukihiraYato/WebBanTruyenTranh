@@ -28,6 +28,8 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(1012, "Order cannot be found", HttpStatus.NOT_FOUND),
     UNAUTHORIZED(1013, "Your role is not allowed to perform this action", HttpStatus.UNAUTHORIZED),
     PROMOTION_NOT_FOUND(1014, "Promotion cannot be found", HttpStatus.NOT_FOUND),
+    NULL_CART_ITEM_REQUEST(1015, "Null cart item request", HttpStatus.BAD_REQUEST),
+    NOT_ENOUGH_WB_POINT(1016, "Not enough wb point to checkout", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

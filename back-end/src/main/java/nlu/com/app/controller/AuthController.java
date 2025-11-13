@@ -3,12 +3,15 @@ package nlu.com.app.controller;
 import lombok.RequiredArgsConstructor;
 import nlu.com.app.constant.EDiscountTarget;
 import nlu.com.app.constant.EDiscountType;
+import nlu.com.app.constant.EUserRank;
 import nlu.com.app.dto.AppResponse;
 import nlu.com.app.dto.request.LoginUserDTO;
 import nlu.com.app.dto.request.RegisterUserDTO;
 import nlu.com.app.dto.request.VerifyOTPRequestDTO;
 import nlu.com.app.entity.Discount;
 import nlu.com.app.entity.User;
+import nlu.com.app.entity.UserPoint;
+import nlu.com.app.repository.UserPointRepository;
 import nlu.com.app.repository.UserRepository;
 import nlu.com.app.service.EmailService;
 import nlu.com.app.service.IDiscountService;
@@ -32,7 +35,8 @@ public class AuthController {
     private OtpRedisService otpService;
     @Autowired
     private UserRepository userRepository;
-
+    @Autowired
+    private UserPointRepository userPointRepository;
 
     @PostMapping("/register")
     public AppResponse<String> register(@RequestBody RegisterUserDTO requestDTO) {
@@ -83,6 +87,17 @@ public class AuthController {
             User user = userRepository.findByEmail(request.getEmail());
             user.setVerified(true);
             userRepository.save(user);
+            UserPoint userPoint = userPointRepository.findByUser_UserId(user.getUserId()).orElseGet(
+                    ()->{
+                        UserPoint newPoint = new UserPoint();
+                        newPoint.setUser(user);
+                        newPoint.setUserRank(EUserRank.Bronze);
+                        newPoint.setTotalPoint(0.0); // khởi tạo mặc định
+                        return userPointRepository.save(newPoint);
+
+                    }
+            );
+            userPointRepository.save(userPoint);
             return AppResponse.<String>builder().result("Xác thực OTP thành công!").build();
         }catch (Exception e) {
             e.printStackTrace();

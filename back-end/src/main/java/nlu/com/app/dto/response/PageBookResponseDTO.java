@@ -17,7 +17,6 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PageBookResponseDTO {
-
   Long bookId;
   String title;
   double price;
@@ -25,4 +24,5 @@ public class PageBookResponseDTO {
   double discountPercentage;
   double averageRating;
   String imageUrl;
+  String typePurchase;
 }

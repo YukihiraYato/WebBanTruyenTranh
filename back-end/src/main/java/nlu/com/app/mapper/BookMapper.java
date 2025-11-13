@@ -134,6 +134,7 @@ public interface BookMapper {
   @Mapping(target = "price", source = "book", qualifiedByName = "caculatePrice")
   @Mapping(target = "discountPercentage", source = "book", qualifiedByName = "getDiscountPercentage")
   @Mapping(target = "averageRating", source = "averageRating")
+  @Mapping(target = "typePurchase", source = "book.typePurchase")
   PageBookResponseDTO toPageDto(Book book, @Context double discountPercentage,
       double averageRating);
 
@@ -144,6 +145,7 @@ public interface BookMapper {
   @Mapping(target = "thumbnail", source = "thumbnail")
   @Mapping(target = "gallery", source = "gallery")
   @Mapping(target = "genre", source = "book.genre")
+  @Mapping(target = "typePurchase", source = "book.typePurchase")
   CreateBookResponse toCreateBookResponse(Book book, String thumbnail, List<String> gallery);
 
   @Mapping(target = "page_count", source = "book.pageCount")
@@ -164,7 +166,7 @@ public interface BookMapper {
     var thumbnail = imageRepository.findByBookBookIdAndIsThumbnailIsTrue(book.getBookId());
     return BookOverviewDTO.builder()
             .title(book.getTitle())
-            .price((int)book.getPrice())
+            .price((Double)book.getPrice())
             .quantityInStock(book.getQtyInStock())
             .avgRate(rvStats.getAvgScore())
             .rvCounts(Math.toIntExact(rvStats.getTotal()))
@@ -245,6 +247,7 @@ public interface BookMapper {
   @Mapping(source = "imageUrls", target = "imageUrls")
   @Mapping(source = "reviews", target = "reviews")
   @Mapping(source = "book.genre", target ="genre" )
+  @Mapping(source = "book.typePurchase", target = "typePurchase")
   BookDetailsDTO toBookDetailsDTO(Book book,
       List<String> imageUrls,
       List<ReviewDTO> reviews,

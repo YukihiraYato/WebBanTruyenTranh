@@ -22,7 +22,7 @@ public class RedeemRewardJson {
     String material;
     String size;
     String weight;
-    long qty_in_stock;
+    int qty_in_stock;
     String [] images;
     String url;
 
