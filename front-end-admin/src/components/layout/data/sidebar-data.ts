@@ -81,6 +81,20 @@ export const sidebarData: SidebarData = {
           icon: IconTicket,
         },
         {
+          title: 'Mã giảm giá',
+          items: [
+            {
+              title: 'Danh sách',
+              url: '/discounts/overview',
+            },
+            {
+              title: 'Thêm mới',
+              url: '/discounts/new',
+            },
+          ],
+          icon: IconTicket,
+        },
+        {
           title: 'Chats',
           url: '/chats',
           badge: '3',
@@ -95,10 +109,10 @@ export const sidebarData: SidebarData = {
           title: 'Đăng xuất',
           url: '/sign-in',
           icon: IconLogout,
-          onClick : ()=>{
+          onClick: () => {
             localStorage.clear()
           }
-          
+
         }
       ],
     },

@@ -43,7 +43,7 @@ function getColumns(
     },
     {
       header: 'Ngày đặt',
-      cell: ({ row }) => <OrderDateCell orderDate={row.original.orderDate} />,
+      cell: ({ row }) => <OrderDateCell orderDate={row.original.timeFor5StatusOrder.pendingConfirmationDate} />,
     },
     {
       header: 'Khách hàng',

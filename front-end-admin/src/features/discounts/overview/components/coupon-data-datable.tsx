@@ -189,7 +189,11 @@ export function CouponDataTable() {
       header: 'Tình trạng',
       cell: ({ row }) => {
         const { isActive } = row.original as DiscountResponse
-        return <Badge variant='outline'>{isActive}</Badge>
+        return <Badge variant='outline'>{(
+          isActive
+            ? 'Đang kích hoạt'
+            : 'Khóa'
+        )}</Badge>
       },
     },
     // actions
