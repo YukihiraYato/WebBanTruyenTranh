@@ -53,7 +53,7 @@ export function BottomDrawer({
 
   const [showPaypal, setShowPaypal] = useState(false);
   const amountDiscounted = localStorage.getItem("amountDiscounted");
-  function handelCreateOrder() {
+  function handelCreateOrder(paymentMethodId: number) {
     if (!listAddress || listAddress.length === 0) {
       alert(
         t(
@@ -64,13 +64,13 @@ export function BottomDrawer({
     }
 
     createOrder({
-      paymentMethodId: 1,
-      selectedProductIds: selectedBooksId,
+      paymentMethodId: paymentMethodId,
+      items: selectBooks,
       listDiscountIds: discountId 
     })
       .then(() => {
         selectBooks.forEach((book: CartItemPropertyResponseDTO) => {
-          removeItem?.(book.productId.toString());
+          removeItem?.(book.item.productId.toString());
         });
         localStorage.removeItem("selectedBooks");
         navigate("/profileUser/orders");
@@ -189,7 +189,24 @@ export function BottomDrawer({
               disableTouchRipple
               onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
                 event.preventDefault();
-                handelCreateOrder();
+                handelCreateOrder(1);
+              }}
+            >
+              {t("page.checkout.content.bottomDrawer.item5")}
+            </Button>
+          )}
+            {paymentMethod === "pay-on-wb_point" && (
+            <Button
+              sx={{ marginLeft: "auto" }}
+              size="small"
+              variant="contained"
+              color="error"
+              disableFocusRipple
+              disableRipple
+              disableTouchRipple
+              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                event.preventDefault();
+                handelCreateOrder(8);
               }}
             >
               {t("page.checkout.content.bottomDrawer.item5")}

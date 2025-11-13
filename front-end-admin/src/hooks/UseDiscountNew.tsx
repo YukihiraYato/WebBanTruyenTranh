@@ -7,7 +7,7 @@ export interface UseDiscountNewProps {
     title: string;
     description: string;
     discountType: string;
-    value: number;
+    value: string;
     targetType: string;
     minOrderAmount: number;
     usageLimit: number;
@@ -22,7 +22,7 @@ export function useDiscountNew() {
     const [title, setTitle] = useState<string>('');
     const [description, setDescription] = useState<string>('');
     const [discountType, setDiscountType] = useState<string>('PERCENT');
-    const [value, setValue] = useState<number>(0);
+    const [value, setValue] = useState<string>("0");
     const [targetType, setTargetType] = useState<string>('ORDER');
     const [minOrderAmount, setMinOrderAmount] = useState<number>(0);
     const [usageLimit, setUsageLimit] = useState<number>(0);

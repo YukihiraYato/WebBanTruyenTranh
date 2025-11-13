@@ -22,7 +22,7 @@ interface ShippingAddress {
 
 export interface OrderDTO {
   orderId: number
-  ordetimeFor5StatusOrderrDate: timeFor5StatusOrderObject
+  timeFor5StatusOrder: timeFor5StatusOrderObject
   totalAmount: number
   paymentMethodName: string
   items: OrderItem[]

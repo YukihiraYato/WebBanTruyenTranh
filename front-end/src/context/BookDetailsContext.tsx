@@ -95,7 +95,7 @@ export const BookDetailsProvider = ({ children }: BookDetailsProviderProps) => {
   const { increaseItem } = useCart();
   const addToCart = async () => {
     if (!id) return;
-    increaseItem(id, 1);
+    increaseItem(id, 1,"BOOK");
   };
 
   return (

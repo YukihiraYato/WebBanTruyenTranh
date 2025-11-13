@@ -3,6 +3,7 @@ package nlu.com.app.service;
 import java.util.List;
 
 import nlu.com.app.dto.filter.OrderFilter;
+import nlu.com.app.dto.request.CartItemRequestDTO;
 import nlu.com.app.dto.request.UpdateOrderStatus;
 import nlu.com.app.dto.response.OrderDetailsResponseDTO;
 import nlu.com.app.dto.response.OrderResponseDTO;
@@ -16,7 +17,7 @@ import org.springframework.data.domain.Pageable;
  */
 public interface IOrderService {
 
-  OrderResponseDTO createOrderFromCart(List<Long> selectedProductIds, Long paymentMethodId, List<Long> listDiscountIds);
+  OrderResponseDTO createOrderFromCart(List<CartItemRequestDTO> items, Long paymentMethodId, List<Long> listDiscountIds);
 
   Page<OrderResponseDTO> getOrdersWithPagination(Pageable pageable);
   Page<OrderDetailsResponseDTO> getOrdersWithPagination_ForAdmin(Pageable pageable);

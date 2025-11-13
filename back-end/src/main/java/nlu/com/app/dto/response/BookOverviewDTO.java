@@ -18,7 +18,7 @@ import java.util.List;
 public class BookOverviewDTO {
   Long bookId;
   String thumbnail;
-  Integer price;
+  Double price;
   Integer quantityInStock;
   String title;
   Double avgRate;

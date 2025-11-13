@@ -10,7 +10,6 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Optional: Add a request interceptor (e.g. for auth token)
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token");
@@ -22,12 +21,33 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Optional: Add a response interceptor
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    // handle 401, 403, etc. globally here
-    return window;
+
+    const status = error.response.status;
+    const data = error.response.data as { code?: number; message?: string };
+
+    console.warn(" API Error:", status, data);
+
+    //  Token hết hạn
+    if (data.code === 1009) {
+      alert("Tài khoản đã hết phiên sử dụng, vui lòng đăng nhập lại.");
+
+      //  Xóa toàn bộ localStorage 
+      localStorage.clear();
+
+      //  Redirect về trang  home
+      window.location.href = "/";
+
+      //  return để chặn tiếp tục xử lý
+      return Promise.reject(error);
+    }
+    if (data.code === 1016){
+      alert("Bạn không đủ WB point để thanh toán đơn hàng này.");
+    }
+
+    return Promise.reject(error);
   }
 );
 

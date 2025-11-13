@@ -1,6 +1,7 @@
+import {CartItemPropertyResponseDTO  } from "./cart";
 export interface OrderRequestDTO{
     paymentMethodId : number,
-    selectedProductIds : number[],
+    items : CartItemPropertyResponseDTO[],
     listDiscountIds?: number[]
 }
 export interface timeFor5StatusOrderObject {

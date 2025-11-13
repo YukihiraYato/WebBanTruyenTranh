@@ -12,8 +12,8 @@ interface DiscountNewContextType {
   setDescription: (description: string) => void;
   discountType: string; // or enum, depending on your use case
   setDiscountType: (discountType: string) => void;
-  value: number; // or string, depending on your use case
-  setValue: (value: number) => void;
+  value: string; // or string, depending on your use case
+  setValue: (value: string) => void;
   targetType: string; // or enum, depending on your use case
   setTargetType: (targetType: string) => void;
   minOrderAmount: number;
@@ -39,7 +39,7 @@ const DiscountNewContext = createContext<DiscountNewContextType>({
   setDescription: () => { },
   discountType: 'PERCENT',
   setDiscountType: () => { },
-  value: 0,
+  value: "0",
   setValue: () => { },
   targetType: 'ORDER',
   setTargetType: () => { },
@@ -72,7 +72,7 @@ export const DiscountNewProvider = ({ children }: { children: ReactNode }) => {
         title: value.title,
         description: value.description,
         discountType: value.discountType,
-        value: value.value,
+        value: Number(value.value),
         targetType: value.targetType,
         minOrderAmount: value.minOrderAmount,
         usageLimit: value.usageLimit,

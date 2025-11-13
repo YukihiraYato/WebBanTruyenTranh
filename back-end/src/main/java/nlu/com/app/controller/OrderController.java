@@ -33,7 +33,7 @@ public class OrderController {
   @PostMapping
   public AppResponse<OrderResponseDTO> createOrder(@RequestBody CreateOrderRequest request) {
     return AppResponse.<OrderResponseDTO>builder().result(
-        orderService.createOrderFromCart(request.getSelectedProductIds(),
+        orderService.createOrderFromCart(request.getItems(),
             request.getPaymentMethodId(), request.getListDiscountIds())).build();
   }
 

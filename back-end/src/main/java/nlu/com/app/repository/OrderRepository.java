@@ -35,6 +35,6 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
   // Tần suất mua hàng theo tháng (chỉ tính đơn đã giao thành công)
   @Query("SELECT FUNCTION('DATE_FORMAT', o.deliveredDate, '%Y-%m') as month, SUM(o.totalAmount) " +
           "FROM Order o WHERE o.user.userId = :userId AND o.status = 'DELIVERED' " +
-          "GROUP BY month ORDER BY  MONTH(o.deliveredDate)")
+          "GROUP BY FUNCTION ('DATE_FORMAT', o.deliveredDate, '%Y-%m') ORDER BY FUNCTION ('DATE_FORMAT', o.deliveredDate, '%Y-%m')")
   List<Object[]> sumDeliveredAmountGroupByMonth(@Param("userId") Long userId);
 }

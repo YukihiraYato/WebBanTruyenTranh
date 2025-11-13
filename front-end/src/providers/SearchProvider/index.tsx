@@ -4,10 +4,11 @@ import { createContext, useContext, useState } from "react";
 import { PageBookResponseDTO } from "~/types/book";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+type SearchType = "BOOK" | "REWARD";
 interface SearchContextType {
   searchKeyword: string;
   setSearchKeyword: React.Dispatch<React.SetStateAction<string>>;
-  searchResults: PageBookResponseDTO[];
+  searchResults: any[];
   setSearchResults: React.Dispatch<React.SetStateAction<any[]>>;
   filters: {
     page: number;
@@ -30,6 +31,8 @@ interface SearchContextType {
   isResetDefaultFilters: boolean;
   resetDefaultFilters: () => void;
   setIsResetDefaultFilters: React.Dispatch<React.SetStateAction<boolean>>;
+  searchType: SearchType;
+  setSearchType: React.Dispatch<React.SetStateAction<SearchType>>;
 }
 const SearchContext = createContext<SearchContextType | null>(null);
 
@@ -46,13 +49,14 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   };
   const [isResetDefaultFilters, setIsResetDefaultFilters] = useState(true);
   const location = useLocation();
+  const [searchType, setSearchType] = useState<SearchType>("BOOK");
   function resetDefaultFilters() {
     setFilters(defaultFilters);
   }
   const [filters, setFilters] = useState(defaultFilters);
   // Khi rời khỏi /category, reset filter
   useEffect(() => {
-    if (!location.pathname.startsWith("/category/")) {
+    if (!location.pathname.startsWith("/category/") || !location.pathname.startsWith("/redeem-reward/")) {
       resetDefaultFilters(); 
       setIsResetDefaultFilters(true);
     } else {
@@ -71,6 +75,8 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
         isResetDefaultFilters,
         setIsResetDefaultFilters,
         resetDefaultFilters,
+        searchType,
+        setSearchType
       }}
     >
       {children}

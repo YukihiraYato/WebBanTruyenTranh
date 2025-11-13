@@ -30,17 +30,31 @@ public interface OrderMapper {
   default List<OrderResponseDTO.OrderItemDTO> mapOrderItemsDTO(List<OrderItem> orderItems) {
     List<OrderResponseDTO.OrderItemDTO> orderItemDTOS = new ArrayList<>();
     for (OrderItem orderItem : orderItems) {
-      OrderResponseDTO.OrderItemDTO dto = new OrderResponseDTO.OrderItemDTO();
-      dto.setImg(orderItem.getBook().getImages().stream()
-              .filter(img -> img.isThumbnail() && img.getImageUrl() != null && !img.getImageUrl().isEmpty())
-              .map(BookImage::getImageUrl)
-              .findFirst()
-              .orElse(null));
-      dto.setBookTitle(orderItem.getBook().getTitle());
-      dto.setPrice(orderItem.getPrice());
-      dto.setQuantity(orderItem.getQuantity());
-      dto.setDiscount(orderItem.getDiscountPercentage());
-      orderItemDTOS.add(dto);
+       if(orderItem.getBook() != null) {
+         OrderResponseDTO.OrderItemDTO dto = new OrderResponseDTO.OrderItemDTO();
+         dto.setImg(orderItem.getBook().getImages().stream()
+                 .filter(img -> img.isThumbnail() && img.getImageUrl() != null && !img.getImageUrl().isEmpty())
+                 .map(BookImage::getImageUrl)
+                 .findFirst()
+                 .orElse(null));
+         dto.setBookTitle(orderItem.getBook().getTitle());
+         dto.setPrice(orderItem.getPrice());
+         dto.setQuantity(orderItem.getQuantity());
+         dto.setDiscount(orderItem.getDiscountPercentage());
+         orderItemDTOS.add(dto);
+       }else {
+         OrderResponseDTO.OrderItemDTO dto = new OrderResponseDTO.OrderItemDTO();
+         dto.setImg(orderItem.getRedeemReward().getRedeemRewardImages().stream()
+                 .filter(img -> img.getIsThumbnail() && img.getImages() != null && !img.getImages().isEmpty())
+                 .map(RedeemRewardImages::getImages)
+                 .findFirst()
+                 .orElse(null));
+         dto.setBookTitle(orderItem.getRedeemReward().getTitle());
+         dto.setPrice(orderItem.getPrice());
+         dto.setQuantity(orderItem.getQuantity());
+         dto.setDiscount(orderItem.getDiscountPercentage());
+         orderItemDTOS.add(dto);
+       }
     }
     return orderItemDTOS;
   }
@@ -48,6 +62,7 @@ public interface OrderMapper {
   default List<OrderDetailsResponseDTO.OrderItemDTO> mapOrderItemsDTOForDetails(List<OrderItem> orderItems) {
     List<OrderDetailsResponseDTO.OrderItemDTO> orderItemDTOS = new ArrayList<>();
     for (OrderItem orderItem : orderItems) {
+    if(orderItem.getBook() != null) {
       OrderDetailsResponseDTO.OrderItemDTO dto = new OrderDetailsResponseDTO.OrderItemDTO();
       dto.setImg(orderItem.getBook().getImages().stream()
               .filter(img -> img.isThumbnail() && img.getImageUrl() != null && !img.getImageUrl().isEmpty())
@@ -59,6 +74,19 @@ public interface OrderMapper {
       dto.setQuantity(orderItem.getQuantity());
       dto.setDiscount(orderItem.getDiscountPercentage());
       orderItemDTOS.add(dto);
+    }else{
+      OrderDetailsResponseDTO.OrderItemDTO dto = new OrderDetailsResponseDTO.OrderItemDTO();
+      dto.setImg(orderItem.getRedeemReward().getRedeemRewardImages().stream()
+              .filter(img -> img.getIsThumbnail() && img.getImages() != null && !img.getImages().isEmpty())
+              .map(RedeemRewardImages::getImages)
+              .findFirst()
+              .orElse(null));
+      dto.setBookTitle(orderItem.getRedeemReward().getTitle());
+      dto.setPrice(orderItem.getPrice());
+      dto.setQuantity(orderItem.getQuantity());
+      dto.setDiscount(orderItem.getDiscountPercentage());
+      orderItemDTOS.add(dto);
+    }
     }
     return orderItemDTOS;
   }

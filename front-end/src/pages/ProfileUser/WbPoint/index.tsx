@@ -29,7 +29,7 @@ export default function WbPoint() {
     return (
         <Box>
             <Container maxWidth="xl">
-                <WbPointBalance value={userPoint.totalPoint} />
+                <WbPointBalance value={userPoint?.totalPoint} />
                 <TopUpList />
             </Container>
         </Box>

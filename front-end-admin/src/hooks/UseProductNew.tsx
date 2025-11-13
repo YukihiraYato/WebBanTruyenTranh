@@ -15,8 +15,8 @@ interface ProductNewContextType {
   setGallery: (files: (File | null)[]) => void
   category: Category | null
   setCategory: (category: Category | null) => void
-  genre: number
-  setGenre: (genre: number) => void
+  genre: string
+  setGenre: (genre: string) => void
   author: string
   setAuthor: (author: string) => void
   age: number
@@ -55,7 +55,7 @@ export function ProductNewProvider({children}: {children: React.ReactNode}) {
   const [description, setDescription] = useState('')
   const [gallery, setGallery] = useState<(File | null)[]>([])
   const [category, setCategory] = useState<Category | null>(null)
-  const [genre, setGenre] = useState<number>(1)
+  const [genre, setGenre] = useState<string>("")
   const [author, setAuthor] = useState('')
   const [age, setAge] = useState<number>(0)
   const [price, setPrice] = useState<number>(0)

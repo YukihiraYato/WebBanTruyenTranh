@@ -7,8 +7,8 @@ interface CartItemProps {
   book: CartItemPropertyResponseDTO;
   onToggleCheckbox: (bookId: number) => void;
   isChecked: boolean;
-  increaseItem: (bookId: string, quantity: number) => Promise<CartResult>;
-  decreaseItem: (bookId: string, quantity: number) => Promise<CartResult>;
+  increaseItem: (bookId: string, quantity: number, typePurchase: string) => Promise<CartResult>;
+  decreaseItem: (bookId: string, quantity: number, typePurchase: string) => Promise<CartResult>;
   removeItem?: (bookId: string) => Promise<CartResult>;  
 }
 
@@ -33,30 +33,30 @@ decreaseItem,
         color="error"
         defaultChecked
         checked={isChecked}
-        onChange={() => onToggleCheckbox(book.productId)}
+        onChange={() => onToggleCheckbox(book.item.productId)}
       />
 
       {/* Hình ảnh sách */}
       <Box width={80} height={80} flexShrink={0}>
         <img
-          src={book.imageUrl}
-          alt={book.title}
+          src={book.item.imageUrl}
+          alt={book.item.title}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       </Box>
 
       {/* Thông tin sách */}
       <Box flex={1}>
-        <Typography fontWeight="bold">{book.title}</Typography>
+        <Typography fontWeight="bold">{book.item.title}</Typography>
         <Box display="flex" gap={1} alignItems="center">
           <Typography fontWeight="bold">
-            {book.price.toLocaleString()} đ
+            {book.item.price.toLocaleString()} đ
           </Typography>
           <Typography
             variant="body2"
             sx={{ textDecoration: "line-through", color: "#888" }}
           >
-            {book.price.toLocaleString()} đ
+            {book.item.price.toLocaleString()} đ
           </Typography>
         </Box>
       </Box>
@@ -69,20 +69,20 @@ decreaseItem,
         borderRadius={1}
       >
         <QuantityInput
-         bookId={book.productId.toString()}
-          value={book.quantity}
-          onIncrease={(id, val) => increaseItem(id, val)}
-          onDecrease={(id, val) => decreaseItem(id, val)}
+         bookId={book.item.productId.toString()}
+          value={book.item.quantity}
+          onIncrease={(id, val) => increaseItem(id, val,book.typePurchase)}
+          onDecrease={(id, val) => decreaseItem(id, val,book.typePurchase)}
         ></QuantityInput>
       </Box>
 
       {/* Tổng tiền */}
       <Typography color="error" fontWeight="bold" width={100} textAlign="right">
-        {(book.price * book.quantity).toLocaleString()} đ
+        {(book.item.price * book.item.quantity).toLocaleString()} đ
       </Typography>
 
       {/* Nút xoá */}
-      <IconButton color="error" onClick={() => removeItem?.(book.productId.toString())}>
+      <IconButton color="error" onClick={() => removeItem?.(book.item.productId.toString())}>
         <DeleteIcon />
       </IconButton>
     </Box>

@@ -101,6 +101,7 @@ export default function BookList() {
               discountPrice: book.discountedPrice,
               originallPrice: book.price,
               bookId: book.bookId,
+              typePurchase: book.typePurchase
             }}
           />
         ))}

@@ -39,6 +39,7 @@ export function BookRelated() {
                     discountPrice: book.discountedPrice,
                     originallPrice: book.price,
                     thumbnail: book.imageUrl,
+                    typePurchase: book.typePurchase
                   }}
                 />
               </SwiperSlide>

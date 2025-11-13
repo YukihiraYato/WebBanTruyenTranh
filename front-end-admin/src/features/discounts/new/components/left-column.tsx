@@ -27,7 +27,7 @@ export function LeftCard() {
     setUseCount,
     isActive,
     setIsActive,
-   handleCreateDiscount: submit
+    handleCreateDiscount: submit
   } = useDiscountNewContext()
   return (
     <Card>
@@ -66,14 +66,19 @@ export function LeftCard() {
             <div className='font-manrope text-sm'>Giá trị giảm giá</div>
             <Input
               value={value}
-              type='number'
-              onChange={(ev) => setValue(Number(ev.target.value))}
+              type='text'
+              onChange={(ev) => {
+                setValue(ev.target.value);
+              }}
             />
           </div>
           {/* Loại giảm giá*/}
           <div className='grid gap-2'>
             <div className='font-manrope text-sm'>Loại giảm giá</div>
-           <select style={{border: '1px solid #ccc', borderRadius: '4px', padding: '4px'}} value={discountType ? 'FIXED' : 'PERCENT'} onChange={(e) => setDiscountType(e.target.value)}>
+            <select style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '4px' }} value={discountType } onChange={(e) => {
+              console.log(e.target.value)
+              setDiscountType(e.target.value)
+            }}>
               <option value="FIXED">Giảm theo số tiền</option>
               <option value="PERCENT">Giảm theo %</option>
             </select>
@@ -109,7 +114,7 @@ export function LeftCard() {
           {/*Kích hoạt khuyến mãi*/}
           <div className='grid gap-2'>
             <div className='font-manrope text-sm'>Giới hạn số lần sử dụng  để áp được giảm giá</div>
-            <select  style={{border: '1px solid #ccc', borderRadius: '4px', padding: '4px'}}  value={isActive ? 'active' : 'inactive'} onChange={(e) => setIsActive(e.target.value === 'active')}>
+            <select style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '4px' }} value={isActive ? 'active' : 'inactive'} onChange={(e) => setIsActive(e.target.value === 'active')}>
               <option value="active">Kích hoạt</option>
               <option value="inactive">Không kích hoạt</option>
             </select>

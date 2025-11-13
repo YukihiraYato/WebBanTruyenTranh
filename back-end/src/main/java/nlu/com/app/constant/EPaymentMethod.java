@@ -10,7 +10,8 @@ public enum EPaymentMethod {
   PAYPAL("Thanh toán qua PayPal"),
   MOMO("Ví MoMo"),
   ZALO_PAY("Ví ZaloPay"),
-  VNPAY("VNPAY");
+  VNPAY("VNPAY"),
+  WB_POINT("Xu Wb point");
 
   private final String description;
 

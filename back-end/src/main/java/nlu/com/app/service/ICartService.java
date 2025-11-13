@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import nlu.com.app.dto.cart.Cart;
 import nlu.com.app.dto.cart.CartItem;
+import nlu.com.app.dto.request.CartItemRequestDTO;
 import nlu.com.app.dto.response.CartResponseDTO;
 
 /**
@@ -23,6 +24,6 @@ public interface ICartService {
 
   void addOrUpdateCart(Long userId, CartItem newItem);
 
-  void removeItemsFromCart(Long userId, List<Long> productIds);
+  void removeItemsFromCart(Long userId, List<CartItemRequestDTO> items);
 
 }

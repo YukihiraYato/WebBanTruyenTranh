@@ -24,6 +24,7 @@ export function LightNovel() {
           discountPrice: book.discountedPrice,
           originallPrice: book.price,
           thumbnail: book.imageUrl,
+          typePurchase: book.typePurchase
         }}
       />
     </SwiperSlide>

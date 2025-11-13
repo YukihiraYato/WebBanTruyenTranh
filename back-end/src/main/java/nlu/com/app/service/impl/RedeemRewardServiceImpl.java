@@ -15,6 +15,7 @@ import nlu.com.app.service.RedeemRewardService;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -55,7 +59,12 @@ public class RedeemRewardServiceImpl implements RedeemRewardService {
                     redeemReward.setSize(rewardJson.getSize());
                     redeemReward.setWeight(rewardJson.getWeight());
                     redeemReward.setQty_in_stock(rewardJson.getQty_in_stock());
-                    redeemReward.setPrice(rewardJson.getPrice());
+
+                    String priceStr = rewardJson.getPrice().toString();
+                    priceStr = priceStr.replace(".", "").replace(",", "").trim();
+                    Double price = Double.parseDouble(priceStr);
+
+                    redeemReward.setPrice(price);
 
 
                     //  Tạo list ảnh mới cho mỗi reward
@@ -67,13 +76,12 @@ public class RedeemRewardServiceImpl implements RedeemRewardService {
                         image.setImages(imgUrl);
                         image.setIsThumbnail(false);
                         imageList.add(image);
+                        image.setRedeemReward(redeemReward);
                     }
 
                     // Thêm thumbnail
-                    RedeemRewardImages thumb = new RedeemRewardImages();
-                    thumb.setImages(rewardJson.getUrl());
-                    thumb.setIsThumbnail(true);
-                    imageList.add(thumb);
+                    RedeemRewardImages thumbnail = imageList.get(0);
+                    thumbnail.setIsThumbnail(true);
 
                     // Gán danh sách ảnh vào reward
                     redeemReward.setRedeemRewardImages(imageList);
@@ -101,6 +109,87 @@ public class RedeemRewardServiceImpl implements RedeemRewardService {
     } catch (Exception e) {
         throw new RuntimeException(e);
     }
+    }
+
+    @Override
+    public Page<RedeemRewardResponseDTO> getRedeemRewardsByFilter(
+            int page,
+            int size,
+            String material,
+            String origin,
+            String rangePrice,
+            String keyword
+    ) {
+        try {
+            // ✅ 1. Parse khoảng giá
+            double minPrice = 0;
+            double maxPrice = Double.MAX_VALUE;
+
+            if (rangePrice != null && !rangePrice.isEmpty()) {
+                String[] parts = rangePrice.split("-");
+                try {
+                    if (parts.length > 0 && !parts[0].isEmpty()) {
+                        minPrice = Double.parseDouble(parts[0]);
+                    }
+                    if (parts.length > 1 && !parts[1].isEmpty()) {
+                        maxPrice = Double.parseDouble(parts[1]);
+                    }
+                } catch (NumberFormatException e) {
+                    minPrice = 0;
+                    maxPrice = Double.MAX_VALUE;
+                }
+            }
+
+            final double minPriceFinal = minPrice;
+            final double maxPriceFinal = maxPrice;
+
+            // ✅ 2. Xây dựng Specification linh hoạt
+            Specification<RedeemReward> spec = Specification.where(null);
+
+            if (material != null && !material.isEmpty()) {
+                spec = spec.and((root, query, cb) ->
+                        cb.like(cb.lower(root.get("material")), "%" + material.toLowerCase() + "%"));
+            }
+
+            if (origin != null && !origin.isEmpty()) {
+                spec = spec.and((root, query, cb) ->
+                        cb.like(cb.lower(root.get("origin")), "%" + origin.toLowerCase() + "%"));
+            }
+
+            // ✅ 3. Lọc theo giá
+            spec = spec.and((root, query, cb) ->
+                    cb.between(root.get("price"), minPriceFinal, maxPriceFinal));
+
+            // ✅ 4. Lọc theo keyword (title)
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String kw = "%" + keyword.trim().toLowerCase() + "%";
+                spec = spec.and((root, query, cb) ->
+                        cb.like(cb.lower(root.get("title")), kw));
+            }
+
+            // ✅ 5. Query & paging
+            Page<RedeemReward> resultPage = redeemRepository.findAll(spec, PageRequest.of(page, size));
+
+            // ✅ 6. Map sang DTO
+            return resultPage.map(redeemRewardMapper::toRedeemRewardResponseDTO);
+
+        } catch (Exception e) {
+            throw new RuntimeException("❌ Error while filtering RedeemRewards", e);
+        }
+    }
+
+
+    @Override
+    public Page<RedeemRewardResponseDTO> searchRedeemRewards(int page, int size, String keyword) {
+      Page<RedeemRewardResponseDTO> redeemRewardResponseDTOS = redeemRepository.findByTitleContainingIgnoreCase(keyword, PageRequest.of(page, size)).map(redeemRewardMapper::toRedeemRewardResponseDTO);
+        System.out.println("Có ra danh sách redeem reward: "+ redeemRewardResponseDTOS.getContent().size());
+      return redeemRewardResponseDTOS;
+    }
+
+    @Override
+    public Optional<RedeemRewardResponseDTO> getRedeemRewardById(long redeemRewardId) {
+        Optional<RedeemReward> redeemReward = redeemRepository.findById(redeemRewardId);
+        return redeemReward.map(redeemRewardMapper::toRedeemRewardResponseDTO);
     }
 
 

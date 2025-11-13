@@ -42,4 +42,7 @@ public class OrderItem {
   @ManyToOne
   @JoinColumn(name = "book_id")
   private Book book;
+  @ManyToOne
+  @JoinColumn(name = "reward_id")
+  private RedeemReward redeemReward;
 }

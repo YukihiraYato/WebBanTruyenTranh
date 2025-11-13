@@ -13,12 +13,14 @@ export const getCart = async (): Promise<CartResponseDTO> => {
 };
 export const addToCart = async (
   productId: string,
-  quantity: number
+  quantity: number,
+  typePurchase: string
 ): Promise<CartItemResponseDTO> => {
   try {
     const response = await axiosInstance.post(API_ENDPOINTS.CART.ADD, {
       productId,
       quantity,
+      typePurchase
     });
     return  response.data
   } catch (error) {

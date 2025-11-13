@@ -11,12 +11,15 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import nlu.com.app.dto.cart.Cart;
 import nlu.com.app.dto.cart.CartItem;
+import nlu.com.app.dto.request.CartItemRequestDTO;
+import nlu.com.app.dto.response.CartItemResponseDTO;
 import nlu.com.app.dto.response.CartResponseDTO;
 import nlu.com.app.entity.Book;
 import nlu.com.app.entity.Promotion;
 import nlu.com.app.mapper.CartMapper;
 import nlu.com.app.repository.BookRepository;
 import nlu.com.app.repository.PromotionCategoriesRepository;
+import nlu.com.app.repository.RedeemRepository;
 import nlu.com.app.service.ICartService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -31,7 +34,7 @@ public class CartService implements ICartService {
   private final CartMapper cartMapper;
   private final BookRepository bookRepository;
   private final PromotionCategoriesRepository promotionCategoriesRepository;
-
+  private final RedeemRepository redeemRepository;
   private String getKey(Long userId) {
     return "cart:user:" + userId;
   }
@@ -40,7 +43,6 @@ public class CartService implements ICartService {
   public void saveCart(Long userId, Cart cart) {
     try {
       String json = objectMapper.writeValueAsString(cart);
-      System.out.println(json);
       redisTemplate.opsForValue().set(getKey(userId), json);
     } catch (JsonProcessingException e) {
       e.printStackTrace();
@@ -150,15 +152,46 @@ public class CartService implements ICartService {
             book -> categoryDiscountMap.getOrDefault(book.getCategory().getCategoryId(), 0D)
         ));
 
-    return cartMapper.toCartResponseDTO(cart, bookRepository, productDiscountMap);
+    return cartMapper.toCartResponseDTO(cart, bookRepository, productDiscountMap, redeemRepository);
   }
   @Override
-  public void removeItemsFromCart(Long userId, List<Long> productIds) {
+  public void removeItemsFromCart(Long userId, List<CartItemRequestDTO> items) {
     Optional<Cart> cartOpt = getCart(userId);
-    if (cartOpt.isPresent()) {
-      Cart cart = cartOpt.get();
-      cart.getItems().removeIf(item -> productIds.contains(Long.parseLong(item.getProductId())));
-      saveCart(userId, cart);
-    }
+    if (cartOpt.isEmpty()) return;
+
+    Cart cart = cartOpt.get();
+
+    cart.getItems().removeIf(cartItem ->
+            items.stream().anyMatch(req -> {
+              if (req == null || req.getItem() == null || req.getTypePurchase() == null) {
+                return false;
+              }
+
+              String type = req.getTypePurchase().toUpperCase();
+              String reqProductId = null;
+
+              try {
+                if ("BOOK".equals(type)) {
+                  CartItemResponseDTO.BookItemResponseDTO book =
+                          objectMapper.convertValue(req.getItem(), CartItemResponseDTO.BookItemResponseDTO.class);
+                  reqProductId = String.valueOf(book.getProductId());
+                } else if ("REDEEM_REWARD".equals(type)) {
+                  CartItemResponseDTO.RewardItemResponseDTO reward =
+                          objectMapper.convertValue(req.getItem(), CartItemResponseDTO.RewardItemResponseDTO.class);
+                  reqProductId = String.valueOf(reward.getProductId());
+                }
+              } catch (IllegalArgumentException e) {
+                // nếu convert lỗi, bỏ qua item này
+                return false;
+              }
+
+              return reqProductId != null
+                      && reqProductId.equals(cartItem.getProductId())
+                      && type.equalsIgnoreCase(cartItem.getTypePurchase());
+            })
+    );
+
+    saveCart(userId, cart);
   }
+
 }
