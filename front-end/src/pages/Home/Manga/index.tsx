@@ -24,6 +24,7 @@ export function Manga() {
           discountPrice: book.discountedPrice,
           originallPrice: book.price,
           thumbnail: book.imageUrl,
+          typePurchase: book.typePurchase
         }}
       />
     </SwiperSlide>

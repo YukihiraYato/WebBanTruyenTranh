@@ -26,6 +26,7 @@ function PaypalButton() {
   const navigate = useNavigate();
   const { removeItem } = useCart();
   const selectBooks = JSON.parse(localStorage.getItem("selectedBooks") || "[]");
+  const listDiscount = JSON.parse(localStorage.getItem("listDiscount") || "[]");
   return (
     <div className="App">
       <PayPalScriptProvider options={initialOptions}>
@@ -39,7 +40,11 @@ function PaypalButton() {
           }}
           createOrder={async () => {
             try {
-              const orderData = await createPaypalOrder(selectBooks);
+              const orderData = await createPaypalOrder({
+                paymentMethodId: 4,
+                items: selectBooks,
+                listDiscountIds: listDiscount.map((discount: any) => discount.discountId),
+              });
               console.log("Order data:", orderData);
               if (orderData.id) {
                 return orderData.id;
@@ -58,7 +63,11 @@ function PaypalButton() {
           }}
           onApprove={async (data, actions) => {
             try {
-              const orderData = await capturePaypalOrder(data.orderID);
+              const orderData = await capturePaypalOrder(data.orderID, {
+                paymentMethodId: 4,
+                items: selectBooks,
+                listDiscountIds: listDiscount.map((discount: any) => discount.discountId),
+              });
               console.log("Capture result", orderData);
               // Three cases to handle:
               //   (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
@@ -80,10 +89,11 @@ function PaypalButton() {
                 // (3) Successful transaction -> Show confirmation or thank you message
                 // Or go to another URL:  actions.redirect('thank_you.html');
                selectBooks.forEach((book: CartItemPropertyResponseDTO) => {
-                  removeItem?.(book.productId.toString());
+                  removeItem?.(book.item.productId.toString());
                 });
                 localStorage.removeItem("selectedBooks");
-
+                localStorage.removeItem("amountDiscounted");
+                localStorage.removeItem("listDiscount");
                 navigate("/profileUser/orders")
               }
             } catch (error) {

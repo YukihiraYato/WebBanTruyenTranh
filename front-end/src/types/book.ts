@@ -8,6 +8,7 @@ export interface PageBookResponseDTO {
   discountPercentage: number;
   averageRating: number;
   imageUrl: string;
+  typePurchase: string;
 }
 
 export interface PageBookResponse {

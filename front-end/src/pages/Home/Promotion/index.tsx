@@ -63,6 +63,7 @@ export function Promotion() {
                 discountPrice: b.discountedPrice,
                 originallPrice: b.price,
                 thumbnail: b.imageUrl,
+                typePurchase: b.typePurchase
               }}
             />
           </SwiperSlide>

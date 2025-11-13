@@ -22,6 +22,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  Avatar
 } from "@mui/material";
 import ControlPointRoundedIcon from "@mui/icons-material/ControlPointRounded";
 import { grey, yellow } from "@mui/material/colors";
@@ -31,7 +32,7 @@ import cashWithPaypal from "~/assets/paypal.svg";
 import cashWithVNPay from "~/assets/ico_vnpay.svg";
 import discountIcon from "~/assets/ico_promotion.svg";
 import React from "react";
-import { CartItemPropertyResponseDTO } from "~/types/cart";
+import { CartItemPropertyResponseDTO, BookItemPropertyResponseDTO, RedeemRewardItemPropertyResponseDTO } from "~/types/cart";
 import { useState, useEffect } from "react";
 import { addUserAddress, getUserAddresses } from "~/api/user/userAddress";
 import { AddressResponseDTO } from "~/types/user";
@@ -90,6 +91,7 @@ export function Checkout() {
   const { listDiscountChosen } = useDiscount();
   const discountObject = listDiscountChosen?.[0] ?? {};
   const listDiscount = Object.values(discountObject) as DiscountType[];
+  localStorage.setItem("listDiscount", JSON.stringify(listDiscount));
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -97,11 +99,16 @@ export function Checkout() {
   const handleClose = () => {
     setOpen(false);
   };
-  const totalPrice = selectBooks.reduce(
-    (sum: number, book: CartItemPropertyResponseDTO) =>
-      sum + book.discountedPrice * book.quantity,
-    0
-  );
+  const totalPrice = selectBooks.reduce((sum: number, book: CartItemPropertyResponseDTO) => {
+    if (book.typePurchase === "BOOK") {
+      const item = book.item as BookItemPropertyResponseDTO;
+      return sum + item.discountedPrice * item.quantity;
+    } else {
+      const item = book.item as RedeemRewardItemPropertyResponseDTO;
+      return sum + item.price * item.quantity;
+    }
+  }, 0);
+
   const fetchAddresses = async () => {
     try {
       const addresses = await getUserAddresses();
@@ -152,7 +159,7 @@ export function Checkout() {
   };
   // Lưu id của các book được mua vào localStorage
   const selectedBooksId = selectBooks.map(
-    (book: CartItemPropertyResponseDTO) => book.productId
+    (book: CartItemPropertyResponseDTO) => book.item.productId
   );
   localStorage.setItem(
     "selectedBooksId",
@@ -273,6 +280,30 @@ export function Checkout() {
                   </Box>
                 }
               />
+              <FormControlLabel
+                value="pay-on-wb_point"
+                onClick={() => setPaymentMethod("pay-on-wb_point")}
+                control={<SmallRadio />}
+                label={
+                  <Box display={"flex"} alignItems={"center"} gap={1}>
+                    <Box
+                    />
+                    <Avatar
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        bgcolor: "#ffb300",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "#fff",
+                      }}
+                    >
+                      W
+                    </Avatar>
+                    <RadioLabel>{"Thanh toán bằng xu WB"}</RadioLabel>
+                  </Box>
+                }
+              />
             </RadioGroup>
           </Section>
         </Container>
@@ -289,23 +320,25 @@ export function Checkout() {
                   {selectBooks.length > 0
                     ? selectBooks.map((book: CartItemPropertyResponseDTO) => (
                       <TableRow
-                        key={book.productId}
+                        key={book.item.productId}
                         sx={{
                           "&:last-child td, &:last-child th": { border: 0 },
                         }}
                       >
                         <TableCell component="th" scope="row">
                           <Box sx={{ width: 150 }}>
-                            <img width={"100%"} src={book.imageUrl} alt="" />
+                            <img width={"100%"} src={book.item.imageUrl} alt="" />
                           </Box>
                         </TableCell>
-                        <TableCell align="left">{book.title}</TableCell>
+                        <TableCell align="left">{book.item.title}</TableCell>
                         <TableCell align="left">
                           <Stack>
                             <Typography>
-                              {book.discountedPrice.toLocaleString("vi-VN") +
-                                "đ"}
+                              {book.typePurchase === "BOOK"
+                                ? (book.item as BookItemPropertyResponseDTO).discountedPrice.toLocaleString("vi-VN") + "đ"
+                                : (book.item as RedeemRewardItemPropertyResponseDTO).price.toLocaleString("vi-VN") + "đ"}
                             </Typography>
+
                             <Typography
                               sx={{
                                 textDecoration: "line-through",
@@ -313,16 +346,18 @@ export function Checkout() {
                                 color: grey["500"],
                               }}
                             >
-                              {book.price.toLocaleString("vi-VN") + "đ"}
+                              {book.item.price.toLocaleString("vi-VN") + "đ"}
                             </Typography>
                           </Stack>
                         </TableCell>
-                        <TableCell align="left">{book.quantity}</TableCell>
+                        <TableCell align="left">{book.item.quantity}</TableCell>
                         <TableCell align="left">
                           <Typography fontWeight={"bold"} color="error">
-                            {(
-                              book.discountedPrice * book.quantity
-                            ).toLocaleString("vi-Vn") + "đ"}
+                            {book.typePurchase === "BOOK"
+                              ? ((book.item as BookItemPropertyResponseDTO).discountedPrice *
+                                (book.item as BookItemPropertyResponseDTO).quantity).toLocaleString("vi-VN") + "đ"
+                              : ((book.item as RedeemRewardItemPropertyResponseDTO).price *
+                                (book.item as RedeemRewardItemPropertyResponseDTO).quantity).toLocaleString("vi-VN") + "đ"}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -349,7 +384,7 @@ export function Checkout() {
               {listDiscount.length > 0 ? (
                 console.log("listDiscount:", listDiscount),
                 listDiscount.map((discount, index) => (
-                  
+
                   <Paper
                     key={index}
                     elevation={2}
@@ -394,7 +429,7 @@ export function Checkout() {
                       <Box
                         sx={{
                           display: "-webkit-box",
-                        
+
                           maxWidth: 300,
                         }}
                       >
@@ -403,7 +438,7 @@ export function Checkout() {
                         </Typography>
                       </Box>
                       <Typography sx={{ marginTop: 2 }} fontSize="small">
-                       {"HSD: "} {discount.startDate} {" - "} {discount.endDate}
+                        {"HSD: "} {discount.startDate} {" - "} {discount.endDate}
                       </Typography>
                     </Box>
                   </Paper>

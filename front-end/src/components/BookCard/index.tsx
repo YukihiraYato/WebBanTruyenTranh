@@ -1,5 +1,5 @@
 import { Box, Typography, IconButton, Tooltip } from "@mui/material";
-import { grey, red } from "@mui/material/colors";
+import { grey, red, yellow } from "@mui/material/colors";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import bookImage from "~/assets/product/mockup_1.png";
 import { useNavigate } from "react-router-dom";
@@ -8,18 +8,20 @@ import CustomSnackbar from "~/components/Popup/Snackbar";
 import { useState } from "react";
 import { Menu, MenuItem } from "@mui/material";
 import { useBookCollection } from "~/providers/BookCollectionProvider";
+import { Avatar } from "@mui/material";
 export interface BookCard {
   thumbnail: string;
   title: string;
-  discountPrice: number;
-  discountPercentage: number;
+  discountPrice?: number | null;
+  discountPercentage?: number | null;
   originallPrice: number;
   bookId: number;
   isRemoved?: boolean;
   idBookCollection?: number;
+  typePurchase: string;
 }
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-export function BookCard({ card }: { card?: BookCard }) {
+export function BookCard({ card }: { card: BookCard }) {
   const navigate = useNavigate();
   const { increaseItem } = useCart();
   const { deleteBookFromCollection } = useBookCollection();
@@ -43,28 +45,28 @@ export function BookCard({ card }: { card?: BookCard }) {
   };
 
   const handleRemove = () => {
-   const deleteBook = async () =>{
-    try {
-       if (card?.bookId && card.isRemoved) {
-      // Call api
-      await deleteBookFromCollection(card.idBookCollection!, card.bookId);
-      setStateSnackbar({
-        ...initStateSnackbar,
-        open: true,
-        message: "Xóa sách thành công",
-      });
+    const deleteBook = async () => {
+      try {
+        if (card?.bookId && card.isRemoved) {
+          // Call api
+          await deleteBookFromCollection(card.idBookCollection!, card.bookId);
+          setStateSnackbar({
+            ...initStateSnackbar,
+            open: true,
+            message: "Xóa sách thành công",
+          });
+        }
+      } catch (error) {
+        console.error("Error deleting book from collection:", error);
+        setStateSnackbar({
+          ...initStateSnackbar,
+          open: true,
+          message: "Xóa sách thất bại",
+          severity: "error",
+        });
+      }
     }
-    } catch (error) {
-      console.error("Error deleting book from collection:", error);
-      setStateSnackbar({
-        ...initStateSnackbar,
-        open: true,
-        message: "Xóa sách thất bại",
-        severity: "error",
-      });
-    }
-   }
-   deleteBook();
+    deleteBook();
     handleMenuClose();
   };
   return (
@@ -97,7 +99,11 @@ export function BookCard({ card }: { card?: BookCard }) {
       }}
       onClick={() => {
         if (!anchorEl) {
-          navigate(`/details/${card?.bookId}`);
+          if(card?.discountPercentage !== undefined && card.discountPrice !== null){
+            navigate(`/details/${card.bookId}`);
+          } else {
+            navigate(`/redeem_details/${card?.bookId}`);
+          }
         }
       }}
     >
@@ -237,7 +243,8 @@ export function BookCard({ card }: { card?: BookCard }) {
             }}
             onClick={(event) => {
               event.stopPropagation();
-              increaseItem(card?.bookId.toString() || "", 1);
+              
+              increaseItem(card?.bookId.toString() || "", 1,card?.typePurchase);
               setStateSnackbar({
                 ...initStateSnackbar,
                 open: true,
@@ -276,25 +283,60 @@ export function BookCard({ card }: { card?: BookCard }) {
 
       {/* Giá bán & Giá bị gạch (giảm giá) */}
       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Typography
-          fontFamily={"Segoe UI"}
-          sx={{ fontSize: 15, fontWeight: 600 }}
-          color={red[600]}
-        >
-          {card?.discountPrice.toLocaleString("vi") + "₫" || "39.950₫"}
-        </Typography>
-        <Typography
-          fontFamily={"Segoe UI"}
-          sx={{
-            fontSize: 15,
-            fontWeight: 600,
-            textDecoration: "line-through",
-            textDecorationThickness: 1.2,
-          }}
-          color={grey[400]}
-        >
-          {card?.originallPrice.toLocaleString("vi") + "₫" || "47.000₫"}
-        </Typography>
+        {card?.discountPrice != null ? (
+          <>
+            <Typography
+              fontFamily={"Segoe UI"}
+              sx={{ fontSize: 15, fontWeight: 600 }}
+              color={red[600]}
+            >
+              {card?.discountPrice.toLocaleString("vi") + "₫" || "39.950₫"}
+            </Typography>
+            <Typography
+              fontFamily={"Segoe UI"}
+              sx={{
+                fontSize: 15,
+                fontWeight: 600,
+                textDecoration: "line-through",
+                textDecorationThickness: 1.2,
+              }}
+              color={grey[400]}
+            >
+              {card?.originallPrice.toLocaleString("vi") + "₫" || "47.000₫"}
+
+            </Typography>
+          </>
+
+        ) :
+          // Đây là trường hợp làm cho Redeem Reward
+          (
+            <Typography
+              fontFamily={"Segoe UI"}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                fontSize: 15,
+                fontWeight: 600,
+                color: yellow[600],
+              }}
+            >
+              {card?.originallPrice.toLocaleString("vi") || "39.950₫"}
+              <Avatar
+                sx={{
+                  width: 24,
+                  height: 24,
+                  bgcolor: "#ffb300",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#fff",
+                  marginLeft: 1, // tạo khoảng cách giữa tiền và avatar
+                }}
+              >
+                W
+              </Avatar>
+            </Typography>
+          )}
+
       </Box>
     </Box>
   );

@@ -116,9 +116,19 @@ const API_ENDPOINTS = {
   },
   REDEEM_REWARD:{
       GET: (page: number, size: number) => {
-        return `/api/redeem-reward?page=${page}&size=${size}`;
+        return `/redeem-reward?page=${page}&size=${size}`;
       },
-  }
+      GET_FILTER:(page:number, size:number, material: string | "", origin: string | "", rangePrice: string | "", keyword: string | "") => {
+        let url = `/redeem-reward/filter?page=${page}&size=${size}&material=${material}&origin=${origin}&rangePrice=${rangePrice}&keyword=${keyword}`;
+        return url;
+      },
+      SEARCH:(keyword: string, page:number, size: number) => {
+        return `/redeem-reward/search?keyword=${keyword}&page=${page}&size=${size}`;
+      },
+      GET_A_REDEEM_REWARD:(redeemRewardId: number) => {
+        return `/redeem-reward/${redeemRewardId}`;
+      }
+  } 
 };
 
 export default API_ENDPOINTS;

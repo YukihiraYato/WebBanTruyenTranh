@@ -83,7 +83,7 @@ function PaypalButtonForWbPoint() {
                 // Or go to another URL:  actions.redirect('thank_you.html');
 
                 localStorage.removeItem("selectedTopUp");
-                window.location.href = "/profileUser/account-wbpoint";
+                window.location.href = "/profileUser/account-wbpoint/overview";
               }
             } catch (error) {
               console.error(error);

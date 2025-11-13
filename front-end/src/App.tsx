@@ -12,7 +12,8 @@ import Cart from "./pages/Cart";
 import Search from "./pages/Search";
 import OrderDetail from "./components/Order/OrderDetail";
 import ChatBox from "./components/Popup/Chat/ChatBox";
-
+import RedeemRewardPage from "./pages/BuyRedeemReward";
+import RedeemRewardDetailsPage from "./pages/RedeemRewardDetails";
 function App() {
   const CheckoutLayout = useMemo(() => {
     return (
@@ -49,6 +50,8 @@ function App() {
             path="/profileUser/orders/view/order_id/:orderId"
             Component={OrderDetail}
           />
+           <Route path="/redeem-reward/*" element={<RedeemRewardPage />} />
+           <Route path="redeem_details/*" element={<RedeemRewardDetailsPage />} />
           <Route
             path="*"
             element={
@@ -64,6 +67,7 @@ function App() {
         <Route element={CheckoutLayout}>
           <Route path="/checkout" Component={Checkout} />
         </Route>
+       
       </Routes>
 
         <ChatBox

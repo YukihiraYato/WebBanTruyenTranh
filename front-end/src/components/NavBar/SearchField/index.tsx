@@ -8,6 +8,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleXmark } from "@fortawesome/free-solid-svg-icons";
 import { searchBooks } from "~/api/book";
 import { getSearchHistory, saveSearchKeyword, deleteSearchHistory } from "~/api/user/searchHistory";
+import { searchRedeemReward } from "~/api/redeemReward";
+import { Select, MenuItem } from "@mui/material";
+import { useRedeemReward } from "~/providers/RedeemRewardProivder";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
 import "tippy.js/themes/light.css";
@@ -32,10 +35,12 @@ export function SearchField() {
     setSearchResults,
     filters,
     setIsResetDefaultFilters,
+    searchType,
+    setSearchType
   } = useSearchContext();
   const [history, setHistory] = useState([]);
   const [visible, setVisible] = useState(false);
-
+  const {  setKeyword} = useRedeemReward();
   useEffect(() => {
     setIsResetDefaultFilters(true);
   }, [setIsResetDefaultFilters]);
@@ -47,54 +52,78 @@ export function SearchField() {
     if (debounce.trim() === "") {
       return;
     }
+
     setLoading(true);
-    searchBooks({
-      context: debounce,
-      categoryId: filters.categoryId,
-      minPrice: filters.minPrice,
-      maxPrice: filters.maxPrice,
-      page: filters.page,
-      size: 5,
-    } as SearchBookParams)
-      .then((res) => {
-        setSearchResults(res.result.content);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching search results:", error);
-        setLoading(false);
-      });
-  }, [debounce]);
+
+    if (searchType === "BOOK") {
+      searchBooks({
+        context: debounce,
+        categoryId: filters.categoryId,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
+        page: filters.page,
+        size: 5,
+      } as SearchBookParams)
+        .then((res) => {
+          setSearchResults(res.result.content);
+        })
+        .catch((error) => console.error("Error fetching books:", error))
+        .finally(() => setLoading(false));
+    } else if (searchType === "REWARD") {
+      searchRedeemReward(debounce, filters.page, 5)
+        .then((res) => {
+          setSearchResults(res.content);
+        })
+        .catch((error) => console.error("Error fetching rewards:", error))
+        .finally(() => setLoading(false));
+    }
+  }, [debounce, searchType]);
+
   const handleClearResult = () => {
     setSearchKeyword(""); // Xóa ô input
+    setKeyword("");
     if (inputRef.current) {
       (inputRef.current as HTMLInputElement).focus();
     }
   };
-  const searchingBook = () => {
-    const url = `/category?categoryId=1&page=1&size=12&context=${searchKeyword}`;
-    if (location.pathname === "/category") {
-      // Nếu đang ở category, refresh lại trang với URL mới
-      saveSearchKeyword(searchKeyword).then(() => {
-        window.location.href = url;
-      }).catch((error) => {
-        console.error("Lỗi khi lưu từ khóa tìm kiếm:", error);
-      });
-    } else {
-      saveSearchKeyword(searchKeyword).then(() => {
-        navigate(url);
-      }).catch((error) => {
-        console.error("Lỗi khi lưu từ khóa tìm kiếm:", error);
-      }
-      );
+  const handleSearchSubmit = () => {
 
+    if (searchType === "BOOK") {
+      const url = `/category?categoryId=1&page=1&size=12&context=${searchKeyword}`;
+      saveSearchKeyword(searchKeyword)
+        .then(() => {
+          if (location.pathname === "/category") {
+            window.location.href = url;
+          } else {
+            navigate(url);
+          }
+        })
+        .catch((error) => console.error("Lỗi khi lưu từ khóa tìm kiếm:", error));
+    }
+    else if (searchType === "REWARD") {
+      const url = `/redeem-reward?page=1&size=12&context=${searchKeyword}`;
+      saveSearchKeyword(searchKeyword)
+        .then(() => {
+          if (location.pathname === "/redeem-reward") {
+            navigate(`/redeem-reward?page=1&size=12&context=${searchKeyword}`)
+          } else {
+            navigate(url);
+          }
+        })
+        .catch((error) => console.error("Lỗi khi lưu từ khóa tìm kiếm:", error));
     }
   };
+
   const handleSelectBook = (book: { bookId: number }) => {
     navigate(`/details/${book.bookId}`);
     saveSearchKeyword(searchKeyword);
     setVisible(false);
   }
+  const handleSelectReward = (reward: { rewardId: number }) => {
+    navigate(`/redeem-reward/${reward.rewardId}`);
+    saveSearchKeyword(searchKeyword);
+    setVisible(false);
+  };
   const getSearchHistoryFromServer = async () => {
     try {
       setIsWatingKeyword(true);
@@ -157,8 +186,9 @@ export function SearchField() {
         {isLoading ? (
           <div className="text-gray-400 italic px-2">Đang tải...</div>
         ) : searchResults.length > 0 ? (
-          <div className="flex flex-col gap-1">
-            {searchResults.map((book) => (
+          searchType === "BOOK" ? (
+            // Render kết quả sách
+            searchResults.map((book) => (
               <div
                 key={book.bookId}
                 className="cursor-pointer hover:bg-gray-100 px-2 py-2 rounded transition"
@@ -182,27 +212,63 @@ export function SearchField() {
                     height: "90px",
                     objectFit: "cover",
                     borderRadius: "6px",
-                    flexShrink: 0,
-                    display: "inline-block",
                   }}
                 />
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                  }}
-                >
-                  <span
-                    className="text-gray-800 font-medium truncate"
-                    style={{ fontSize: "14px", lineHeight: "1.2" }}
-                  >
+                <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                  <span className="text-gray-800 font-medium truncate" style={{ fontSize: "14px" }}>
                     {book.title}
                   </span>
+                  <span className="text-gray-500 text-sm">Tác giả: {book.author}</span>
                 </div>
               </div>
-            ))}
-          </div>
+            ))
+          ) : (
+            // Render kết quả redeem reward
+            searchResults.map((reward) => {
+              const thumbnail =
+                reward.images?.find((img) => img.isThumbnail) || reward.images?.[0];
+              return (
+                <div
+                  key={reward.rewardId}
+                  className="cursor-pointer hover:bg-gray-100 px-2 py-2 rounded transition"
+                  onClick={() => handleSelectReward(reward)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    marginTop: "5px",
+                    marginBottom: "10px",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "6px",
+                    padding: "5px",
+                  }}
+                >
+
+                  <img
+                    src={thumbnail?.imageUrl || "/no-image.png"}
+                    alt={reward.title}
+                    style={{
+                      width: "100px",
+                      height: "90px",
+                      objectFit: "cover",
+                      borderRadius: "6px",
+                    }}
+                  />)
+
+                  <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                    <span className="text-gray-800 font-medium truncate" style={{ fontSize: "14px" }}>
+                      {reward.title}
+                    </span>
+                    <span className="text-gray-500 text-sm">
+                      {reward.price} điểm
+                    </span>
+                  </div>
+                </div>
+              )
+            }
+
+            )
+          )
         ) : (
           <div className="text-gray-400 italic px-2">Không có kết quả</div>
         )}
@@ -241,14 +307,15 @@ export function SearchField() {
 
       }}
       onShown={() => {
-        
+
         inputRef.current?.focus();
       }}
-      
+
       onClickOutside={() => {
         setVisible(false);
         setSearchKeyword("");
         setSearchResults([]);
+        setKeyword("");
       }}
     >
       <Box
@@ -334,7 +401,7 @@ export function SearchField() {
             if (e.key === "Enter") {
               const inputValue = (e.target as HTMLInputElement).value;
               setSearchKeyword(inputValue.trim());
-              searchingBook();
+              handleSearchSubmit();
             }
           }}
           value={searchKeyword ?? ""}
@@ -352,10 +419,22 @@ export function SearchField() {
             },
             alignItems: "center",
           }}
-          onClick={searchingBook}
+          onClick={handleSearchSubmit}
         >
           <SearchIcon fontSize="small" />
         </Button>
+        <Select
+          sx={{
+            ml: 1,
+            "& fieldset": { border: "none" }, // ẩn border của OutlinedInput
+          }}
+          value={searchType}
+          onChange={(e) => setSearchType(e.target.value as any)}
+          size="small"
+        >
+          <MenuItem value="BOOK">Sách</MenuItem>
+          <MenuItem value="REWARD">Phần thưởng</MenuItem>
+        </Select>
       </Box>
     </Tippy>
   );

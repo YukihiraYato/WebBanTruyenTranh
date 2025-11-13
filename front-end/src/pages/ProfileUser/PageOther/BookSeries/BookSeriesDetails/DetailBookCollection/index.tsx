@@ -24,7 +24,8 @@ interface Book {
   discountPercentage: number,
   discountedPrice: number,
   averageRating: number,
-  thumbnail: string
+  thumbnail: string,
+  typePurchase: string
 }
 
 export interface BookCollectionDetailViewProperties {
@@ -209,6 +210,7 @@ export default function BookCollectionDetailView() {
                       originallPrice: book.originalPrice,
                       isRemoved: userIdCurrent === userIdOfBookCollection,
                       idBookCollection: idBookCollection,
+                      typePurchase: book.typePurchase
                     }}
                   />
                 </SwiperSlide>

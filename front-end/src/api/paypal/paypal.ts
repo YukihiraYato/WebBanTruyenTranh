@@ -1,20 +1,13 @@
 import axiosInstance from "./../axios";
 import API_ENDPOINTS from "./../endpoint";
-import { CartItemPropertyResponseDTO} from "../../types/cart";
-export const createPaypalOrder = async (data: CartItemPropertyResponseDTO [], listDiscountIds: number[] | null = null): Promise<any> => {
+import {OrderRequestDTO} from "../../types/order";
+export const createPaypalOrder = async (data: OrderRequestDTO): Promise<any> => {
   const url = API_ENDPOINTS.PAYPAL.CREATE_ORDER;
-  const requestData = {
-    items: data,
-    discountIds: listDiscountIds 
-  }
-  const res = await axiosInstance.post(url, requestData);
+  const res = await axiosInstance.post(url, data);
   return res.data;
 };
-export const capturePaypalOrder = async (orderId: string, listIdDiscount : number[] | null = null): Promise<any> => {
-   const listDiscountIds = {
-    discountIds: listIdDiscount 
-  }
+export const capturePaypalOrder = async (orderId: string, data: OrderRequestDTO): Promise<any> => {
   const url = API_ENDPOINTS.PAYPAL.CAPTURE_ORDER(orderId);
-  const res = await axiosInstance.post(url, listDiscountIds);
+  const res = await axiosInstance.post(url, data);
   return res.data;
 }

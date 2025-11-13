@@ -4,16 +4,16 @@ import { BookCard } from "~/components/BookCard";
 import { SelectChangeEvent } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { useTranslation } from "react-i18next";
-import { useCategoryContext } from "~/context/CategoryContext";
+import { useRedeemReward } from "~/providers/RedeemRewardProivder";
 
 const perPageOptions = [12, 24, 48];
 
-export default function BookList() {
-  const { books, page, setPage, size, setSize, totalPages } =
-    useCategoryContext();
+export default function RedeemRewardList() {
+  const { listRedeemReward, page, setPage, size, setSize, totalPages } =
+    useRedeemReward();
   const [sort, setSort] = React.useState("latest");
   const { t } = useTranslation();
-
+  
   const mapSortOptions = [
     { key: "page.search.filterContent.label1.item1", value: "latest" },
     { key: "page.search.filterContent.label1.item2", value: "best-seller" },
@@ -40,13 +40,13 @@ export default function BookList() {
   };
 
   // Sắp xếp sách theo sort
-  const sortedBooks = [...books];
+  const sortRedeemReward = [...listRedeemReward];
   switch (sort) {
     case "price-asc":
-      sortedBooks.sort((a, b) => a.discountedPrice - b.discountedPrice);
+      sortRedeemReward.sort((a, b) => a.price - b.price);
       break;
     case "price-desc":
-      sortedBooks.sort((a, b) => b.discountedPrice - a.discountedPrice);
+      sortRedeemReward.sort((a, b) => b.price - a.price);
       break;
     default:
       break;
@@ -91,20 +91,23 @@ export default function BookList() {
 
       {/* Danh sách sách */}
       <Box display="grid" gridTemplateColumns="repeat(4, 1fr)" gap={2}>
-        {sortedBooks.map((book) => (
-          <BookCard
-            key={book.bookId}
+        {sortRedeemReward.map((redeemReward) => {
+         const thumbnail = redeemReward.images.find(img => img.isThumbnail)?.imageUrl;
+          return (
+               <BookCard
+            key={redeemReward.rewardId}
             card={{
-              discountPercentage: book.discountPercentage,
-              thumbnail: book.imageUrl,
-              title: book.title,
-              discountPrice: book.discountedPrice,
-              originallPrice: book.price,
-              bookId: book.bookId,
-              typePurchase: book.typePurchase
+              discountPrice: null,
+              discountPercentage: null,
+              thumbnail: thumbnail,
+              title: redeemReward.title,
+              originallPrice: redeemReward.price,
+              bookId: redeemReward.rewardId,
+              typePurchase: redeemReward.typePurchase
             }}
           />
-        ))}
+          )
+        })}
       </Box>
 
       {/* Phân trang */}
