@@ -30,7 +30,7 @@ export function TargetPopOver({
           <div className='flex flex-wrap gap-2'>
             
               <Badge  variant='default'>
-                {discount.targetType}
+                {discount.targetType.targetType}
               </Badge>
           
           </div>

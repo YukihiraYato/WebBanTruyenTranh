@@ -15,39 +15,39 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 
-interface DiscountSelectorProps {
+interface UserRankSelectorProps {
   value: string
   onChange: (valueChange: string) => void
 }
 
-export default function DiscountSelector({ value, onChange }: DiscountSelectorProps) {
-  const selectTargetDiscount = value || ""
-  const listTargetDiscount = ["ORDER", "BOOK", "REDEEM"]
-  const toggleDiscountTarget = (selectedTargetDiscount: string) => {
-    const isSelected = selectTargetDiscount === selectedTargetDiscount
+export default function UserRankSelector({ value, onChange }: UserRankSelectorProps) {
+  const selectUserRank = value || ""
+  const listUserRank = ["Bronze","Silver" ,"Gold", "Platinum","Diamond"]
+  const toggleUserRank = (selectedTargetUserRank: string) => {
+    const isSelected = selectUserRank === selectedTargetUserRank
 
     if (isSelected) {
       // Bỏ chọn discount target
       onChange("")
     } else {
       // Chọn discount target
-      onChange(selectedTargetDiscount)
+      onChange(selectedTargetUserRank)
     }
   }
 
 
 
-  function renderDiscountTarget(
-    listTargetDiscount: string[],
+  function renderUserRank(
+    listTargetUserRank: string[],
   ): JSX.Element[] {
-    return listTargetDiscount.map((target) => {
-      const isSelected = selectTargetDiscount === target
+    return listTargetUserRank.map((target) => {
+      const isSelected = selectUserRank === target
 
       return (
         <CommandItem
           key={target}
           value={target}
-          onSelect={() => toggleDiscountTarget(target)}
+          onSelect={() => toggleUserRank(target)}
           className='flex items-center justify-between'
         >
           <span>{target}</span>
@@ -71,14 +71,14 @@ export default function DiscountSelector({ value, onChange }: DiscountSelectorPr
           id='targetChosen'
           className='flex w-full cursor-pointer flex-wrap gap-2 border-2 border-dashed p-2'
         >
-          {selectTargetDiscount === "" ? (
+          {selectUserRank === "" ? (
             <div className='flex w-full justify-center'>
               <span className='text-sm'>Chưa chọn</span>
             </div>
           ) : (
 
             <Badge variant='default'>
-              {selectTargetDiscount}
+              {selectUserRank}
             </Badge>
 
           )}
@@ -90,7 +90,7 @@ export default function DiscountSelector({ value, onChange }: DiscountSelectorPr
           <CommandList>
 
             <CommandGroup heading='Danh mục'>
-              {renderDiscountTarget(listTargetDiscount)}
+              {renderUserRank(listUserRank)}
             </CommandGroup>
           </CommandList>
         </Command>

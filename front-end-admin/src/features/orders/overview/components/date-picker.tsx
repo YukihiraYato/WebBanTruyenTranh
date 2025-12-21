@@ -11,12 +11,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-
+import {useOrderOverviewContext} from "@/context/OrderOverviewContext";
 export function DatePickerWithRange({
   className,
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const [date, setDate] = React.useState<DateRange | undefined>()
-
+  const { date, setDate } = useOrderOverviewContext();
+  console.log('Selected date range: ', date)
   return (
     <div className={cn('grid gap-2', className)}>
       <Popover>

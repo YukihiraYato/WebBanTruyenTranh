@@ -3,9 +3,9 @@ import { IconCheckbox, IconSquare } from '@tabler/icons-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Command,
-  CommandEmpty,
+
   CommandGroup,
-  CommandInput,
+
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
@@ -22,14 +22,14 @@ interface DiscountSelectorProps {
 
 export default function DiscountSelector({ value, onChange }: DiscountSelectorProps) {
   const selectTargetDiscount = value || ""
-  const listTargetDiscount = ["ORDER", "PRODUCT", "CATEGORY"]
+  const listTargetDiscount = ["ORDER", "BOOK", "REDEEM"]
   const toggleDiscountTarget = (selectedTargetDiscount: string) => {
     const isSelected = selectTargetDiscount === selectedTargetDiscount
 
     if (isSelected) {
       // Bỏ chọn discount target
       onChange("")
-    }else {
+    } else {
       // Chọn discount target
       onChange(selectedTargetDiscount)
     }
@@ -86,9 +86,9 @@ export default function DiscountSelector({ value, onChange }: DiscountSelectorPr
       </PopoverTrigger>
       <PopoverContent className='w-80'>
         <Command>
-          <CommandInput placeholder='Nhập thể loại...' />
+
           <CommandList>
-            <CommandEmpty>Không tìm thấy kết quả.</CommandEmpty>
+
             <CommandGroup heading='Danh mục'>
               {renderDiscountTarget(listTargetDiscount)}
             </CommandGroup>

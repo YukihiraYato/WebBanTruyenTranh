@@ -14,9 +14,11 @@ const API_ENDPOINTS = {
   ORDER: {
     SEARCH_ALL_ORDER: `/admin/api/order/search`,
     GET_ALL_ORDER: `/admin/api/order`,
+    FILTER_ORDER: (page: number, size: number) => `/api/orders/admin/filter_orders?page=${page}&size=${size}`,
     GET_ORDER_BY_ID: (id: number) => `/admin/api/order/${id}`,
     GET_ORDER_TIMELINE: (id: number) => `/api/orders/${id}/timeline`,
     UPDATE_ORDER_STATUS: (id: number) => `/api/orders/admin/${id}/status`,
+    GET_QUANTITY_STATUS: '/api/orders/admin/count_status_order',
   },
   PROMOTION: {
     GET_ALL_PROMOTION: '/admin/api/promotion/',
@@ -37,6 +39,10 @@ const API_ENDPOINTS = {
     GET_SUMMARY_ABOUT_CUSTOMER: '/admin/api/chart/summary-about-customer',
     GET_TOP_SELLING_PRODUCT: '/admin/api/chart/top-selling',
   },
+  REFUND:{
+      GET: (orderId: number) => `/api/book/refund-items/get-by-order-id/${orderId}`,
+      HANDEL_REFUND_REQUEST: "/api/book/refund-items/handle-request-refund-items",
+    }
 }
 
 export default API_ENDPOINTS
