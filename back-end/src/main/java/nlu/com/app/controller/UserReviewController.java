@@ -27,15 +27,19 @@ public class UserReviewController {
             @RequestHeader("Authorization") String authHeader,
             @RequestBody CreateReviewRequest request
     ) {
-        // Extract JWT from "Bearer <token>"
-        String jwtToken = extractToken(authHeader);
+       try{
+           // Extract JWT from "Bearer <token>"
+           String jwtToken = extractToken(authHeader);
 
-        // Call service
-        CreateReviewResponse response = userReviewService.createReview(jwtToken, request);
+           // Call service
+           CreateReviewResponse response = userReviewService.createReview(jwtToken, request);
 
-        return AppResponse.<CreateReviewResponse>builder()
-                .result(response)
-                .build();
+           return AppResponse.<CreateReviewResponse>builder()
+                   .result(response)
+                   .build();
+       } catch (Exception e) {
+           throw new RuntimeException(e);
+       }
     }
 
     private String extractToken(String header) {

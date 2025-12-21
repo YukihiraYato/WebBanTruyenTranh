@@ -2,29 +2,30 @@ package nlu.com.app.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.Table;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import nlu.com.app.dto.json.RedeemRewardJson;
+import nlu.com.app.dto.response.DiscountResponseDTO;
 import nlu.com.app.dto.response.RedeemRewardResponseDTO;
+import nlu.com.app.entity.Discount;
 import nlu.com.app.entity.RedeemReward;
 import nlu.com.app.entity.RedeemRewardImages;
+import nlu.com.app.mapper.DiscountMapper;
 import nlu.com.app.mapper.RedeemRewardMapper;
+import nlu.com.app.repository.DiscountRepository;
 import nlu.com.app.repository.RedeemRepository;
 import nlu.com.app.service.RedeemRewardService;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -33,6 +34,9 @@ public class RedeemRewardServiceImpl implements RedeemRewardService {
     private final ObjectMapper objectMapper;
     private final RedeemRepository redeemRepository;
     private final RedeemRewardMapper redeemRewardMapper;
+    private final DiscountRepository discountRepository;
+    private final DiscountMapper discountMapper;
+
     @Override
     public void initData() {
 
@@ -42,7 +46,8 @@ public class RedeemRewardServiceImpl implements RedeemRewardService {
             if (redeemRepository.findAllBy().isEmpty()) {
                 List<RedeemRewardJson> rewardJsonList = objectMapper.readValue(
                         resource.getInputStream(),
-                        new TypeReference<List<RedeemRewardJson>>() {}
+                        new TypeReference<List<RedeemRewardJson>>() {
+                        }
                 );
 
 
@@ -60,7 +65,7 @@ public class RedeemRewardServiceImpl implements RedeemRewardService {
                     redeemReward.setWeight(rewardJson.getWeight());
                     redeemReward.setQty_in_stock(rewardJson.getQty_in_stock());
 
-                    String priceStr = rewardJson.getPrice().toString();
+                    String priceStr = rewardJson.getPrice();
                     priceStr = priceStr.replace(".", "").replace(",", "").trim();
                     Double price = Double.parseDouble(priceStr);
 
@@ -100,15 +105,15 @@ public class RedeemRewardServiceImpl implements RedeemRewardService {
 
     @Override
     public Page<RedeemRewardResponseDTO> getRedeemRewards(int page, int size) {
-    try{
-        Page<RedeemReward> listRedeemReward = redeemRepository.findAll(PageRequest.of(page, size));
-        Page<RedeemRewardResponseDTO> redeemRewardResponseDTOS = listRedeemReward.map(reward ->{
-            return redeemRewardMapper.toRedeemRewardResponseDTO(reward);
-        });
-        return redeemRewardResponseDTOS;
-    } catch (Exception e) {
-        throw new RuntimeException(e);
-    }
+        try {
+            Page<RedeemReward> listRedeemReward = redeemRepository.findAll(PageRequest.of(page, size));
+            Page<RedeemRewardResponseDTO> redeemRewardResponseDTOS = listRedeemReward.map(reward -> {
+                return redeemRewardMapper.toRedeemRewardResponseDTO(reward);
+            });
+            return redeemRewardResponseDTOS;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -181,15 +186,22 @@ public class RedeemRewardServiceImpl implements RedeemRewardService {
 
     @Override
     public Page<RedeemRewardResponseDTO> searchRedeemRewards(int page, int size, String keyword) {
-      Page<RedeemRewardResponseDTO> redeemRewardResponseDTOS = redeemRepository.findByTitleContainingIgnoreCase(keyword, PageRequest.of(page, size)).map(redeemRewardMapper::toRedeemRewardResponseDTO);
-        System.out.println("Có ra danh sách redeem reward: "+ redeemRewardResponseDTOS.getContent().size());
-      return redeemRewardResponseDTOS;
+        Page<RedeemRewardResponseDTO> redeemRewardResponseDTOS = redeemRepository.findByTitleContainingIgnoreCase(keyword, PageRequest.of(page, size)).map(redeemRewardMapper::toRedeemRewardResponseDTO);
+        System.out.println("Có ra danh sách redeem reward: " + redeemRewardResponseDTOS.getContent().size());
+        return redeemRewardResponseDTOS;
     }
 
     @Override
     public Optional<RedeemRewardResponseDTO> getRedeemRewardById(long redeemRewardId) {
         Optional<RedeemReward> redeemReward = redeemRepository.findById(redeemRewardId);
         return redeemReward.map(redeemRewardMapper::toRedeemRewardResponseDTO);
+    }
+
+    @Override
+    public Page<DiscountResponseDTO> getAllRedeemableDiscounts(long userId, Pageable pageable) {
+        Page<Discount> discounts = discountRepository.findRedeemableDiscounts(userId, pageable);
+        Page<DiscountResponseDTO> discountResponseDTOS = discounts.map(discountMapper::mapToDiscountResponseDTO);
+        return discountResponseDTOS;
     }
 
 

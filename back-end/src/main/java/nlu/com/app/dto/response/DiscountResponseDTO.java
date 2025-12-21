@@ -1,12 +1,8 @@
 package nlu.com.app.dto.response;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
 import java.util.List;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -17,12 +13,25 @@ public class DiscountResponseDTO {
     private String description;
     private String discountType;
     private double value;
-    private String targetType;
+    private TargetType targetType;
     private double minOrderAmount;
     private int usageLimit;
     private int useCount;
+    private int usageLimitPerUser;
     private String startDate;
     private String endDate;
-    private Boolean isActive ;
+    private Boolean isActive;
     private List<Long> booksId;
+    private String rankForVipCustomer;
+    private Integer pointCost;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TargetType {
+        private String targetType;
+        //        trường categoryIds chi có value chỉ khi targetType = "Book"
+        private List<Long> categoryIds;
+    }
 }

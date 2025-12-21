@@ -1,9 +1,8 @@
 package nlu.com.app.exception;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-
-import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
@@ -24,21 +23,28 @@ public enum ErrorCode {
     GENRE_NOT_FOUND(1013, "Genre not found", HttpStatus.NOT_FOUND),
     BOOK_COLLECTION_NOT_FOUND(1014, "BookCollection not found", HttpStatus.NOT_FOUND),
     CANT_CHANGE_STATUS_ORDER(1010, "The status cannot be changed backwards to a previous state once it has been updated.", HttpStatus.BAD_REQUEST),
-    NO_DEFAULT_ADDRESS(1011, "No default address found for user.",HttpStatus.BAD_REQUEST),
+    NO_DEFAULT_ADDRESS(1011, "No default address found for user.", HttpStatus.BAD_REQUEST),
     ORDER_NOT_FOUND(1012, "Order cannot be found", HttpStatus.NOT_FOUND),
     UNAUTHORIZED(1013, "Your role is not allowed to perform this action", HttpStatus.UNAUTHORIZED),
     PROMOTION_NOT_FOUND(1014, "Promotion cannot be found", HttpStatus.NOT_FOUND),
     NULL_CART_ITEM_REQUEST(1015, "Null cart item request", HttpStatus.BAD_REQUEST),
     NOT_ENOUGH_WB_POINT(1016, "Not enough wb point to checkout", HttpStatus.BAD_REQUEST),
+    DISCOUNT_NOT_FOUND(1017, "Discount cannot be found", HttpStatus.NOT_FOUND),
+    DISCOUNT_EXPIRED(1018, "Discount has expired", HttpStatus.BAD_REQUEST),
+    DISCOUNT_NOT_REDEEMABLE(1019, "Discount is not redeemable", HttpStatus.BAD_REQUEST),
+    NOT_ENOUGH_POINT(1020, "Not enough point to redeem this discount", HttpStatus.BAD_REQUEST),
+    DISCOUNT_OUT_OF_STOCK(1021, "Discount is out of stock", HttpStatus.BAD_REQUEST),
+    DISCOUNT_LIMIT_REACHED(1022, "Discount limit is reached", HttpStatus.BAD_REQUEST),
+    RANK_NOT_SUFFICIENT(1023, "Your rank is not sufficient to redeem this discount", HttpStatus.BAD_REQUEST),
     ;
+
+    private final int code;
+    private final String message;
+    private final HttpStatusCode statusCode;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;
         this.message = message;
         this.statusCode = statusCode;
     }
-
-    private final int code;
-    private final String message;
-    private final HttpStatusCode statusCode;
 }

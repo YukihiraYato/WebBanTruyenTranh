@@ -41,4 +41,7 @@ public class Category {
   @ManyToOne
   @JoinColumn(name = "parent_category_id")
   private Category parentCategory;
+
+  @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<DiscountCategories> discountCategories = new ArrayList<>();
 }

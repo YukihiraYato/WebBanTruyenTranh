@@ -1,14 +1,16 @@
 package nlu.com.app.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.ArrayList;
 
 @Entity
 @Table(name = "redeem_reward")
@@ -17,13 +19,14 @@ import java.util.ArrayList;
 @ToString(exclude = "redeemRewardImages")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 
-public class RedeemReward  {
+public class RedeemReward {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "reward_id")
     Long rewardId;
     String title;
     Double price;
+    Double finalPrice;
     @Column(columnDefinition = "TEXT")
     String description;
     String supplier;

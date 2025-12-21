@@ -46,7 +46,7 @@ public class SecurityConfiguration {
                 "/api/orders/*/status",
                 "/api/orders/*/timeline",
                 "/api/category/**",
-                "/api/review/*/overall",
+                "/api/review/**",
                 "/api/promotion/*",
                     "/api/collections/*",
                     "/ws/**",

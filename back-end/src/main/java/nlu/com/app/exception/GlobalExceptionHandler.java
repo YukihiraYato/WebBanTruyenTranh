@@ -6,7 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @ControllerAdvice
 @Slf4j
@@ -55,6 +60,27 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(ErrorCode.UNKNOWN_EXCEPTION.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Object> handleResponseStatusException(ResponseStatusException ex) {
+        // Lấy message bạn đã viết ở Service
+        String message = ex.getReason();
+
+        // Tạo body lỗi trả về (theo format team bạn quy định)
+        Map<String, Object> body = new HashMap<>();
+        body.put("errorCode", "INVALID_PAYMENT"); // Hoặc lấy từ 1 enum nào đó nếu cần
+        body.put("message", message);
+        body.put("timestamp", LocalDateTime.now());
+
+
+//        {
+//    "timestamp": "2023-10-27T10:15:30",
+//    "status": 400,
+//    "errorCode": "INVALID_PAYMENT_METHOD",
+//    "message": "Đối với các sản phẩm bằng xu, vui lòng người dùng chọn thanh toán bằng xu WB Point"
+//}
+        return new ResponseEntity<>(body, ex.getStatusCode());
     }
 
 }
