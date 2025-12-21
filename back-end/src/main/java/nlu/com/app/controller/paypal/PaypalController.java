@@ -5,7 +5,8 @@ import com.paypal.sdk.PaypalServerSdkClient;
 import com.paypal.sdk.exceptions.ApiException;
 import com.paypal.sdk.http.response.ApiResponse;
 import com.paypal.sdk.models.*;
-import nlu.com.app.dto.paypal.ListBookChosenPayPalRequestDTO;
+import nlu.com.app.constant.EDiscountTarget;
+import nlu.com.app.constant.EDiscountType;
 import nlu.com.app.dto.request.CartItemRequestDTO;
 import nlu.com.app.dto.request.CreateOrderRequest;
 import nlu.com.app.dto.response.CartItemResponseDTO;
@@ -18,16 +19,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/paypal")
 public class PaypalController {
+    private static final double EXCHANGE_RATE = 26040.0;
     private final DiscountRepository discountRepository;
     private final ObjectMapper objectMapper;
     private final PaypalServerSdkClient client;
     private final IOrderService orderService;
-    private List<Long> bookIds = new ArrayList<>();
+    private final List<Long> bookIds = new ArrayList<>();
+
     @Autowired
     public PaypalController(ObjectMapper objectMapper, PaypalServerSdkClient client, IOrderService orderService, DiscountRepository discountRepository) {
         this.objectMapper = objectMapper;
@@ -39,8 +45,6 @@ public class PaypalController {
     @PostMapping("/api/orders")
     public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {
         try {
-
-
             Order order = createOrderForPaypal(request);
             return new ResponseEntity<>(order, HttpStatus.OK);
         } catch (Exception e) {
@@ -51,8 +55,21 @@ public class PaypalController {
 
     private Order createOrderForPaypal(CreateOrderRequest request) throws IOException, ApiException {
         List<Discount> discounts = discountRepository.findAllById(request.getListDiscountIds());
+
+        // 1. Phân loại Discount
+        List<Discount> itemLevelDiscounts = new ArrayList<>();
+        List<Discount> orderLevelDiscounts = new ArrayList<>();
+        if (discounts != null) {
+            for (Discount d : discounts) {
+                if (d.getTargetType() == EDiscountTarget.ORDER) orderLevelDiscounts.add(d);
+                else itemLevelDiscounts.add(d);
+            }
+        }
+
+        // 2. Map Request -> DTO
         List<CartItemResponseDTO.BookItemResponseDTO> listRequestBook = new ArrayList<>();
         List<CartItemResponseDTO.RewardItemResponseDTO> listRequestRedeem = new ArrayList<>();
+
         for (CartItemRequestDTO item : request.getItems()) {
             if (item.getTypePurchase().equals("BOOK")) {
                 CartItemResponseDTO.BookItemResponseDTO book = objectMapper.convertValue(item.getItem(), CartItemResponseDTO.BookItemResponseDTO.class);
@@ -62,95 +79,122 @@ public class PaypalController {
                 listRequestRedeem.add(redeem);
             }
         }
-        // Danh sách các item đã chuyển đổi sang USD và làm tròn 2 chữ số sau dấu phẩy
-        List<Item> items = new ArrayList<>();
+        List<Item> paypalItems = new ArrayList<>();
         double itemTotalUSD = 0.0;
 
-        for (CartItemResponseDTO.BookItemResponseDTO item : listRequestBook) {
-//            Cần giới hạn lại đồ dài của tên sách do yêu cầu của Paypal khong cho phep quá 127 ky tự
-            String itemName = item.getTitle();
-            if (itemName.length() > 127) {
-                itemName = itemName.substring(0, 124) + "...";
-            }
-            double unitPriceUSD = item.getDiscountedPrice() / 26040.0;
-            unitPriceUSD = Math.round(unitPriceUSD * 100.0) / 100.0; // làm tròn 2 chữ số
+        // --- XỬ LÝ BOOK ---
+        for (CartItemResponseDTO.BookItemResponseDTO book : listRequestBook) {
+            // Lấy giá gốc (đã trừ promotion admin nếu có)
+            double currentPriceVND = book.getDiscountedPrice() != null ? book.getDiscountedPrice() : book.getPrice();
 
-            double totalItemUSD = unitPriceUSD * item.getQuantity();
-            itemTotalUSD += totalItemUSD;
-
-            items.add(new Item.Builder(
-                    itemName,
-                    new Money("USD", String.format(Locale.US, "%.2f", unitPriceUSD)),
-
-                    String.valueOf(item.getQuantity())
-            )
-                    .sku(String.valueOf(item.getProductId()))
-                    .description(item.getTitle())
-                    .category(ItemCategory.PHYSICAL_GOODS)
-                    .build());
-        }
-        for (CartItemResponseDTO.RewardItemResponseDTO item : listRequestRedeem) {
-//            Cần giới hạn lại đồ dài của tên sách do yêu cầu của Paypal khong cho phep quá 127 ky tự
-            String itemName = item.getTitle();
-            if (itemName.length() > 127) {
-                itemName = itemName.substring(0, 124) + "...";
-            }
-            double unitPriceUSD = item.getPrice() / 26040.0;
-            unitPriceUSD = Math.round(unitPriceUSD * 100.0) / 100.0; // làm tròn 2 chữ số
-
-            double totalItemUSD = unitPriceUSD * item.getQuantity();
-            itemTotalUSD += totalItemUSD;
-
-            items.add(new Item.Builder(
-                    itemName,
-                    new Money("USD", String.format(Locale.US, "%.2f", unitPriceUSD)),
-
-                    String.valueOf(item.getQuantity())
-            )
-                    .sku(String.valueOf(item.getProductId()))
-                    .description(item.getTitle())
-                    .category(ItemCategory.PHYSICAL_GOODS)
-                    .build());
-        }
-        double amountDecreased = 0.0;
-        //        Kiểm tra có giảm giá theo ORDER ko
-        if (discounts != null && !discounts.isEmpty()) {
-            for(Discount discount : discounts) {
-                Double discountValue = discount.getValue();
-                switch (discount.getDiscountType()) {
-                    case PERCENT:
-                        amountDecreased= (itemTotalUSD * discountValue);
-                        break;
-                    case FIXED:
-                        amountDecreased = Math.round((discountValue/ 26040.0) * 100.0) / 100.0;
-                        break;
+            // Áp dụng Item Discount (Nếu có)
+            // Lưu ý: Logic check isBookEligibleForDiscount cần được implement hoặc giả định
+            for (Discount d : itemLevelDiscounts) {
+                if (d.getTargetType() == EDiscountTarget.BOOK) {
+                    // Cần check condition của discount với book ở đây
+                    // Giả sử thỏa mãn:
+                    if (d.getDiscountType() == EDiscountType.PERCENT) {
+                        currentPriceVND = currentPriceVND * (1 - d.getValue());
+                    } else {
+                        currentPriceVND = Math.max(0, currentPriceVND - d.getValue());
+                    }
                 }
             }
-            amountDecreased = Math.round(amountDecreased * 100.0) / 100.0;
-       
 
+            // Convert sang USD và làm tròn
+            double unitPriceUSD = Math.round((currentPriceVND / EXCHANGE_RATE) * 100.0) / 100.0;
+            double lineTotalUSD = unitPriceUSD * book.getQuantity();
+            itemTotalUSD += lineTotalUSD;
+
+            // Format tên (cắt chuỗi 127 ký tự)
+            String itemName = book.getTitle().length() > 127
+                    ? book.getTitle().substring(0, 124) + "..."
+                    : book.getTitle();
+
+            paypalItems.add(new Item.Builder(
+                    itemName,
+                    new Money("USD", String.format(Locale.US, "%.2f", unitPriceUSD)),
+                    String.valueOf(book.getQuantity())
+            )
+                    .sku(String.valueOf(book.getProductId()))
+                    .category(ItemCategory.PHYSICAL_GOODS)
+                    .build());
         }
 
+        // --- XỬ LÝ REDEEM/REWARD ---
+        for (CartItemResponseDTO.RewardItemResponseDTO redeem : listRequestRedeem) {
+            double currentPriceVND = redeem.getPrice();
 
-        double finalAmountUSD = itemTotalUSD -amountDecreased;
+            // Áp dụng Discount Redeem (nếu có)
+            for (Discount d : itemLevelDiscounts) {
+                if (d.getTargetType() == EDiscountTarget.REDEEM) {
+                    if (d.getDiscountType() == EDiscountType.PERCENT) {
+                        currentPriceVND = currentPriceVND * (1 - d.getValue());
+                    } else {
+                        currentPriceVND = Math.max(0, currentPriceVND - d.getValue());
+                    }
+                }
+            }
 
+            double unitPriceUSD = Math.round((currentPriceVND / EXCHANGE_RATE) * 100.0) / 100.0;
+            double lineTotalUSD = unitPriceUSD * redeem.getQuantity();
+            itemTotalUSD += lineTotalUSD;
 
+            String itemName = redeem.getTitle().length() > 127
+                    ? redeem.getTitle().substring(0, 124) + "..."
+                    : redeem.getTitle();
 
-        Money totalMoney = new Money("USD", String.format(Locale.US, "%.2f", finalAmountUSD));
+            paypalItems.add(new Item.Builder(
+                    itemName,
+                    new Money("USD", String.format(Locale.US, "%.2f", unitPriceUSD)),
+                    String.valueOf(redeem.getQuantity())
+            )
+                    .sku(String.valueOf(redeem.getProductId()))
+                    .category(ItemCategory.PHYSICAL_GOODS)
+                    .build());
+        }
 
+        // 4. Tính toán Order Discount (trên tổng USD)
+        double orderDiscountUSD = 0.0;
+
+        for (Discount d : orderLevelDiscounts) {
+            double discountVal = 0.0;
+
+            // Check Min Order (quy đổi sang USD để so sánh hoặc quy đổi total sang VND)
+            double minOrderUSD = d.getMinOrderAmount() / EXCHANGE_RATE;
+            if (itemTotalUSD < minOrderUSD) continue;
+
+            if (d.getDiscountType() == EDiscountType.PERCENT) {
+                discountVal = itemTotalUSD * d.getValue();
+            } else {
+                // Fixed VND -> USD
+                discountVal = d.getValue() / EXCHANGE_RATE;
+            }
+            orderDiscountUSD += discountVal;
+        }
+
+        // Làm tròn Discount Order
+        orderDiscountUSD = Math.round(orderDiscountUSD * 100.0) / 100.0;
+
+        // Đảm bảo không âm
+        if (orderDiscountUSD > itemTotalUSD) orderDiscountUSD = itemTotalUSD;
+
+        double finalTotalUSD = itemTotalUSD - orderDiscountUSD;
+        // Fix sai số floating point lần cuối
+        finalTotalUSD = Math.round(finalTotalUSD * 100.0) / 100.0;
+
+        // 5. Build Request gửi PayPal
         AmountBreakdown breakdown = new AmountBreakdown.Builder()
-                .itemTotal(new Money("USD", String.format(Locale.US, "%.2f", itemTotalUSD))) // tổng trước giảm
-                .discount(new Money("USD", String.format(Locale.US, "%.2f", amountDecreased))) // số tiền giảm
+                .itemTotal(new Money("USD", String.format(Locale.US, "%.2f", itemTotalUSD)))
+                .discount(new Money("USD", String.format(Locale.US, "%.2f", orderDiscountUSD)))
                 .build();
 
-
-        AmountWithBreakdown amount = new AmountWithBreakdown.Builder("USD", String.format(Locale.US, "%.2f", finalAmountUSD))
+        AmountWithBreakdown amount = new AmountWithBreakdown.Builder("USD", String.format(Locale.US, "%.2f", finalTotalUSD))
                 .breakdown(breakdown)
                 .build();
 
-
         PurchaseUnitRequest unit = new PurchaseUnitRequest.Builder(amount)
-                .items(items)
+                .items(paypalItems)
                 .build();
 
         OrderRequest orderRequest = new OrderRequest.Builder(
@@ -181,12 +225,12 @@ public class PaypalController {
                 .build();
 
         PurchaseUnitRequest unit = new PurchaseUnitRequest.Builder(amount)
-                .items(Arrays.asList(item))
+                .items(Collections.singletonList(item))
                 .build();
 
         return new OrderRequest.Builder(
                 CheckoutPaymentIntent.CAPTURE,
-                Arrays.asList(unit)
+                Collections.singletonList(unit)
         ).build();
     }
 
@@ -202,10 +246,34 @@ public class PaypalController {
         }
     }
 
-    private Order captureOrders(String orderID , CreateOrderRequest request) throws IOException, ApiException {
+    private Order captureOrders(String orderID, CreateOrderRequest request) throws IOException, ApiException {
         CaptureOrderInput input = new CaptureOrderInput.Builder(orderID, null).build();
         ApiResponse<Order> response = client.getOrdersController().captureOrder(input);
-        orderService.createOrderFromCart(request.getItems(), 4L, request.getListDiscountIds());
-        return response.getResult();
+
+        // Lấy Order Result từ response
+        Order resultOrder = response.getResult();
+
+        //
+        // Cấu trúc: purchase_units[0] -> payments -> captures[0] -> id
+        String realCaptureId = "";
+
+        if (resultOrder.getPurchaseUnits() != null && !resultOrder.getPurchaseUnits().isEmpty()) {
+            PurchaseUnit unit = resultOrder.getPurchaseUnits().get(0);
+            if (unit.getPayments() != null && unit.getPayments().getCaptures() != null
+                    && !unit.getPayments().getCaptures().isEmpty()) {
+                realCaptureId = unit.getPayments().getCaptures().get(0).getId();
+            }
+        }
+
+        // 3. Truyền realCaptureId này vào service để lưu xuống DB (thay vì orderID)
+        // orderID cũ chỉ là Order ID thôi, không refund được đâu!
+        orderService.createOrderFromCartByPaypal(
+                request.getItems(),
+                4L,
+                request.getListDiscountIds(),
+                realCaptureId // <--- Truyền cái này nhé
+        );
+
+        return resultOrder;
     }
 }

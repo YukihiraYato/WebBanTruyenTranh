@@ -12,29 +12,40 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author VuLuu
  */
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
+    Optional<Order> findByOrderId(long orderId);
 
-  Page<Order> findAllByUser(User user, Pageable pageable);
-  List<Order> findByStatus(EOrderStatus status);
-  @Query("SELECT COUNT(o) FROM Order o WHERE MONTH(o.deliveredDate) = :month AND YEAR(o.deliveredDate) = :year and o.status = :status")
-  int countByOrderDateMonthAndYear(@Param("month") int month, @Param("year") int year, @Param("status") EOrderStatus status);
-  List<Order> findTop5ByStatusOrderByDeliveredDateDesc(EOrderStatus status);
-  // Đếm số đơn hàng đã giao thành công
-  @Query("SELECT COUNT(o) FROM Order o WHERE o.user.userId = :userId AND o.status = 'DELIVERED'")
-  int countDeliveredOrdersByUserId(@Param("userId") Long userId);
+    Page<Order> findAllByUserOrderByOrderIdDesc(User user, Pageable pageable);
 
-  // Tổng chi tiêu các đơn đã giao thành công
-  @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.user.userId = :userId AND o.status = 'DELIVERED'")
-  Double sumDeliveredTotalAmountByUserId(@Param("userId") Long userId);
+    List<Order> findByStatus(EOrderStatus status);
 
-  // Tần suất mua hàng theo tháng (chỉ tính đơn đã giao thành công)
-  @Query("SELECT FUNCTION('DATE_FORMAT', o.deliveredDate, '%Y-%m') as month, SUM(o.totalAmount) " +
-          "FROM Order o WHERE o.user.userId = :userId AND o.status = 'DELIVERED' " +
-          "GROUP BY FUNCTION ('DATE_FORMAT', o.deliveredDate, '%Y-%m') ORDER BY FUNCTION ('DATE_FORMAT', o.deliveredDate, '%Y-%m')")
-  List<Object[]> sumDeliveredAmountGroupByMonth(@Param("userId") Long userId);
+    Page<Order> findByStatusOrderByOrderIdDesc(EOrderStatus status, Pageable pageable);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE MONTH(o.deliveredDate) = :month AND YEAR(o.deliveredDate) = :year and o.status = :status")
+    int countByOrderDateMonthAndYear(@Param("month") int month, @Param("year") int year, @Param("status") EOrderStatus status);
+
+    List<Order> findTop5ByStatusOrderByDeliveredDateDesc(EOrderStatus status);
+
+    // Đếm số đơn hàng đã giao thành công
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.user.userId = :userId AND o.status = 'DELIVERED'")
+    int countDeliveredOrdersByUserId(@Param("userId") Long userId);
+
+    // Tổng chi tiêu các đơn đã giao thành công
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.user.userId = :userId AND o.status = 'DELIVERED'")
+    Double sumDeliveredTotalAmountByUserId(@Param("userId") Long userId);
+
+    // Tần suất mua hàng theo tháng (chỉ tính đơn đã giao thành công)
+    @Query("SELECT FUNCTION('DATE_FORMAT', o.deliveredDate, '%Y-%m') as month, SUM(o.totalAmount) " +
+            "FROM Order o WHERE o.user.userId = :userId AND o.status = 'DELIVERED' " +
+            "GROUP BY FUNCTION ('DATE_FORMAT', o.deliveredDate, '%Y-%m') ORDER BY FUNCTION ('DATE_FORMAT', o.deliveredDate, '%Y-%m')")
+    List<Object[]> sumDeliveredAmountGroupByMonth(@Param("userId") Long userId);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = :status")
+    Long countQualityOrderBaseOnStatus(EOrderStatus status);
 }

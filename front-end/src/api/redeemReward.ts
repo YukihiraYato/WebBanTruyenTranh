@@ -37,3 +37,21 @@ export async function getARedeemReward(redeemRewardId: number): Promise<any> {
     return { code: error.response?.status || 500, result: error.response?.data?.message || "Lỗi không xác định" };
   }
 }
+export async function getRedeemableDiscount(userId: number): Promise<any> {
+  try {
+    const response = await axiosInstance.get(API_ENDPOINTS.REDEEM_REWARD.GET_REDEEMABLE_DISCOUNT(userId));
+    return response.data.result
+  } catch (error: any) {
+    console.error("Lỗi khi lấy thông tin mã giảm giá có thể đổi:", error);
+    return { code: error.response?.status || 500, result: error.response?.data?.message || "Lỗi không xác định" };
+  }
+}
+export async function redeemDiscountReward(discountId: number): Promise<any> {
+  try {
+    const response = await axiosInstance.post(API_ENDPOINTS.REDEEM_REWARD.REDEEM_DISCOUNT_REWARD(discountId));
+    return response.data
+  } catch (error: any) {
+    console.error("Lỗi khi đổi mã giảm giá:", error);
+    return { code: error.response?.status || 500, result: error.response?.data?.message || "Lỗi không xác định" };
+  }
+}

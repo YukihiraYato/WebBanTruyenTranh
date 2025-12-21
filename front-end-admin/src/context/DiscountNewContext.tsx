@@ -29,6 +29,14 @@ interface DiscountNewContextType {
   endDate: string;
   setEndDate: (endDate: string) => void;
   handleCreateDiscount: () => void; // add this property
+  categoryIds: number[];
+  setCategoryIds: (categoryIds: number[]) => void;
+  userRank: string;
+  setUserRank: (userRank: string) => void;
+  usageLimitPerUser: number;
+  setUsageLimitPerUser: (limit: number) => void;
+  pointCost: number;
+  setPointCost: (pointCost: number) => void;
 }
 const DiscountNewContext = createContext<DiscountNewContextType>({
   code: '',
@@ -45,9 +53,9 @@ const DiscountNewContext = createContext<DiscountNewContextType>({
   setTargetType: () => { },
   minOrderAmount: 0,
   setMinOrderAmount: () => { },
-  usageLimit: 0,
+  usageLimit: -1,
   setUsageLimit: () => { },
-  useCount: 0,
+  useCount: -1,
   setUseCount: () => { },
   isActive: true,
   setIsActive: () => { },
@@ -55,7 +63,15 @@ const DiscountNewContext = createContext<DiscountNewContextType>({
   setStartDate: () => { },
   endDate: '',
   setEndDate: () => { },
-  handleCreateDiscount: () => { }
+  handleCreateDiscount: () => { },
+  categoryIds: [],
+  setCategoryIds: () => { },
+  userRank: '',
+  setUserRank: () => { },
+  usageLimitPerUser: -1,
+  setUsageLimitPerUser: () => { },
+  pointCost: 0,
+  setPointCost: () => { },
 })
 export const useDiscountNewContext = () => useContext(DiscountNewContext)
 export const DiscountNewProvider = ({ children }: { children: ReactNode }) => {
@@ -66,6 +82,86 @@ export const DiscountNewProvider = ({ children }: { children: ReactNode }) => {
 
   // }, [value])
   const handleCreateDiscount = async () => {
+    // ---  VALIDATION (KIỂM TRA DỮ LIỆU) ---
+
+    // 1. Kiểm tra các trường bắt buộc cơ bản (Không được null hoặc rỗng)
+    if (!value.code?.trim()) {
+      toast.error('Lỗi tạo Discount', { description: 'Vui lòng nhập Mã giảm giá (Code).' });
+      return;
+    }
+    if (!value.title?.trim()) {
+      toast.error('Lỗi tạo Discount', { description: 'Vui lòng nhập Tiêu đề (Title).' });
+      return;
+    }
+    if (!value.description?.trim()) {
+      toast.error('Lỗi tạo Discount', { description: 'Vui lòng nhập Mô tả (Description).' });
+      return;
+    }
+    if (!value.startDate) {
+      toast.error('Lỗi tạo Discount', { description: 'Vui lòng chọn Ngày bắt đầu.' });
+      return;
+    }
+    if (!value.endDate) {
+      toast.error('Lỗi tạo Discount', { description: 'Vui lòng chọn Ngày kết thúc.' });
+      return;
+    }
+    // Kiểm tra isActive (thường boolean thì luôn true/false, nhưng check null cho chắc)
+    if (value.isActive === null || value.isActive === undefined) {
+      toast.error('Lỗi tạo Discount', { description: 'Trạng thái hoạt động không hợp lệ.' });
+      return;
+    }
+
+    // 2. Kiểm tra trường số (Value, MinOrderAmount)
+    if (!value.value || isNaN(Number(value.value))) {
+      toast.error('Lỗi tạo Discount', { description: 'Giá trị giảm giá (Value) không hợp lệ.' });
+      return;
+    }
+    if (value.minOrderAmount === null || value.minOrderAmount === undefined || isNaN(value.minOrderAmount)) {
+      toast.error('Lỗi tạo Discount', { description: 'Giá trị đơn hàng tối thiểu không hợp lệ.' });
+      return;
+    }
+
+    // 3. Kiểm tra Logic Target Type
+    if (!value.targetType) {
+      toast.error('Lỗi tạo Discount', { description: 'Vui lòng chọn loại áp dụng (Target Type).' });
+      return;
+    }
+    // Nếu là Book thì bắt buộc phải có categoryIds
+    // (Giả sử 'BOOK' là giá trị enum/string bạn dùng, hãy sửa lại nếu tên khác, ví dụ 'CATEGORY' hay 'PRODUCT')
+    if (value.targetType === 'BOOK') {
+      if (!value.categoryIds || value.categoryIds.length === 0) {
+        toast.error('Lỗi tạo Discount', { description: 'Vui lòng chọn ít nhất một Danh mục/Sách khi loại áp dụng là Book.' });
+        return;
+      }
+    }
+
+    // 4. Kiểm tra Logic Usage Limit (Giới hạn sử dụng)
+    // Yêu cầu: usageLimit có thể là default (-1) nếu usageLimitPerUser có giá trị set (khác -1) và ngược lại.
+    // Logic này có nghĩa là: Chỉ cần một trong hai cái hợp lệ về mặt logic số học, 
+    // và ta chấp nhận giá trị -1 (mặc định) mà không báo lỗi.
+
+    // Kiểm tra đơn giản: Đảm bảo chúng là số
+    if (value.usageLimit === null || value.usageLimit === undefined || isNaN(value.usageLimit)) {
+      toast.error('Lỗi tạo Discount', { description: 'Giới hạn sử dụng (Usage Limit) không hợp lệ.' });
+      return;
+    }
+    if (value.usageLimitPerUser === null || value.usageLimitPerUser === undefined || isNaN(value.usageLimitPerUser)) {
+      toast.error('Lỗi tạo Discount', { description: 'Giới hạn mỗi người dùng (Per User) không hợp lệ.' });
+      return;
+    }
+
+
+
+    if (value.usageLimit === -1 && value.usageLimitPerUser === -1) {
+      toast.error('Lỗi tạo Discount', { description: 'Vui lòng thiết lập ít nhất một loại giới hạn sử dụng.' });
+      return;
+    }
+    // Kiểm tra pointCost chỉ được số nguyên dương >=0 
+    if (value.pointCost === null || value.pointCost === undefined || isNaN(value.pointCost) || value.pointCost < 0) {
+      toast.error('Lỗi tạo Discount', { description: 'Chi phí điểm (Point Cost) không hợp lệ. Vui lòng nhập số nguyên dương hoặc 0.' });
+      return;
+    }
+
     try {
       const response = await createDiscount({
         code: value.code,
@@ -73,13 +169,19 @@ export const DiscountNewProvider = ({ children }: { children: ReactNode }) => {
         description: value.description,
         discountType: value.discountType,
         value: Number(value.value),
-        targetType: value.targetType,
+        targetType: {
+          targetType: value.targetType,
+          categoryIds: value.categoryIds
+        },
         minOrderAmount: value.minOrderAmount,
         usageLimit: value.usageLimit,
         useCount: value.useCount,
         isActive: value.isActive,
         startDate: value.startDate,
-        endDate: value.endDate
+        endDate: value.endDate,
+        userRank: value.userRank,
+        usageLimitPerUser: value.usageLimitPerUser,
+        pointCost: value.pointCost,
       })
       if (response.code === 1000) {
         toast('Tạo Discount thành công!', {

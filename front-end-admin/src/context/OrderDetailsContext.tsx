@@ -9,11 +9,11 @@ const OrderDetailsContext = createContext<ReturnType<typeof useOrderDetails>>(
 export const useOrderDetailsContext = () => useContext(OrderDetailsContext)
 
 interface OrderDetailsProviderProps {
-  children: ReactNode
+  children: ReactNode,
 }
 
 export const OrderDetailsProvider = ({
-  children,
+  children
 }: OrderDetailsProviderProps) => {
   const value = useOrderDetails()
 

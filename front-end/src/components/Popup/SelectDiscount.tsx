@@ -14,9 +14,10 @@ import { DiscountSelections } from "~/providers/DiscountProvider";
 interface SelectDiscountProps {
     open: boolean;
     onClose: () => void;
-    totalPrice: number;
-    setTotalPrice?: (price: number) => void;
-
+    totalPrice?: number;
+    onUpdateDiscountAmount?: (discountId: number, amount: number) => void;
+    setListItem?: React.Dispatch<React.SetStateAction<any[]>>;
+    setTotalPrice?: React.Dispatch<React.SetStateAction<number>>;
 }
 
 type Discount = {
@@ -26,14 +27,16 @@ type Discount = {
     description: string;
     discountType: string;
     value: number;
-    targetType: string;
+    targetType: {
+        targetType: string;
+        categoryIds?: number[];
+    };
     minOrderAmount: number;
     usageLimit: number;
     useCount: number;
     startDate: string;
     endDate: string;
     isActive: boolean;
-
 };
 
 
@@ -42,41 +45,44 @@ export default function SelectDiscountPopup({
     open,
     onClose,
     totalPrice,
-    setTotalPrice,
+    setListItem,
+    onUpdateDiscountAmount,
+    setTotalPrice
 }: SelectDiscountProps) {
-    const { listDiscount, setListDiscountChosen } = useDiscount();
+    const { listDiscount, setListDiscountChosen, fetchDiscount} = useDiscount();
     const [selectedDiscounts, setSelectedDiscounts] = useState<DiscountSelections>({});
 
     const groupedDiscounts = {
-        ORDER: listDiscount.filter(d => d.targetType === "ORDER"),
-        CATEGORY: listDiscount.filter(d => d.targetType === "CATEGORY"),
-        BOOK: listDiscount.filter(d => d.targetType === "BOOK"),
+        ORDER: listDiscount.filter(d => d.targetType.targetType === "ORDER"),
+        REDEEM: listDiscount.filter(d => d.targetType.targetType === "REDEEM"),
+        BOOK: listDiscount.filter(d => d.targetType.targetType === "BOOK"),
     };
 
     const handleSelectDiscount = (discount: Discount) => {
         setSelectedDiscounts(prev => {
-            const isSelected = prev[discount.targetType] === discount;
+            const isSelected = prev[discount.targetType.targetType] === discount;
             return {
                 ...prev,
-                [discount.targetType]: isSelected ? undefined : discount
+                [discount.targetType.targetType]: isSelected ? undefined : discount
             };
         });
     };
 
     useEffect(() => {
-        const selectedList: DiscountSelections[] = [];
+        const selectedList: any[] = [];
 
         Object.entries(selectedDiscounts).forEach(([type, discount]) => {
-            const all = [...groupedDiscounts.ORDER, ...groupedDiscounts.CATEGORY, ...groupedDiscounts.BOOK];
+            const all = [...groupedDiscounts.ORDER, ...groupedDiscounts.REDEEM, ...groupedDiscounts.BOOK];
             const found = all.find(d => d === discount);
-            if (found) selectedList.push({
-                [found.targetType]: found
-            });
+            if (found) selectedList.push(found);
         });
 
-        setListDiscountChosen(selectedList);
+        setListDiscountChosen?.(selectedList);
 
     }, [selectedDiscounts]);
+    useEffect(() => {
+        fetchDiscount();
+    }, []);
 
     const renderSection = (title: string, items: Discount[], type: keyof DiscountSelections) => (
         <Box mb={3}>
@@ -100,10 +106,12 @@ export default function SelectDiscountPopup({
                     <DiscountCard
                         key={i}
                         {...d}
+                        onUpdateDiscountAmount={onUpdateDiscountAmount}
                         totalPrice={totalPrice}
-                        setTotalPrice={setTotalPrice}
                         isSelected={selectedDiscounts[type] === d}
                         onSelect={() => handleSelectDiscount(d)}
+                        setListItem={setListItem}
+                        setTotalPrice={setTotalPrice}
                     />
                 ))}
             </Box>
@@ -129,7 +137,7 @@ export default function SelectDiscountPopup({
                     <Button variant="contained">Áp dụng</Button>
                 </Box>
                 {renderSection("Mã giảm giá cho Đơn hàng", groupedDiscounts.ORDER, "ORDER")}
-                {renderSection("Mã giảm giá theo Danh mục", groupedDiscounts.CATEGORY, "CATEGORY")}
+                {renderSection("Mã giảm giá theo Đồ đổi điểm Wb point", groupedDiscounts.REDEEM, "REDEEM")}
                 {renderSection("Mã giảm giá theo Sách", groupedDiscounts.BOOK, "BOOK")}
             </DialogContent>
         </Dialog>

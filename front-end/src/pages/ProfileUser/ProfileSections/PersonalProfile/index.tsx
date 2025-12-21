@@ -10,10 +10,10 @@ import {
     Paper,
 } from "@mui/material";
 import { addUserDetails, getUserDetails } from "~/api/user/userDetails";
-
 export default function PersonalProfile() {
     const initialUserDetails = JSON.parse(localStorage.getItem("userDetails") || "{}");
-
+    const userId = initialUserDetails.userId;
+   
     const [userDetails, setUserDetails] = useState({
         fullName: initialUserDetails.fullName || "",
         phoneNum: initialUserDetails.phoneNum || "",
@@ -27,7 +27,7 @@ export default function PersonalProfile() {
         month: "",
         year: "",
     });
-
+  
     
     useEffect(() => {
         if (userDetails?.dateOfBirth) {
@@ -35,6 +35,7 @@ export default function PersonalProfile() {
             setFormData(prev => ({ ...prev, day, month, year }));
         }
     }, [userDetails]);
+ 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -49,6 +50,7 @@ export default function PersonalProfile() {
         if (result.code === 1000) {
             localStorage.setItem("userDetails", JSON.stringify(userDetails));
             setUserDetails(userDetails); 
+            
             alert("Cập nhật thành công!");
         } else {
             alert("Cập nhật thất bại. Vui lòng thử lại.");

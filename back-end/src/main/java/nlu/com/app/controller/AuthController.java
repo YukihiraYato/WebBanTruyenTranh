@@ -1,24 +1,23 @@
 package nlu.com.app.controller;
 
 import lombok.RequiredArgsConstructor;
-import nlu.com.app.constant.EDiscountTarget;
-import nlu.com.app.constant.EDiscountType;
 import nlu.com.app.constant.EUserRank;
 import nlu.com.app.dto.AppResponse;
 import nlu.com.app.dto.request.LoginUserDTO;
 import nlu.com.app.dto.request.RegisterUserDTO;
 import nlu.com.app.dto.request.VerifyOTPRequestDTO;
-import nlu.com.app.entity.Discount;
 import nlu.com.app.entity.User;
 import nlu.com.app.entity.UserPoint;
 import nlu.com.app.repository.UserPointRepository;
 import nlu.com.app.repository.UserRepository;
 import nlu.com.app.service.EmailService;
-import nlu.com.app.service.IDiscountService;
 import nlu.com.app.service.OtpRedisService;
 import nlu.com.app.service.impl.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 import java.util.Random;
@@ -40,27 +39,28 @@ public class AuthController {
 
     @PostMapping("/register")
     public AppResponse<String> register(@RequestBody RegisterUserDTO requestDTO) {
-       String result = userService.registerUser(requestDTO);
-       if(result.equals("Tài khoản này đã có hệ thống, vui lòng đăng ký bằng 1 tài khoản khác")) {
-           return AppResponse.<String>builder()
-                   .result(result)
-                   .build();
-       }
-       if(result.equals("Email này đã được sử dụng. Vui lòng sử dụng email khác")){
-           return AppResponse.<String>builder()
-                   .result(result)
-                   .build();
-       }
-       if(result.equals("Đăng ký tài khoản thành công. Vui lòng xác minh tài khoản")) {
-           return AppResponse.<String>builder()
-                   .result(result)
-                   .build();
-       }
+        String result = userService.registerUser(requestDTO);
+        if (result.equals("Tài khoản này đã có hệ thống, vui lòng đăng ký bằng 1 tài khoản khác")) {
+            return AppResponse.<String>builder()
+                    .result(result)
+                    .build();
+        }
+        if (result.equals("Email này đã được sử dụng. Vui lòng sử dụng email khác")) {
+            return AppResponse.<String>builder()
+                    .result(result)
+                    .build();
+        }
+        if (result.equals("Đăng ký tài khoản thành công. Vui lòng xác minh tài khoản")) {
+            return AppResponse.<String>builder()
+                    .result(result)
+                    .build();
+        }
         return AppResponse.<String>builder()
                 .result("Đăng ký tài khoản bị lỗi. Vui lòng thử lại sau")
                 .build();
 
     }
+
     @PostMapping("register/send-otp")
     public AppResponse<String> sendOtp(@RequestBody Map<String, String> body) {
         try {
@@ -77,7 +77,7 @@ public class AuthController {
     }
 
     @PostMapping("/register/verify-otp")
-    public  AppResponse<String> verifyOtp(@RequestBody VerifyOTPRequestDTO request) {
+    public AppResponse<String> verifyOtp(@RequestBody VerifyOTPRequestDTO request) {
         try {
             boolean valid = otpService.isValid(request.getEmail(), request.getOtp());
             if (!valid) {
@@ -88,18 +88,19 @@ public class AuthController {
             user.setVerified(true);
             userRepository.save(user);
             UserPoint userPoint = userPointRepository.findByUser_UserId(user.getUserId()).orElseGet(
-                    ()->{
+                    () -> {
                         UserPoint newPoint = new UserPoint();
                         newPoint.setUser(user);
                         newPoint.setUserRank(EUserRank.Bronze);
                         newPoint.setTotalPoint(0.0); // khởi tạo mặc định
+                        newPoint.setLifetimePoint(0.0);
                         return userPointRepository.save(newPoint);
 
                     }
             );
             userPointRepository.save(userPoint);
             return AppResponse.<String>builder().result("Xác thực OTP thành công!").build();
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return AppResponse.<String>builder().result("Email không tồn tại. Vui lòng kiểm tra lại email.").build();
         }
@@ -113,6 +114,7 @@ public class AuthController {
                 .result(token)
                 .build();
     }
+
     @PostMapping("/login/admin")
     public AppResponse<String> loginOfAdmin(@RequestBody LoginUserDTO requestDTO) {
         var token = userService.verifyAccountAdmin(requestDTO);
@@ -120,6 +122,7 @@ public class AuthController {
                 .result(token)
                 .build();
     }
+
     private String generateOtp() {
         return String.valueOf(100000 + new Random().nextInt(900000));
     }

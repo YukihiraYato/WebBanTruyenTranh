@@ -15,6 +15,12 @@ export interface UseDiscountNewProps {
     startDate: string;
     endDate: string;
     isActive: boolean;
+    categoryIds: number[];
+    setCategoryIds: (ids: number[]) => void;
+    userRank: string;
+    setUserRank: (userRank: string) => void;
+    usersageLimitPerUser: number;
+    setUsageLimitPerUser: (limit: number) => void;
 }
 
 export function useDiscountNew() {
@@ -25,12 +31,15 @@ export function useDiscountNew() {
     const [value, setValue] = useState<string>("0");
     const [targetType, setTargetType] = useState<string>('ORDER');
     const [minOrderAmount, setMinOrderAmount] = useState<number>(0);
-    const [usageLimit, setUsageLimit] = useState<number>(0);
-    const [useCount, setUseCount] = useState<number>(0);
+    const [usageLimit, setUsageLimit] = useState<number>(-1);
+    const [useCount, setUseCount] = useState<number>(-1);
+    const [usageLimitPerUser, setUsageLimitPerUser] = useState<number>(-1);
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const [isActive, setIsActive] = useState<boolean>(true);
-
+    const [categoryIds, setCategoryIds] = useState<number[]>([]);
+    const [userRank, setUserRank] = useState<string>('');
+        const [pointCost, setPointCost] = useState<number>(0);
     return {
         code,
         setCode,
@@ -55,6 +64,14 @@ export function useDiscountNew() {
         endDate,
         setEndDate,
         isActive,
-        setIsActive
+        setIsActive,
+        categoryIds,
+        setCategoryIds,
+        userRank,
+        setUserRank,
+        usageLimitPerUser,
+        setUsageLimitPerUser,
+        pointCost,
+        setPointCost
     };
 }

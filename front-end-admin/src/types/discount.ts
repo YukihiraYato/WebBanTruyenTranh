@@ -5,13 +5,17 @@ export interface DiscountResponse {
   description: string;
   discountType: string;
   value: number;
-  targetType: string;
+  targetType: TargetType;
   minOrderAmount: number;
   usageLimit: number;
   useCount: number;
   startDate: string;
   endDate: string;
   isActive: boolean;
+}
+export interface TargetType {
+  targetType: string;
+  categoryIds: number[]
 }
 export interface DiscountUpdateRequest {
   id: number;

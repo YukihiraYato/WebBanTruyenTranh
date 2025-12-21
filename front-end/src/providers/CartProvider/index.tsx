@@ -30,7 +30,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await getCart();
       setCart(res.result.items);
-      localStorage.setItem("userId", res.result.userId);
+     
     } catch (err) {
       console.error("Lỗi khi lấy giỏ hàng:", err);
     }

@@ -1,12 +1,6 @@
 package nlu.com.app.dto.response;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -30,25 +24,29 @@ public class CartItemResponseDTO {
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     @NoArgsConstructor
     public static class BookItemResponseDTO {
-      Long productId;
-      Integer quantity;
-      String title;
-      Double price;
-      Double discountedPrice;
-      Double discountPercentage;
-      String imageUrl;
+        Long productId;
+        Long categoryId;
+        Integer quantity;
+        String title;
+        Double price;
+        Double discountedPrice;
+        Double discountPercentage;
+        Double originalPromotionPrice;
+        String imageUrl;
     }
+
     @Data
     @Builder
     @Getter
     @Setter
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     @NoArgsConstructor
-  public static class RewardItemResponseDTO {
-      Long productId;
-      Integer quantity;
-      Double price;
-      String title;
-      String imageUrl;
+    public static class RewardItemResponseDTO {
+        Long productId;
+        Integer quantity;
+        Double price;
+        String title;
+        String imageUrl;
+        Double discountedPrice;
     }
 }

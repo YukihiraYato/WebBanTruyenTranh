@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getListRedeemReward, getListRedeemRewardWithFilter, getARedeemReward } from "../../api/redeemReward";
+import { getListRedeemReward, getListRedeemRewardWithFilter, getARedeemReward , redeemDiscountReward, getRedeemableDiscount} from "../../api/redeemReward";
 import { useLocation } from "react-router-dom";
+import {getUserWbPoint} from "../../api/user/userPoint";
 export interface RedeemRewardType {
   rewardId: number;
   title: string;
@@ -40,6 +41,11 @@ interface RedeemRewardContextType {
   setRedeemRewardId: (redeemRewardId: number) => void;
   keyword: string;
   setKeyword: (keyword: string) => void;
+  listRedeemmableDiscountForExchangeWbPoint: any[];
+  setListRedeemableDiscountForExchangeWbPoint: (list: any[]) => void;
+  redeemDiscountReward: (discountId: number) => Promise<any>;
+  getRedeemableDiscountFromBackend: () => Promise<void>;
+  redeemDiscount: (discountId: number) => Promise<any>;
 }
 
 const RedeemRewardContext = createContext<RedeemRewardContextType | null>(null);
@@ -76,6 +82,7 @@ export function RedeemRewardProvider({ children }: { children: React.ReactNode }
   });
   const [keyword, setKeyword] = useState<string>("");
   const [redeemRewardId, setRedeemRewardId] = useState<number>(0);
+  const [listRedeemmableDiscountForExchangeWbPoint, setListRedeemableDiscountForExchangeWbPoint] = useState<any[]>([]);
   const location = useLocation();
   const getARedeemRewardFromBackend = async (rewardId: number) => {
     try {
@@ -83,6 +90,18 @@ export function RedeemRewardProvider({ children }: { children: React.ReactNode }
       setRedeemRewards(res);
     } catch (err) {
       console.error("Lỗi khi lấy redeem reward:", err);
+    }
+  };
+  const redeemDiscount = async (discountId: number): Promise<any> => {
+    try {
+      const res = await redeemDiscountReward(discountId);
+      if(res.message === "Redeem discount successfully"){
+        getRedeemableDiscountFromBackend();
+        alert("Đổi mã giảm giá thành công!");
+      }
+    } catch (err) {
+      console.error("Lỗi khi đổi mã giảm giá:", err);
+      throw err;
     }
   };
   useEffect(() => {
@@ -128,13 +147,27 @@ useEffect(() => {
   useEffect(() => {
     fetchRedeemReward();
   }, [page, size, material, origin, rangePrice]);
-
+     const getRedeemableDiscountFromBackend = async () => {
+      try {
+        const userId = Number(localStorage.getItem("userId"));
+        if (!isNaN(userId)) {
+          const res = (await getRedeemableDiscount(userId)).content;
+          setListRedeemableDiscountForExchangeWbPoint(res);
+        }
+      } catch (err) {
+        console.error("Lỗi khi lấy mã giảm giá có thể đổi:", err);
+      }
+    };
+  useEffect(() => {
+    getRedeemableDiscountFromBackend();
+  },[]);
   return (
     <RedeemRewardContext.Provider value={{
       listRedeemReward, fetchRedeemReward, page, setPage, size, setSize, totalPages, setTotalPages
       , material, setMaterial, origin, setOrigin, rangePrice, setRangePrice,
       redeemRewards, setRedeemRewards, redeemRewardId, setRedeemRewardId,
-      keyword, setKeyword
+      keyword, setKeyword, listRedeemmableDiscountForExchangeWbPoint, setListRedeemableDiscountForExchangeWbPoint,redeemDiscountReward,
+      getRedeemableDiscountFromBackend, redeemDiscount
     }}>
       {children}
     </RedeemRewardContext.Provider>

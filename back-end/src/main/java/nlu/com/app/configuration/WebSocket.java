@@ -14,6 +14,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocket implements WebSocketMessageBrokerConfigurer {
     private final JwtChannelInterceptor jwtChannelInterceptor;
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         WebSocketMessageBrokerConfigurer.super.registerStompEndpoints(registry);
@@ -25,10 +26,15 @@ public class WebSocket implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         WebSocketMessageBrokerConfigurer.super.configureMessageBroker(registry);
         registry.setApplicationDestinationPrefixes("/app");
-        registry.enableSimpleBroker("/notifyOrderStatus");
-        registry.enableSimpleBroker("/receive/message/conversation");
+        registry.enableSimpleBroker(
+                "/notifyOrderStatus",
+                "/receive/message/conversation",
+                "/notifyForAdminAboutOrder"
+        );
+
     }
-//    Security này dùng để bắt token gửi từ web socket client
+
+    //    Security này dùng để bắt token gửi từ web socket client
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(jwtChannelInterceptor);

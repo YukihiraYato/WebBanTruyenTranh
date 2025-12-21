@@ -39,6 +39,7 @@ export default function BookRecommend() {
                                         discountPrice: book.discountedPrice,
                                         originallPrice: book.price,
                                         thumbnail: book.imageUrl,
+                                        typePurchase: book.typePurchase
                                     }}
                                 />
                             </SwiperSlide>

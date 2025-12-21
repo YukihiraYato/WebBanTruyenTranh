@@ -12,10 +12,10 @@ import { useEffect, useState } from "react";
 import OrderStepper from "../OrderProgress";
 import { BookBought } from "../index";
 import { useTranslation } from "react-i18next";
-import {timeFor5StatusOrderObject} from "~/types/order";
+import { timeFor5StatusOrderObject } from "~/types/order";
 export interface OrderDetailsProps {
   orderId: string;
-  timeFor5StatusOrder:timeFor5StatusOrderObject ;
+  timeFor5StatusOrder: timeFor5StatusOrderObject;
   nameUser: string;
   phoneNumber: string;
   address: string;
@@ -28,9 +28,12 @@ export interface OrderDetailsProps {
   imgBook: string;
   titleBook: string;
   items: BookBought[];
-  img?: string; 
-  refreshOrders : () => void; 
-   goToAllTab: () => void; 
+  img?: string;
+  refreshOrders: () => void;
+  goToAllTab: () => void;
+  handleOpenRequest: () => void;
+  setSelectedOrderId: (orderId: string) => void;
+   refreshKey: number; // <-- NHẬN KEY TỪ COMPONENT CHA (RefundProduct)
 }
 
 export default function OrderDetail() {
@@ -56,27 +59,29 @@ export default function OrderDetail() {
     status: "",
     imgBook: "",
     titleBook: "",
-    img:"",
+    img: "",
     items: [],
-     refreshOrders: () => {},
-      goToAllTab: () => {}
+    refreshOrders: () => { },
+    goToAllTab: () => { },
+    handleOpenRequest: () => { },
+    setSelectedOrderId: (orderId: string) => { },
   });
- const showTimeOrderBaseOnStatus = (status: string) =>{
-    switch(status){
+  const showTimeOrderBaseOnStatus = (status: string) => {
+    switch (status) {
       case "PENDING_CONFIRMATION":
-      return order.timeFor5StatusOrder.pendingConfirmationDate;
+        return order.timeFor5StatusOrder.pendingConfirmationDate;
       case "CONFIRMED":
-      return order.timeFor5StatusOrder.confirmedDate;
+        return order.timeFor5StatusOrder.confirmedDate;
       case "SHIPPING":
-      return order.timeFor5StatusOrder.shippingDate;
+        return order.timeFor5StatusOrder.shippingDate;
       case "DELIVERED":
-      return order.timeFor5StatusOrder.deliveredDate;
+        return order.timeFor5StatusOrder.deliveredDate;
       case "CANCELED":
-      return order.timeFor5StatusOrder.cancelledDate;
+        return order.timeFor5StatusOrder.cancelledDate;
       default:
         return "Lỗi không lấy được thời gian"
-      }
-     }
+    }
+  }
 
   useEffect(() => {
     const stored = localStorage.getItem("selectedOrder");
@@ -92,7 +97,7 @@ export default function OrderDetail() {
     (acc, item) => acc + item.quantity,
     0
   );
-  const total = order.price  + order.feeShip;
+  const total = order.price + order.feeShip;
   const getBackgroundColor = (status: string) => {
     if (status === "DELIVERED") return "#f0fbea";
     if (status === "CANCELED") return "#ffecec";
@@ -111,7 +116,7 @@ export default function OrderDetail() {
         <Grid2 container justifyContent="space-between" alignItems="center">
           <Box mt={2} display="flex" alignItems="center" gap={1}>
             <Typography variant="h6" fontWeight="bold">
-             {t("page.profileUser.profileSection.orders.orderDetail.item2")} #{order.orderId}
+              {t("page.profileUser.profileSection.orders.orderDetail.item2")} #{order.orderId}
             </Typography>
             <Chip
               label={order.status}
@@ -181,10 +186,10 @@ export default function OrderDetail() {
               {t("page.profileUser.profileSection.orders.orderDetail.item14")} {order.feeShip.toLocaleString("vi-VN")} ₫
             </Typography>
             <Typography color="error" fontWeight="bold" mt={1}>
-             {t("page.profileUser.profileSection.orders.orderDetail.item15")} {total.toLocaleString("vi-VN")} ₫
+              {t("page.profileUser.profileSection.orders.orderDetail.item15")} {total.toLocaleString("vi-VN")} ₫
             </Typography>
             <Button variant="contained" color="error" sx={{ mt: 1 }}>
-            {t("page.profileUser.profileSection.orders.orderDetail.item20")}
+              {t("page.profileUser.profileSection.orders.orderDetail.item20")}
             </Button>
           </Paper>
         </Grid2>
@@ -235,32 +240,49 @@ export default function OrderDetail() {
           <Grid2
             container
             spacing={2}
-            alignItems="center"
+            alignItems="left"
             key={index}
             sx={{ mb: 1 }}
           >
-            <Grid2>
-              <Box
-                component="img"
-                src={item.img || "/placeholder.png"} 
-                alt={item.bookTitle}
-                sx={{
-                  width: 64,
-                  height: 80,
-                  borderRadius: 1,
-                  objectFit: "cover",
-                }}
-              />
-            </Grid2>
-            <Grid2>
-              <Typography color="text.secondary">
-                 {t("page.profileUser.profileSection.orders.orderDetail.item18")} {item.price.toLocaleString("vi-VN")} ₫ × {item.quantity}
-              </Typography>
-            </Grid2>
-            <Grid2>
-              <Typography fontWeight="bold">
-                {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
-              </Typography>
+            <Grid2
+              container
+              spacing={2}
+              alignItems="left"
+              sx={{ display: "flex", flexDirection: "column" }}
+            >
+              <Grid2>
+                <Typography style={{ flexGrow: 1 }}>{item.bookTitle}</Typography>
+              </Grid2>
+              <Grid2
+                container
+                spacing={2}
+                alignItems="left"
+                sx={{ display: "flex", flexDirection: "row" }}
+              >
+                <Grid2>
+                  <Box
+                    component="img"
+                    src={item.img || "/placeholder.png"}
+                    alt={item.bookTitle}
+                    sx={{
+                      width: 64,
+                      height: 80,
+                      borderRadius: 1,
+                      objectFit: "cover",
+                    }}
+                  />
+                </Grid2>
+                <Grid2>
+                  <Typography color="text.secondary">
+                    {item.quantity}
+                  </Typography>
+                </Grid2>
+                <Grid2>
+                  <Typography color="text.secondary">
+                    {t("page.profileUser.profileSection.orders.orderDetail.item18")} {item.price.toLocaleString("vi-VN")} ₫
+                  </Typography>
+                </Grid2>
+              </Grid2>
             </Grid2>
           </Grid2>
         ))}
@@ -269,7 +291,7 @@ export default function OrderDetail() {
 
         <Box display="flex" justifyContent="flex-end">
           <Typography fontWeight="bold" color="error">
-             {t("page.profileUser.profileSection.orders.orderDetail.item19")} {total.toLocaleString("vi-VN")} ₫
+            {t("page.profileUser.profileSection.orders.orderDetail.item19")} {total.toLocaleString("vi-VN")} ₫
           </Typography>
         </Box>
       </Paper>

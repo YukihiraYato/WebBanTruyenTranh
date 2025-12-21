@@ -13,6 +13,7 @@ import { Receipt, Person, MenuBook, Logout } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthContext } from "~/context/AuthContext";
+import { useDiscount } from "~/providers/DiscountProvider";
 export function MenuPopper({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { t } = useTranslation();

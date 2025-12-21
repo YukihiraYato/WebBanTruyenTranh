@@ -19,15 +19,32 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserPoint {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "user_point_id")
     private Long userPointId;
+
+    // Điểm hiện tại (có thể trừ khi đổi quà)
     @Column(name = "total_point")
     private Double totalPoint;
+
+    // Điểm tích lũy trọn đời (không bao giờ giảm)
+    @Column(name = "lifetime_point")
+    private Double lifetimePoint;
+
+    // Rank hiện tại
     @Column(name = "user_rank")
     @Enumerated(EnumType.STRING)
     private EUserRank userRank;
+
+    // Điểm cần để lên rank tiếp theo
+    @Column(name = "next_rank_point")
+    private Double nextRankPoint;
+
+    // Thời điểm user được nâng rank
+    @Column(name = "rank_updated_at")
+    private LocalDateTime rankUpdatedAt;
 
     @CreationTimestamp
     @Column(name = "created_at")
@@ -43,5 +60,5 @@ public class UserPoint {
 
     @OneToMany(mappedBy = "userPoint", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserPointHistory> userPointHistories = new ArrayList<>();
-    
 }
+

@@ -70,3 +70,21 @@ export async function updateOrderStatus(
     }
   }
 }
+export const getQuantityStatus = async () => {
+  const res = await axiosInstance.get<any>(
+    API_ENDPOINTS.ORDER.GET_QUANTITY_STATUS
+  )
+  return res.data
+}
+export const filterOrder = async (page: number, size: number, keyword: string | null, fromDate: string | null, toDate: string | null, status: string) => {
+  const res = await axiosInstance.post<any>(
+    API_ENDPOINTS.ORDER.FILTER_ORDER(page, size),
+    {
+      keyword,
+      fromDate,
+      toDate,
+      status
+    }
+  )
+  return res.data
+}

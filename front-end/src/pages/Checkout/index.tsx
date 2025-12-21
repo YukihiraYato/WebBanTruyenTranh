@@ -89,9 +89,8 @@ export function Checkout() {
     return JSON.parse(localStorage.getItem("userDetails") || "{}");
   });
   const { listDiscountChosen } = useDiscount();
-  const discountObject = listDiscountChosen?.[0] ?? {};
-  const listDiscount = Object.values(discountObject) as DiscountType[];
-  localStorage.setItem("listDiscount", JSON.stringify(listDiscount));
+  const listDiscount = listDiscountChosen
+
   const handleClickOpen = () => {
     setOpen(true);
   };

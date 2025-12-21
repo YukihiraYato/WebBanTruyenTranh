@@ -2,6 +2,9 @@ import { Card, CardContent, Typography, Chip, Button, Box } from "@mui/material"
 import PercentIcon from "@mui/icons-material/Percent";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useEffect, useState } from "react";
+import { isCategoryEligible } from "~/constant/category";
+import { BookItemPropertyResponseDTO } from "~/types/cart"; // Import thêm type để ép kiểu cho chuẩn
+import { useCart } from "~/providers/CartProvider";
 interface DiscountProps {
     discountId: number;
     code: string;
@@ -9,7 +12,10 @@ interface DiscountProps {
     description: string;
     discountType: string;
     value: number;
-    targetType: string;
+    targetType: {
+        targetType: string;
+        categoryIds?: number[];
+    };
     minOrderAmount: number;
     usageLimit: number;
     useCount: number;
@@ -17,14 +23,18 @@ interface DiscountProps {
     endDate: string;
     isActive: boolean;
     totalPrice?: number;
-    setTotalPrice?: (price: number) => void;
+
 
     /** props điều khiển từ cha */
     isSelected: boolean;
     onSelect: () => void;
+    setListItem?: React.Dispatch<React.SetStateAction<any[]>>;
+    onUpdateDiscountAmount?: (discountId: number, amount: number) => void;
+    setTotalPrice?: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export default function DiscountCard({
+    discountId,
     title,
     description,
     code,
@@ -33,39 +43,220 @@ export default function DiscountCard({
     endDate,
     discountType,
     totalPrice,
-    setTotalPrice,
+    onUpdateDiscountAmount,
+    minOrderAmount,
     isSelected,
     onSelect,
+    targetType,
+    setListItem,
 }: DiscountProps) {
-    const [amountDiscounted, setAmountDiscounted] = useState<number>(0);
-    useEffect(() => {
-        localStorage.setItem("amountDiscounted", amountDiscounted.toString());
-    }, [amountDiscounted]);
-    // Logic khi áp dụng (tùy chọn)
-    const handleApplyDiscount = () => {
-        onSelect(); // thông báo cho cha biết user chọn discount này
 
-        if (totalPrice && setTotalPrice) {
-            if (discountType === "PERCENT") {
-                setTotalPrice(totalPrice - totalPrice * value);
-                setAmountDiscounted(totalPrice * value);
-            } else if (discountType === "FIXED") {
-                setTotalPrice(totalPrice - value);
-                setAmountDiscounted(value);
-            }
-            
+    const { cart } = useCart();
+
+    // 1. Logic tính toán giá mới cho từng Item (Pure Function)
+    const executeDiscountLogic = (currentList: any[]) => {
+        switch (targetType.targetType) {
+            case "BOOK":
+                return currentList.map((cartItem) => {
+                    const type = cartItem.typePurchase?.toString().toUpperCase().trim();
+                    if (type === "BOOK") {
+                        const itemData = cartItem.item as BookItemPropertyResponseDTO;
+
+                        if (isCategoryEligible((itemData as any).categoryId, targetType.categoryIds)) {
+                            const currentAdminPrice = itemData.discountedPrice || itemData.price;
+                            let finalPrice = currentAdminPrice;
+
+                            if (discountType === "PERCENT") {
+                                finalPrice = currentAdminPrice - (currentAdminPrice * value);
+                            } else if (discountType === "FIXED") {
+                                finalPrice = currentAdminPrice - value;
+                            }
+                            if (finalPrice < 0) finalPrice = 0;
+
+                            const backupPrice = (itemData as any).originalPromotionPrice !== undefined
+                                ? (itemData as any).originalPromotionPrice
+                                : itemData.discountedPrice;
+
+                            return {
+                                ...cartItem,
+                                item: {
+                                    ...itemData,
+                                    discountedPrice: finalPrice,
+                                    originalPromotionPrice: backupPrice
+                                }
+                            };
+                        }
+                    }
+                    return cartItem;
+                });
+
+            case "REDEEM":
+                return currentList.map((cartItem) => {
+                    const type = cartItem.typePurchase?.toString().toUpperCase().trim();
+                    if (type === "REDEEM" || type === "REWARD") {
+                        const itemData = cartItem.item as any;
+                        const basePrice = itemData.price;
+                        let finalPrice = basePrice;
+
+                        if (discountType === "PERCENT") {
+                            finalPrice = basePrice - (basePrice * value);
+                        } else if (discountType === "FIXED") {
+                            finalPrice = basePrice - value;
+                        }
+                        if (finalPrice < 0) finalPrice = 0;
+
+                        return {
+                            ...cartItem,
+                            item: { ...itemData, discountedPrice: finalPrice }
+                        };
+                    }
+                    return cartItem;
+                });
+
+            default:
+                return currentList;
         }
     };
 
-    // Logic khi bỏ chọn (click lại)
-    const handleRemoveDiscount = () => {
-        onSelect(); // gọi lại cha để unselect
-        if (totalPrice && setTotalPrice) {
-            if (discountType === "PERCENT") {
-                setTotalPrice(totalPrice / (1 - value)); // hoàn lại tiền
-            } else if (discountType === "FIXED") {
-                setTotalPrice(totalPrice + value);
+    // Helper tính tổng (để biết item giảm bao nhiêu)
+    const calculateTotal = (items: any[]) => {
+        return items.reduce((total, cartItem) => {
+            const itemData = cartItem.item;
+            const finalPrice = (itemData.discountedPrice !== undefined && itemData.discountedPrice !== null)
+                ? itemData.discountedPrice
+                : itemData.price;
+            return total + (finalPrice * itemData.quantity);
+        }, 0);
+    };
+
+    // 2. EFFECT: Xử lý Voucher ORDER (Tự động tính & Báo cáo)
+    useEffect(() => {
+        // Chỉ chạy nếu voucher này là ORDER và đang được chọn
+        if (targetType.targetType === "ORDER" && onUpdateDiscountAmount && totalPrice !== undefined) {
+            
+            // Nếu không chọn -> Báo 0
+            if (!isSelected) {
+                onUpdateDiscountAmount(discountId, 0);
+                return;
             }
+
+            // Kiểm tra Min Order
+            if (minOrderAmount > 0 && totalPrice < minOrderAmount) {
+                // Không đủ điều kiện -> Báo giảm 0 đồng (nhưng vẫn giữ trạng thái Selected để khi đủ tiền thì tự giảm lại)
+                // Hoặc có thể hiển thị cảnh báo UI ở đây
+                console.warn(`Voucher ${code} không đủ điều kiện min order`);
+                onUpdateDiscountAmount(discountId, 0);
+                return;
+            }
+
+            // Tính tiền giảm
+            let newAmount = 0;
+            if (discountType === "PERCENT") {
+                newAmount = totalPrice * value;
+            } else if (discountType === "FIXED") {
+                newAmount = value;
+                // Không giảm quá tổng tiền
+                if (newAmount > totalPrice) newAmount = totalPrice;
+            }
+
+            // Báo cáo số tiền giảm lên Cha (Cart.tsx)
+            onUpdateDiscountAmount(discountId, newAmount);
+        }
+    }, [totalPrice, isSelected, discountId]); // Dependency chuẩn
+
+    // 3. EFFECT: Tự động Re-apply Item Discount khi Cart thay đổi (API update số lượng)
+    useEffect(() => {
+        if (isSelected && targetType.targetType !== "ORDER" && setListItem && cart) {
+            console.log("🔄 Re-applying Item Discount logic...");
+            setListItem((prevList) => {
+                const newList = executeDiscountLogic(prevList);
+                
+                // Tính số tiền tiết kiệm được để báo cáo (nếu cần)
+                const newTotal = calculateTotal(newList);
+                const oldTotal = calculateTotal(prevList);
+                const savedAmount = oldTotal - newTotal;
+
+                // Nếu voucher item cũng muốn báo cáo tổng tiền tiết kiệm cho Cha
+                if (onUpdateDiscountAmount) {
+                    onUpdateDiscountAmount(discountId, savedAmount);
+                }
+                
+                return newList;
+            });
+        }
+    }, [cart, isSelected]); // Chỉ chạy khi Cart gốc đổi hoặc trạng thái chọn đổi
+
+    // 4. Handle Click Apply
+    const handleApplyDiscount = () => {
+        onSelect(); // Toggle UI state
+
+        // Logic ORDER đã được useEffect xử lý tự động khi isSelected thay đổi -> Không cần code ở đây
+
+        // Logic ITEM (Book/Redeem) thì cần chạy ngay lập tức để update UI List
+        if (targetType.targetType !== "ORDER" && setListItem) {
+            setListItem((prevList) => {
+                const newList = executeDiscountLogic(prevList);
+                
+                const newTotal = calculateTotal(newList);
+                const oldTotal = calculateTotal(prevList);
+                
+                if (onUpdateDiscountAmount) {
+                    onUpdateDiscountAmount(discountId, oldTotal - newTotal);
+                }
+                return newList;
+            });
+        }
+    };
+
+    // 5. Handle Click Remove
+    const handleRemoveDiscount = () => {
+        onSelect(); // Toggle UI state -> isSelected = false
+
+        // Logic ORDER: useEffect sẽ tự chạy (do isSelected đổi) và báo cáo 0 -> OK
+
+        // Logic ITEM: Cần khôi phục giá thủ công
+        if (targetType.targetType === "BOOK" && setListItem) {
+            setListItem((prevList) => {
+                const recoveredList = prevList.map((cartItem) => {
+                    const type = cartItem.typePurchase?.toString().toUpperCase().trim();
+                    if (type === "BOOK") {
+                        const itemData = cartItem.item as any;
+                        return {
+                            ...cartItem,
+                            item: {
+                                ...itemData,
+                                discountedPrice: itemData.originalPromotionPrice // Restore
+                            }
+                        };
+                    }
+                    return cartItem;
+                });
+                
+                // Báo cáo giảm 0 đồng
+                if (onUpdateDiscountAmount) onUpdateDiscountAmount(discountId, 0);
+                return recoveredList;
+            });
+        } 
+        else if ((targetType.targetType === "REDEEM" || targetType.targetType === "REWARD") && setListItem) {
+            setListItem((prevList) => {
+                const recoveredList = prevList.map((cartItem) => {
+                    const type = cartItem.typePurchase?.toString().toUpperCase().trim();
+                    if (type === "REWARD" || type === "REDEEM") {
+                        const itemData = cartItem.item as any;
+                        return {
+                            ...cartItem,
+                            item: {
+                                ...itemData,
+                                discountedPrice: undefined // Reset
+                            }
+                        };
+                    }
+                    return cartItem;
+                });
+
+                if (onUpdateDiscountAmount) onUpdateDiscountAmount(discountId, 0);
+                return recoveredList;
+            });
         }
     };
 
@@ -88,6 +279,8 @@ export default function DiscountCard({
                 cursor: "pointer",
             }}
         >
+            {/* ... Phần UI giữ nguyên như cũ ... */}
+
             {/* Bên trái (icon) */}
             <Box
                 sx={{

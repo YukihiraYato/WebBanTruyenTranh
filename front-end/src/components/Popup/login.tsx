@@ -17,6 +17,7 @@ import { login } from "~/api/user/login";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+
 import "./main.css";
 interface LoginPopupProps {
   open: boolean;
@@ -40,6 +41,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ open, onClose }) => {
   const { setJwtToken } = useAuthContext();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
   // Cập nhập lại data account khi người dùng nhập và reset lỗi
   const handleChangeAccount = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAccountInfo(event.target.value);
@@ -130,6 +132,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ open, onClose }) => {
           localStorage.setItem("access_token", response.result);
           const userDetails = await getUserDetails();
           localStorage.setItem("userDetails", JSON.stringify(userDetails.result));
+          localStorage.setItem("userId", JSON.stringify(userDetails.result.userId));
           navigate("/");
         }
         // // Lưu thông tin chi tiết người dùng vào localStorage

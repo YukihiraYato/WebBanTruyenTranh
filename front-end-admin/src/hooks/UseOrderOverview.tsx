@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { OrderDTO } from '@/types/order'
-import { getOrders, updateOrderStatus } from '@/api/order'
+import { getOrders, updateOrderStatus, getQuantityStatus, filterOrder } from '@/api/order'
+import { useGetUpdatedOrder } from '@/hooks/useWebsocket'
+import { DateRange } from 'react-day-picker'
 
 export function useOrderOverview(initialPage = 0, initialSize = 99) {
   const [orders, setOrders] = useState<OrderDTO[]>([])
@@ -12,9 +14,27 @@ export function useOrderOverview(initialPage = 0, initialSize = 99) {
   const [totalElements, setTotalElements] = useState(0)
   const [isLastPage, setIsLastPage] = useState(false)
   const [isFirstPage, setIsFirstPage] = useState(false)
+  const [date, setDate] = useState<DateRange | undefined>()
+  const [listQuantityStatus, setListQuantityStatus] = useState<[]>([])
+  const [keyword, setKeyword] = useState<string>('')
+  const [status, setStatus] = useState<string>('');
+
+  const [messageFromBackend, setMessageFromBackend] = useState<string>('');
+  useGetUpdatedOrder(setMessageFromBackend);
+  const updateStatusOrder = useCallback(async () => {
+    const rs = await getQuantityStatus()
+    setListQuantityStatus(rs.result)
+  }, [messageFromBackend]);
   const loadOrders = async () => {
     setIsLoading(true)
-    const rs = await getOrders(page, size)
+    const fromDate = date?.from
+      ? date.from.toISOString().slice(0, 10)
+      : null;
+
+    const toDate = date?.to
+      ? date?.to.toISOString().slice(0, 10)
+      : null;
+    const rs = await filterOrder(page, size, keyword, fromDate, toDate, status)
     setOrders(rs.result.content)
     setTotalPage(rs.result.totalPages)
     setTotalElements(rs.result.totalElements)
@@ -37,6 +57,13 @@ export function useOrderOverview(initialPage = 0, initialSize = 99) {
   useEffect(() => {
     loadOrders()
   }, [page, size])
+  useEffect(() => {
+    loadOrders()
+  }, [date, keyword, status])
+  useEffect(() => {
+    updateStatusOrder();
+    loadOrders();
+  }, [messageFromBackend, updateStatusOrder]);
   return {
     orders,
     isLoading,
@@ -48,5 +75,14 @@ export function useOrderOverview(initialPage = 0, initialSize = 99) {
     isLastPage,
     isFirstPage,
     updateStatus,
+    date,
+    setDate,
+    listQuantityStatus,
+    setListQuantityStatus,
+    keyword,
+    setKeyword,
+    loadOrders,
+    status,
+    setStatus
   }
 }

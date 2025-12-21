@@ -12,6 +12,8 @@ import NotificationList from "./Nofitication";
 import OrderList from "./MyOrder";
 import BookCollectionDetailView from "./PageOther/BookSeries/BookSeriesDetails/DetailBookCollection";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import RefundPolicy from "./Refund/Rule";
+import ReturnRequestPage from "./Refund/RefundProduct";
 export function ProfileUser() {
   const [openAccount, setOpenAccount] = useState(true);
   const [selected, setSelected] = useState("Hồ sơ cá nhân");
@@ -47,6 +49,9 @@ export function ProfileUser() {
           <Route path="notifications" element={<NotificationList />} />
           <Route path="orders" element={<OrderList />} />
           <Route path="account-wbpoint/overview" element={<WbPoint />} />
+
+          <Route path="refund/rule" element={<RefundPolicy/>} />
+          <Route path="refund/request" element={<ReturnRequestPage/>} />
           <Route path="*" element={<div>Chưa có nội dung</div>} />
         </Routes>
       </Box>

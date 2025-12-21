@@ -6,9 +6,11 @@ import { useState } from "react";
 import SelectDiscountPopup from "~/components/Popup/SelectDiscount";
 interface DiscountProps {
   totalPrice?: number;
-  setTotalPrice?: (price: number) => void;
+  setTotalPrice?: React.Dispatch<React.SetStateAction<number>>;
+  setListItem?: React.Dispatch<React.SetStateAction<any[]>>;
+  onUpdateDiscountAmount?: (discountId: number, amount: number) => void;
 }
-function Discount({totalPrice = 0, setTotalPrice}: DiscountProps) {
+function Discount({setTotalPrice, totalPrice, setListItem, onUpdateDiscountAmount}: DiscountProps) {
   const { t } = useTranslation();
   const [openPopup, setOpenPopup] = useState(false);
   return (
@@ -72,7 +74,7 @@ function Discount({totalPrice = 0, setTotalPrice}: DiscountProps) {
         </Tooltip>
       </Stack>
       {/* Popup xem thêm */}
-      <SelectDiscountPopup open={openPopup} onClose={() => setOpenPopup(false) } totalPrice={totalPrice} setTotalPrice={setTotalPrice}  />
+      <SelectDiscountPopup onUpdateDiscountAmount={onUpdateDiscountAmount} setTotalPrice={setTotalPrice} open={openPopup} onClose={() => setOpenPopup(false) } totalPrice={totalPrice}  setListItem={setListItem}  />
     </Box>
   );
 }

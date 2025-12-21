@@ -22,8 +22,10 @@ import {
 } from "@mui/icons-material";
 import { red } from "@mui/material/colors";
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Fragment } from "react";
+import AssignmentReturnedIcon from '@mui/icons-material/AssignmentReturned';
+import UserRankCard from "../ProfileSections/CardUserRank/index.tsx";
 export default function SidebarMenu({
   selected,
   setSelected,
@@ -31,9 +33,11 @@ export default function SidebarMenu({
   setOpenAccount,
   currentPath,
 }) {
+
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [openWbpoint, setOpenWbpoint] = useState(false);
+  const [openRefund, setOpenRefund] = useState(false);
   const handleClick = (path: string) => {
     navigate(`/profileUser/${path}`);
   };
@@ -50,6 +54,10 @@ export default function SidebarMenu({
     { label: "Lịch sử sử dụng Wb-Point", path: "account-wbpoint/history" },
     // { label: t('page.profileUser.profileSection.wbpointItem.item3'), path: "account-wbpoint/redeem" },
   ];
+  const refundItems = [
+    { label: "Chính sách đổi trả", path: "refund/rule" },
+    { label: "Yêu cầu đổi trả", path: "refund/request" },
+  ];
   const otherItems = [
     { label: `${(t('page.profileUser.profileSection.otherItem.item1'))}`, icon: <LocalShipping />, path: "orders" },
     { label: `${(t('page.profileUser.profileSection.otherItem.item2'))}`, icon: <CardGiftcard />, path: "vouchers" },
@@ -58,41 +66,14 @@ export default function SidebarMenu({
     { label: `${(t('page.profileUser.profileSection.otherItem.item5'))}`, icon: <Favorite />, path: "wishlist" },
     { label: `${(t('page.profileUser.profileSection.otherItem.item6'))}`, icon: <MenuBook />, path: "book-series" },
     { label: `${(t('page.profileUser.profileSection.otherItem.item7'))}`, icon: <RateReview />, path: "review" },
+    { label: "Quản lý đổi trả", icon: <AssignmentReturnedIcon /> },
   ];
-  const userName = JSON.parse(localStorage.getItem("userDetails") || "{}");
+
   return (
     <Box width={280} bgcolor="#fff" p={2}>
       <Box textAlign="center" mb={2}>
-        <Box
-          component="img"
-          src="https://cdn1.fahasa.com/skin/frontend/ma_vanese/fahasa/images/icon_rank_silver.png"
-          alt="badge"
-          width={60}
-          mb={1}
-        />
-        <Typography variant="h6" fontWeight="bold">
-          {userName.fullName || "Tên người dùng"}
-        </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          disableElevation
-          sx={{
-            textTransform: "none",
-            color: "#666",
-            borderColor: "#ccc",
-            borderRadius: 10,
-            mt: 0.5,
-          }}
-        >
-          Thành viên Bạc
-        </Button>
-        <Typography variant="caption" display="block" mt={1}>
-          F-Point tích lũy 0
-        </Typography>
-        <Typography variant="caption" display="block">
-          Thêm 30.000 để nâng hạng Vàng
-        </Typography>
+        <UserRankCard  />
+       
       </Box>
       <Divider />
       <List disablePadding>
@@ -184,6 +165,49 @@ export default function SidebarMenu({
                 </Collapse>
               </Fragment>
             );
+          }
+          if (item.label === "Quản lý đổi trả") {
+            return (
+              <Fragment key={idx}>
+                <ListItemButton onClick={() => setOpenRefund(!openRefund)} sx={{ pl: 1.5 }}>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontWeight: "medium",
+                      color: openRefund ? red[700] : "inherit",
+                    }}
+                  />
+                  {openRefund ? (
+                    <ExpandLess sx={{ color: "#d70018" }} />
+                  ) : (
+                    <ExpandMore />
+                  )}
+                </ListItemButton>
+                <Collapse in={openRefund} timeout="auto" unmountOnExit>
+                  <List disablePadding sx={{ pl: 4 }}>
+                    {refundItems.map((sub) => (
+                      <ListItemButton
+                        key={sub.path}
+                        sx={{ py: 0.5 }}
+                        onClick={() => {
+                          setSelected(sub.label);
+                          handleClick(sub.path);
+                        }}
+                      >
+                        <ListItemText
+                          primary={sub.label}
+                          primaryTypographyProps={{
+                            fontSize: 14,
+                            color: selected === sub.label ? red[700] : "inherit",
+                          }}
+                        />
+                      </ListItemButton>
+                    ))}
+                  </List>
+                </Collapse>
+              </Fragment>
+            )
           }
 
           // còn lại render bình thường

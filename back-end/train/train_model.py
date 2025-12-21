@@ -5,26 +5,26 @@ from lightfm.data import Dataset
 import pickle
 import re
 import os
+import numpy as np
 
 # =========================
-# Kết nối MySQL
+# 🔗 Kết nối MySQL
 # =========================
 engine = create_engine("mysql+pymysql://admin:admin@host.docker.internal:3306/bookstore")
 
 # =========================
-#  Lấy dữ liệu ratings
+# 📚 Lấy dữ liệu ratings mới nhất
 # =========================
-ratings = pd.read_sql("""
-                      SELECT user_id, item_id, rating
-                      FROM user_book_ratings
-                      """, engine)
-
+ratings = pd.read_sql("SELECT user_id, item_id, rating FROM user_book_ratings", engine)
 ratings['user_id'] = ratings['user_id'].astype(int)
 ratings['item_id'] = ratings['item_id'].astype(int)
-ratings['rating']  = ratings['rating'].astype(float)
+ratings['rating'] = ratings['rating'].astype(float)
+
+# Tạo dict user -> set(item_id)
+user_rated_books = ratings.groupby('user_id')['item_id'].apply(set).to_dict()
 
 # =========================
-#  Lấy dữ liệu books + category + genre
+# 📖 Lấy dữ liệu books + category + genre
 # =========================
 books = pd.read_sql("""
                     SELECT b.book_id, c.category_name, b.genre
@@ -32,80 +32,74 @@ books = pd.read_sql("""
                              LEFT JOIN categories c ON b.category_id = c.category_id
                     """, engine)
 
-# Bỏ record null
-books = books.dropna(subset=['book_id', 'category_name', 'genre'])
 books['book_id'] = books['book_id'].astype(int)
+books['category_name'] = books['category_name'].fillna('unknown').str.lower().str.strip()
+books['genre'] = books['genre'].fillna('')
 
 # =========================
-#  Xử lý genre
+# 🧹 Làm sạch & tạo feature kết hợp
 # =========================
 def split_genres(genre_str):
-    genre_str = re.sub(r'[^\w, ]', '', str(genre_str))  # bỏ dấu chấm, ký tự lạ
+    genre_str = re.sub(r'[^\w, ]', '', str(genre_str))
     return [g.strip().lower() for g in genre_str.split(",") if g.strip()]
 
 books['genres_list'] = books['genre'].apply(split_genres)
 
-# Chuẩn hóa category
-books['category_name'] = books['category_name'].str.lower().str.strip()
-
-# =========================
-#  Kết hợp category + genre thành feature
-# =========================
 def combined_features(row):
+    if not row.genres_list:
+        return [f"{row.category_name}_unknown"]
     return [f"{row.category_name}_{g}" for g in row.genres_list]
 
 books['combined_features'] = books.apply(combined_features, axis=1)
 
 # =========================
-#  Chỉ giữ sách có rating
+# 🧱 Dataset LightFM setup
 # =========================
-valid_items = set(ratings['item_id']).intersection(set(books['book_id']))
-ratings = ratings[ratings['item_id'].isin(valid_items)]
-books = books[books['book_id'].isin(valid_items)]
+all_items = books['book_id'].unique()
+all_users = ratings['user_id'].unique()
 
-# =========================
-#  Tạo tập features cho LightFM
-# =========================
 all_features = set()
-for row in books.itertuples():
-    all_features.update(row.combined_features)
+for feats in books['combined_features']:
+    all_features.update(feats)
 
 dataset = Dataset()
 dataset.fit(
-    users=ratings['user_id'].unique(),
-    items=books['book_id'].unique(),
+    users=all_users,
+    items=all_items,
     item_features=list(all_features)
 )
 
-# =========================
-#  Build item features matrix
-# =========================
+# Build item_features cho toàn bộ sách
 item_features_matrix = dataset.build_item_features(
     [(row.book_id, row.combined_features) for row in books.itertuples()]
 )
 
-# =========================
-#  Build interactions
-# =========================
-interactions, weights = dataset.build_interactions(
+# Build interactions
+(interactions, weights) = dataset.build_interactions(
     [(row.user_id, row.item_id, row.rating) for row in ratings.itertuples()]
 )
 
 # =========================
-# Train LightFM model
+# 🧠 Train LightFM model
 # =========================
-model = LightFM(loss='warp')
+print("🚀 Bắt đầu train model...")
+model = LightFM(loss='warp', random_state=42)
 model.fit(interactions, item_features=item_features_matrix, epochs=20, num_threads=4)
+print("✅ Train xong!")
 
 # =========================
-#  Save model
+# 💾 Lưu model + dataset + interactions + user_rated_books
 # =========================
 os.makedirs('models', exist_ok=True)
 with open('models/model.pkl', 'wb') as f:
     pickle.dump({
         'model': model,
         'dataset': dataset,
-        'item_features': item_features_matrix
+        'item_features': item_features_matrix,
+        'interactions': interactions,
+        'user_rated_books': user_rated_books
     }, f)
 
-print(" Model đã lưu vào models/model.pkl")
+print("💾 Model đã lưu vào models/model.pkl")
+print("Số lượng interactions:", interactions.getnnz())
+print("Số lượng user_rated_books:", len(user_rated_books))
