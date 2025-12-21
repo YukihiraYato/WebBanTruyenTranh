@@ -13,6 +13,13 @@ const OrderList = () => {
   const [notificationFromWs, setNotificationFromWs] = useState<string>("");
   const userDetails = JSON.parse(localStorage.getItem("userDetails") || "{}");
   useWebsocket(userDetails.userId, setNotificationFromWs);
+  const parseDDMMYYYY = (dateStr: string) => {
+  const [datePart, timePart] = dateStr.split(" ");
+  const [day, month, year] = datePart.split("-").map(Number);
+  const [hour, minute, second] = timePart.split(":").map(Number);
+
+  return new Date(year, month - 1, day, hour, minute, second);
+};
   // API lấy đơn hàng theo trang (chỉ dùng cho tab ALL)
   const fetchOrders = async (page: number) => {
     try {
@@ -26,12 +33,12 @@ const OrderList = () => {
         paymentMethod: order.paymentMethodName,
         shipmentMethod: "Giao hàng tận nơi",
         note: "",
-        img: order.items.img,
+        img: order.items[0].img,
         price: order.totalAmount,
         feeShip: 32000,
         status: convertStatus(order.status),
         items: order.items,
-      }));
+      })).sort((a: any, b: any)=> b.orderId - a.orderId);
 
       setAllOrders(mappedOrders);
       setFilteredOrders(mappedOrders);
@@ -64,7 +71,7 @@ const OrderList = () => {
           feeShip: 32000,
           status: convertStatus(order.status),
           items: order.items,
-        }));
+        })).sort((a: any, b: any)=> b.orderId - a.orderId);
 
         allResults = [...allResults, ...mappedOrders];
         isLastPage = data.last;

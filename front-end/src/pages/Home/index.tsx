@@ -5,7 +5,13 @@ import { Collection } from "./Collection";
 import { TopWeekly } from "./TopWeekly";
 import { HomeProvider } from "~/context/HomeContext";
 import { Manga } from "./Manga";
+import { useCart } from "~/providers/CartProvider";
+import { useEffect } from "react";
 export function Home() {
+  const { fetchCart } = useCart();
+  useEffect(()=>{
+    fetchCart();
+  },[])
   return (
     <HomeProvider>
       <Container

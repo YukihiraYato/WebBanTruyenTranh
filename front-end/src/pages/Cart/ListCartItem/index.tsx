@@ -4,6 +4,7 @@ import CartItem from "../CartItem/";
 import { CartItemPropertyResponseDTO } from "~/types/cart";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { BookItemPropertyResponseDTO } from "~/types/cart";
 interface ListCartItemProps {
   listBook: CartItemPropertyResponseDTO[];
   onQuantityChange: (bookId: number, newQuantity: number) => void;
@@ -13,17 +14,15 @@ interface ListCartItemProps {
 }
 
 function ListCartItem({
-  listBook =[] ,
+  listBook = [],
   onToggleCheckbox,
   checkedItems,
   onToggleAll,
 }: ListCartItemProps) {
-  const {  cart, increaseItem, decreaseItem, removeItem } = useCart();
- const [listBookData, setListBook] = useState(listBook);
- const { t } = useTranslation();
- useEffect(() => {
-    setListBook(cart); 
-  }, [cart]);
+  const { increaseItem, decreaseItem, removeItem } = useCart();
+ 
+  const { t } = useTranslation();
+ 
   return (
     <Box bgcolor={"#f5f5f5"}>
       {/* Header */}
@@ -41,12 +40,12 @@ function ListCartItem({
         <Checkbox
           color="error"
           checked={
-            checkedItems.length === listBook.length && listBook.length > 0
+            checkedItems?.length === listBook?.length && listBook?.length > 0
           }
           onChange={onToggleAll}
         />
         <Typography variant="subtitle1" fontWeight="bold" flex={1}>
-          {t("page.cart.listBook.checkbox.item1")} ({listBook.length} {t("page.cart.listBook.checkbox.item2")})
+          {t("page.cart.listBook.checkbox.item1")} ({listBook?.length} {t("page.cart.listBook.checkbox.item2")})
         </Typography>
         <Typography
           variant="subtitle1"
@@ -74,26 +73,39 @@ function ListCartItem({
         p={2}
         bgcolor={"#fff"}
         borderRadius={2}
-       sx={{
-         overflowY:"auto",
-        maxHeight:"calc(100vh - 200px)"
-       }}
+        sx={{
+          overflowY: "auto",
+          maxHeight: "calc(100vh - 200px)"
+        }}
       >
-        {listBookData?.length > 0 &&  listBookData.map((item) => (
-          <Box key={item.item.productId}>
-            <CartItem
-             book={item}
-             
-              onToggleCheckbox={onToggleCheckbox}
-              isChecked={checkedItems.includes(item.item.productId)}
-              increaseItem={increaseItem}
-              decreaseItem={decreaseItem}
-              removeItem={removeItem}
-            />
-            {item.item.productId !== listBookData.length - 1 && <Divider sx={{ my: 2 }} />}
-          </Box>
-        ))}
-     
+        {listBook?.length > 0 && listBook.map((item) => {
+          const itemData = item.item;
+          let priceForRenderKey = itemData.price;
+
+          if (item.typePurchase?.toString().toUpperCase() === "BOOK") {
+            const bookItem = itemData as BookItemPropertyResponseDTO;
+            if (bookItem.discountedPrice !== undefined && bookItem.discountedPrice !== null) {
+              priceForRenderKey = bookItem.discountedPrice;
+            }
+          }
+          return (
+            <Box key={item.item.productId}>
+              <CartItem
+                book={item}
+                key={`${itemData.productId}-${priceForRenderKey}-${checkedItems.includes(itemData.productId)}`}
+                onToggleCheckbox={onToggleCheckbox}
+                isChecked={checkedItems.includes(item.item.productId)}
+                increaseItem={increaseItem}
+                decreaseItem={decreaseItem}
+                removeItem={removeItem}
+              />
+              {item.item.productId !== listBook.length - 1 && <Divider sx={{ my: 2 }} />}
+            </Box>
+          )
+        }
+
+        )}
+
       </Box>
     </Box>
   );

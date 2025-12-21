@@ -34,17 +34,13 @@ export function BottomDrawer({
   listAddress?: AddressResponseDTO[];
 }) {
   const { listDiscountChosen } = useDiscount();
-  const discountObject = listDiscountChosen?.[0] ?? {};
-  const listDiscount = Object.values(discountObject) as DiscountType[];
-  const discountId = listDiscount.reduce((acc, discount) => {
+  const discountId = listDiscountChosen.reduce((acc, discount) => {
     if (discount?.discountId) {
       acc.push(discount.discountId);
     }
     return acc;
   }, [] as number[]);
-  const selectedBooksId = JSON.parse(
-    localStorage.getItem("selectedBooksId") || "[]"
-  );
+
   const selectBooks = JSON.parse(localStorage.getItem("selectedBooks") || "[]");
 
   const navigate = useNavigate();
@@ -75,9 +71,7 @@ export function BottomDrawer({
         localStorage.removeItem("selectedBooks");
         navigate("/profileUser/orders");
       })
-      .catch((error) => {
-        console.error("Lỗi khi tạo đơn hàng:", error);
-      });
+   
   }
 
   function handlePaypalClick() {
@@ -140,11 +134,8 @@ export function BottomDrawer({
               <Typography
                 sx={{ fontWeight: 700, fontSize: 18, color: red["900"] }}
               >
-                {amountDiscounted
-                  ? (
-                      totalPrice - parseInt(amountDiscounted, 10)
-                    ).toLocaleString("vi-VN") + " đ"
-                  : totalPrice.toLocaleString("vi-VN") + " đ"}
+                {
+              totalPrice.toLocaleString("vi-VN") + " đ"}
               </Typography>
             </Box>
           </Box>

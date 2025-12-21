@@ -13,7 +13,10 @@ export interface DiscountType {
   description: string;
   discountType: string;
   value: number;
-  targetType: string;
+  targetType: {
+    targetType: string;
+    categoryIds?: number[];
+  };
   minOrderAmount: number;
   usageLimit: number;
   useCount: number;
@@ -24,16 +27,17 @@ export interface DiscountType {
 }
 export type DiscountSelections = {
   ORDER?: DiscountType;
-  CATEGORY?: DiscountType;
+  REDEEM?: DiscountType;
   BOOK?: DiscountType;
   [key: string]: DiscountType | undefined;
 
 };
 interface DiscountContextType {
   listDiscount: DiscountType[];
-  listDiscountChosen?: DiscountSelections[];
+  listDiscountChosen: DiscountType[];
   fetchDiscount: () => void;
-  setListDiscountChosen?: (discounts: DiscountSelections[]) => void;
+  setListDiscountChosen: (discounts: DiscountType[] ) => void;
+  setListDiscount: (discounts: DiscountType[] ) => void;
 }
 
 const DiscountContext = createContext<DiscountContextType | null>(null);
@@ -46,13 +50,13 @@ export const useDiscount = () => {
 
 export function DiscountProvider({ children }: { children: React.ReactNode }) {
   const [listDiscount, setListDiscount] = useState<DiscountType[]>([]);
-  const [listDiscountChosen, setListDiscountChosen] = useState<DiscountSelections[]>([]);
+  const [listDiscountChosen, setListDiscountChosen] = useState<DiscountType[]>([]);
   const fetchDiscount = async () => {
     try {
       const resUserDetails = await getUserDetails();
       const userId = resUserDetails.result.userId;
       const res = await getDiscountForUser(userId);
-      setListDiscount(res.result);
+      setListDiscount(res);
 
     } catch (err) {
       console.error("Lỗi khi lấy Discount:", err);
@@ -65,7 +69,7 @@ export function DiscountProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <DiscountContext.Provider value={{ listDiscount, fetchDiscount, listDiscountChosen, setListDiscountChosen }}>
+    <DiscountContext.Provider value={{ listDiscount, fetchDiscount, listDiscountChosen, setListDiscountChosen, setListDiscount }}>
       {children}
     </DiscountContext.Provider>
   );

@@ -46,6 +46,9 @@ axiosInstance.interceptors.response.use(
     if (data.code === 1016){
       alert("Bạn không đủ WB point để thanh toán đơn hàng này.");
     }
+    if(status === 400 && data.message === "Đối với các sản phẩm bằng xu, vui lòng người dùng chọn thanh toán bằng xu WB Point"){
+      alert(data.message);
+    }
 
     return Promise.reject(error);
   }

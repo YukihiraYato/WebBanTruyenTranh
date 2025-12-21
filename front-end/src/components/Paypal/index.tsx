@@ -4,6 +4,7 @@ import { createPaypalOrder, capturePaypalOrder } from "../../api/paypal/paypal";
 import {useCart} from "~/providers/CartProvider";
 import {  CartItemPropertyResponseDTO } from "~/types/cart";
 import { useNavigate } from "react-router-dom";
+import { useDiscount } from "~/providers/DiscountProvider";
 // Renders errors or successfull transactions on the screen.
 
 
@@ -26,7 +27,13 @@ function PaypalButton() {
   const navigate = useNavigate();
   const { removeItem } = useCart();
   const selectBooks = JSON.parse(localStorage.getItem("selectedBooks") || "[]");
-  const listDiscount = JSON.parse(localStorage.getItem("listDiscount") || "[]");
+  const { listDiscountChosen } = useDiscount();
+   const discountId = listDiscountChosen.reduce((acc, discount) => {
+     if (discount?.discountId) {
+       acc.push(discount.discountId);
+     }
+     return acc;
+   }, [] as number[]);
   return (
     <div className="App">
       <PayPalScriptProvider options={initialOptions}>
@@ -43,7 +50,7 @@ function PaypalButton() {
               const orderData = await createPaypalOrder({
                 paymentMethodId: 4,
                 items: selectBooks,
-                listDiscountIds: listDiscount.map((discount: any) => discount.discountId),
+                listDiscountIds: discountId,
               });
               console.log("Order data:", orderData);
               if (orderData.id) {
@@ -66,7 +73,7 @@ function PaypalButton() {
               const orderData = await capturePaypalOrder(data.orderID, {
                 paymentMethodId: 4,
                 items: selectBooks,
-                listDiscountIds: listDiscount.map((discount: any) => discount.discountId),
+                listDiscountIds: discountId,
               });
               console.log("Capture result", orderData);
               // Three cases to handle:

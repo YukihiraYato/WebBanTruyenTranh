@@ -1,5 +1,7 @@
 // src/constants/endpoint.ts
 
+import { use } from "react";
+
 const API_ENDPOINTS = {
   BOOK: {
     SUMMARY_ABOUT_BOOK: "/api/book",
@@ -88,6 +90,10 @@ const API_ENDPOINTS = {
     WB_POINT: {
       GET: (userId: number) => `/user-point/get/user?userId=${userId}`,
     },
+    REQUEST_REFUND:{
+      CREATE: "/api/book/refund-items/request-create",
+      GET: (orderId: number) => `/api/book/refund-items/get-by-order-id/${orderId}`,
+    }
 
   },
   CART: {
@@ -112,6 +118,9 @@ const API_ENDPOINTS = {
         return `/api/orders`;
       }
     },
+    GET_ORDER_BY_STATUS: (status: string, page: number, size: number) => {
+      return `/api/orders/get-by-status?status=${status}&page=${page}&size=${size}`;
+    },
     CANCEL: (orderId: string) => `/api/orders/${orderId}/cancel`,
   },
   REDEEM_REWARD:{
@@ -125,9 +134,13 @@ const API_ENDPOINTS = {
       SEARCH:(keyword: string, page:number, size: number) => {
         return `/redeem-reward/search?keyword=${keyword}&page=${page}&size=${size}`;
       },
+      // api này lấy đồ chơi đổi thưởng
       GET_A_REDEEM_REWARD:(redeemRewardId: number) => {
         return `/redeem-reward/${redeemRewardId}`;
-      }
+      },
+      GET_REDEEMABLE_DISCOUNT: (userId: number) => `/redeem-reward/get-redeemable-discount/${userId}`,
+      REDEEM_DISCOUNT_REWARD: (discountId: number) => `/redeem-reward/redeem/${discountId}`,
+      
   } 
 };
 

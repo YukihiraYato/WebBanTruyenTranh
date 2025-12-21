@@ -33,7 +33,7 @@ const BookDetailsContext = createContext<BookDetailsContextType>({
   recommendBooks: null,
   isLoading: false,
   error: null,
-  addToCart: () => {},
+  addToCart: () => { },
   reviewOverall: null,
   bookId: 0,
 });
@@ -69,25 +69,30 @@ export const BookDetailsProvider = ({ children }: BookDetailsProviderProps) => {
       try {
         const detailsRes = await getBookDetails(bookId);
         setBookDetails(detailsRes.result);
+
         const chainRes = await getCategoryChainOfBook(detailsRes.result.bookId);
-        console.log("chain res: ", chainRes);
         setCategoryChain(chainRes.result);
-        const relatedRes = await searchBooks({
-          categoryId: chainRes.result.list[chainRes.result.list.length - 1].id,
-          context: " ",
-        });
-        const recommendRes = await getRecommendBooks();
-        setRelatedBooks(relatedRes.result.content);
-        setRecommendBooks(recommendRes.result);
-        const overall = await getBookReviewOverall(Number(id));
-        setReviewOverall(overall.result);
+
+        const categoryId = chainRes.result.list[chainRes.result.list.length - 1].id;
+
+        // chạy độc lập, không chờ
+        searchBooks({ categoryId, context: " " }).then((relatedRes) =>
+          setRelatedBooks(relatedRes.result.content)
+        );
+        getRecommendBooks().then((recommendRes) =>
+          setRecommendBooks(recommendRes.result)
+        );
+        getBookReviewOverall(Number(id)).then((overall) =>
+          setReviewOverall(overall.result)
+        );
       } catch (err) {
         console.error(err);
-        setError("Failed to load books");
+        setError("Failed to load book details.");
       } finally {
         setIsLoading(false);
       }
     };
+
 
     loadBooks();
   }, [id, setCategoryChain]);
@@ -95,7 +100,7 @@ export const BookDetailsProvider = ({ children }: BookDetailsProviderProps) => {
   const { increaseItem } = useCart();
   const addToCart = async () => {
     if (!id) return;
-    increaseItem(id, 1,"BOOK");
+    increaseItem(id, 1, "BOOK");
   };
 
   return (

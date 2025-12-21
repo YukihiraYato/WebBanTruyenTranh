@@ -10,11 +10,13 @@ export interface CartItemPropertyResponseDTO {
 export interface BookItemPropertyResponseDTO {
   productId: number;
   quantity: number;
+  categoryId: number;
   title: string;
   price: number;
   discountedPrice: number;
   discountPercentage: number;
   imageUrl: string;
+  originalPromotionPrice?: number;
 }
 export interface RedeemRewardItemPropertyResponseDTO {
     productId: number;
@@ -22,6 +24,7 @@ export interface RedeemRewardItemPropertyResponseDTO {
     price: number;
     imageUrl: string;
     quantity: number;
+    discountedPrice?: number;
 }
 export interface CartPropertyResponseDTO {
     userId: string;
