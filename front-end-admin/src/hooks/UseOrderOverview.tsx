@@ -15,12 +15,13 @@ export function useOrderOverview(initialPage = 0, initialSize = 99) {
   const [isLastPage, setIsLastPage] = useState(false)
   const [isFirstPage, setIsFirstPage] = useState(false)
   const [date, setDate] = useState<DateRange | undefined>()
-  const [listQuantityStatus, setListQuantityStatus] = useState<[]>([])
+  const [listQuantityStatus, setListQuantityStatus] = useState<any[]>([])
   const [keyword, setKeyword] = useState<string>('')
   const [status, setStatus] = useState<string>('');
 
   const [messageFromBackend, setMessageFromBackend] = useState<string>('');
   useGetUpdatedOrder(setMessageFromBackend);
+  // Hàm lấy toàn bộ số lượng của mỗi status hiện có
   const updateStatusOrder = useCallback(async () => {
     const rs = await getQuantityStatus()
     setListQuantityStatus(rs.result)
@@ -52,7 +53,8 @@ export function useOrderOverview(initialPage = 0, initialSize = 99) {
       | 'CANCELED'
   ) => {
     await updateOrderStatus(orderId, status)
-    loadOrders()
+    await loadOrders()
+    await updateStatusOrder();
   }
   useEffect(() => {
     loadOrders()

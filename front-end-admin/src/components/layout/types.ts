@@ -15,18 +15,21 @@ interface Team {
 interface BaseNavItem {
   title: string
   badge?: string
-  icon?: React.ElementType
+  icon?: React.ElementType,
+  role?: string[]
 }
 
 type NavLink = BaseNavItem & {
   url: LinkProps['to']
   items?: never
   onClick?: () => void
+  role?: string[]
 }
 
 type NavCollapsible = BaseNavItem & {
   items: (BaseNavItem & { url: LinkProps['to'] })[]
   url?: never
+   role?: string[]
 }
 
 type NavItem = NavCollapsible | NavLink

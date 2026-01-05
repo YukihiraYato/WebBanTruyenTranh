@@ -12,7 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated/route'
-import { Route as AuthenticatedIndexImport } from './routes/_authenticated/index'
+import { Route as IndexImport } from './routes/index'
 import { Route as errors503Import } from './routes/(errors)/503'
 import { Route as errors500Import } from './routes/(errors)/500'
 import { Route as errors404Import } from './routes/(errors)/404'
@@ -28,16 +28,21 @@ import { Route as AuthenticatedUsersIndexImport } from './routes/_authenticated/
 import { Route as AuthenticatedTasksIndexImport } from './routes/_authenticated/tasks/index'
 import { Route as AuthenticatedSettingsIndexImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedHelpCenterIndexImport } from './routes/_authenticated/help-center/index'
+import { Route as AuthenticatedDashboardIndexImport } from './routes/_authenticated/dashboard/index'
 import { Route as AuthenticatedChatsIndexImport } from './routes/_authenticated/chats/index'
+import { Route as AuthenticatedChangePasswordIndexImport } from './routes/_authenticated/change-password/index'
 import { Route as AuthenticatedAppsIndexImport } from './routes/_authenticated/apps/index'
 import { Route as AuthenticatedSettingsNotificationsImport } from './routes/_authenticated/settings/notifications'
 import { Route as AuthenticatedSettingsDisplayImport } from './routes/_authenticated/settings/display'
 import { Route as AuthenticatedSettingsAppearanceImport } from './routes/_authenticated/settings/appearance'
 import { Route as AuthenticatedSettingsAccountImport } from './routes/_authenticated/settings/account'
+import { Route as AuthenticatedReviewReviewPageImport } from './routes/_authenticated/review/reviewPage'
 import { Route as AuthenticatedProductsOverviewImport } from './routes/_authenticated/products/overview'
 import { Route as AuthenticatedProductsNewImport } from './routes/_authenticated/products/new'
 import { Route as AuthenticatedOrdersOverviewImport } from './routes/_authenticated/orders/overview'
 import { Route as AuthenticatedOrdersDetailsImport } from './routes/_authenticated/orders/details'
+import { Route as AuthenticatedImportStockImport } from './routes/_authenticated/import/stock'
+import { Route as AuthenticatedImportCreateImport } from './routes/_authenticated/import/create'
 import { Route as AuthenticatedDiscountsOverviewImport } from './routes/_authenticated/discounts/overview'
 import { Route as AuthenticatedDiscountsNewImport } from './routes/_authenticated/discounts/new'
 import { Route as AuthenticatedCouponsOverviewImport } from './routes/_authenticated/coupons/overview'
@@ -56,10 +61,10 @@ const AuthenticatedRouteRoute = AuthenticatedRouteImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuthenticatedIndexRoute = AuthenticatedIndexImport.update({
+const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  getParentRoute: () => rootRoute,
 } as any)
 
 const errors503Route = errors503Import.update({
@@ -157,11 +162,25 @@ const AuthenticatedHelpCenterIndexRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
+const AuthenticatedDashboardIndexRoute =
+  AuthenticatedDashboardIndexImport.update({
+    id: '/dashboard/',
+    path: '/dashboard/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
 const AuthenticatedChatsIndexRoute = AuthenticatedChatsIndexImport.update({
   id: '/chats/',
   path: '/chats/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+
+const AuthenticatedChangePasswordIndexRoute =
+  AuthenticatedChangePasswordIndexImport.update({
+    id: '/change-password/',
+    path: '/change-password/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 const AuthenticatedAppsIndexRoute = AuthenticatedAppsIndexImport.update({
   id: '/apps/',
@@ -197,6 +216,13 @@ const AuthenticatedSettingsAccountRoute =
     getParentRoute: () => AuthenticatedSettingsRouteRoute,
   } as any)
 
+const AuthenticatedReviewReviewPageRoute =
+  AuthenticatedReviewReviewPageImport.update({
+    id: '/review/reviewPage',
+    path: '/review/reviewPage',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+
 const AuthenticatedProductsOverviewRoute =
   AuthenticatedProductsOverviewImport.update({
     id: '/products/overview',
@@ -224,6 +250,18 @@ const AuthenticatedOrdersDetailsRoute = AuthenticatedOrdersDetailsImport.update(
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any,
 )
+
+const AuthenticatedImportStockRoute = AuthenticatedImportStockImport.update({
+  id: '/import/stock',
+  path: '/import/stock',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+
+const AuthenticatedImportCreateRoute = AuthenticatedImportCreateImport.update({
+  id: '/import/create',
+  path: '/import/create',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 const AuthenticatedDiscountsOverviewRoute =
   AuthenticatedDiscountsOverviewImport.update({
@@ -298,6 +336,13 @@ const AuthenticatedCouponsIdEditRoute = AuthenticatedCouponsIdEditImport.update(
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -382,13 +427,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof errors503Import
       parentRoute: typeof rootRoute
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexImport
-      parentRoute: typeof AuthenticatedRouteImport
-    }
     '/_authenticated/categories/overview': {
       id: '/_authenticated/categories/overview'
       path: '/categories/overview'
@@ -424,6 +462,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDiscountsOverviewImport
       parentRoute: typeof AuthenticatedRouteImport
     }
+    '/_authenticated/import/create': {
+      id: '/_authenticated/import/create'
+      path: '/import/create'
+      fullPath: '/import/create'
+      preLoaderRoute: typeof AuthenticatedImportCreateImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
+    '/_authenticated/import/stock': {
+      id: '/_authenticated/import/stock'
+      path: '/import/stock'
+      fullPath: '/import/stock'
+      preLoaderRoute: typeof AuthenticatedImportStockImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/orders/details': {
       id: '/_authenticated/orders/details'
       path: '/orders/details'
@@ -450,6 +502,13 @@ declare module '@tanstack/react-router' {
       path: '/products/overview'
       fullPath: '/products/overview'
       preLoaderRoute: typeof AuthenticatedProductsOverviewImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
+    '/_authenticated/review/reviewPage': {
+      id: '/_authenticated/review/reviewPage'
+      path: '/review/reviewPage'
+      fullPath: '/review/reviewPage'
+      preLoaderRoute: typeof AuthenticatedReviewReviewPageImport
       parentRoute: typeof AuthenticatedRouteImport
     }
     '/_authenticated/settings/account': {
@@ -487,11 +546,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppsIndexImport
       parentRoute: typeof AuthenticatedRouteImport
     }
+    '/_authenticated/change-password/': {
+      id: '/_authenticated/change-password/'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof AuthenticatedChangePasswordIndexImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/chats/': {
       id: '/_authenticated/chats/'
       path: '/chats'
       fullPath: '/chats'
       preLoaderRoute: typeof AuthenticatedChatsIndexImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
+    '/_authenticated/dashboard/': {
+      id: '/_authenticated/dashboard/'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardIndexImport
       parentRoute: typeof AuthenticatedRouteImport
     }
     '/_authenticated/help-center/': {
@@ -587,18 +660,22 @@ const AuthenticatedSettingsRouteRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCategoriesOverviewRoute: typeof AuthenticatedCategoriesOverviewRoute
   AuthenticatedCouponsNewRoute: typeof AuthenticatedCouponsNewRoute
   AuthenticatedCouponsOverviewRoute: typeof AuthenticatedCouponsOverviewRoute
   AuthenticatedDiscountsNewRoute: typeof AuthenticatedDiscountsNewRoute
   AuthenticatedDiscountsOverviewRoute: typeof AuthenticatedDiscountsOverviewRoute
+  AuthenticatedImportCreateRoute: typeof AuthenticatedImportCreateRoute
+  AuthenticatedImportStockRoute: typeof AuthenticatedImportStockRoute
   AuthenticatedOrdersDetailsRoute: typeof AuthenticatedOrdersDetailsRoute
   AuthenticatedOrdersOverviewRoute: typeof AuthenticatedOrdersOverviewRoute
   AuthenticatedProductsNewRoute: typeof AuthenticatedProductsNewRoute
   AuthenticatedProductsOverviewRoute: typeof AuthenticatedProductsOverviewRoute
+  AuthenticatedReviewReviewPageRoute: typeof AuthenticatedReviewReviewPageRoute
   AuthenticatedAppsIndexRoute: typeof AuthenticatedAppsIndexRoute
+  AuthenticatedChangePasswordIndexRoute: typeof AuthenticatedChangePasswordIndexRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
+  AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedHelpCenterIndexRoute: typeof AuthenticatedHelpCenterIndexRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
@@ -611,18 +688,22 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCategoriesOverviewRoute: AuthenticatedCategoriesOverviewRoute,
   AuthenticatedCouponsNewRoute: AuthenticatedCouponsNewRoute,
   AuthenticatedCouponsOverviewRoute: AuthenticatedCouponsOverviewRoute,
   AuthenticatedDiscountsNewRoute: AuthenticatedDiscountsNewRoute,
   AuthenticatedDiscountsOverviewRoute: AuthenticatedDiscountsOverviewRoute,
+  AuthenticatedImportCreateRoute: AuthenticatedImportCreateRoute,
+  AuthenticatedImportStockRoute: AuthenticatedImportStockRoute,
   AuthenticatedOrdersDetailsRoute: AuthenticatedOrdersDetailsRoute,
   AuthenticatedOrdersOverviewRoute: AuthenticatedOrdersOverviewRoute,
   AuthenticatedProductsNewRoute: AuthenticatedProductsNewRoute,
   AuthenticatedProductsOverviewRoute: AuthenticatedProductsOverviewRoute,
+  AuthenticatedReviewReviewPageRoute: AuthenticatedReviewReviewPageRoute,
   AuthenticatedAppsIndexRoute: AuthenticatedAppsIndexRoute,
+  AuthenticatedChangePasswordIndexRoute: AuthenticatedChangePasswordIndexRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
+  AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedHelpCenterIndexRoute: AuthenticatedHelpCenterIndexRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
   AuthenticatedUsersIndexRoute: AuthenticatedUsersIndexRoute,
@@ -637,6 +718,7 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
   '': typeof AuthenticatedRouteRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
@@ -649,22 +731,26 @@ export interface FileRoutesByFullPath {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
-  '/': typeof AuthenticatedIndexRoute
   '/categories/overview': typeof AuthenticatedCategoriesOverviewRoute
   '/coupons/new': typeof AuthenticatedCouponsNewRoute
   '/coupons/overview': typeof AuthenticatedCouponsOverviewRoute
   '/discounts/new': typeof AuthenticatedDiscountsNewRoute
   '/discounts/overview': typeof AuthenticatedDiscountsOverviewRoute
+  '/import/create': typeof AuthenticatedImportCreateRoute
+  '/import/stock': typeof AuthenticatedImportStockRoute
   '/orders/details': typeof AuthenticatedOrdersDetailsRoute
   '/orders/overview': typeof AuthenticatedOrdersOverviewRoute
   '/products/new': typeof AuthenticatedProductsNewRoute
   '/products/overview': typeof AuthenticatedProductsOverviewRoute
+  '/review/reviewPage': typeof AuthenticatedReviewReviewPageRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/apps': typeof AuthenticatedAppsIndexRoute
+  '/change-password': typeof AuthenticatedChangePasswordIndexRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
+  '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
@@ -677,6 +763,8 @@ export interface FileRoutesByFullPath {
 }
 
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '': typeof AuthenticatedRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/otp': typeof authOtpRoute
   '/sign-in': typeof authSignInRoute
@@ -687,22 +775,26 @@ export interface FileRoutesByTo {
   '/404': typeof errors404Route
   '/500': typeof errors500Route
   '/503': typeof errors503Route
-  '/': typeof AuthenticatedIndexRoute
   '/categories/overview': typeof AuthenticatedCategoriesOverviewRoute
   '/coupons/new': typeof AuthenticatedCouponsNewRoute
   '/coupons/overview': typeof AuthenticatedCouponsOverviewRoute
   '/discounts/new': typeof AuthenticatedDiscountsNewRoute
   '/discounts/overview': typeof AuthenticatedDiscountsOverviewRoute
+  '/import/create': typeof AuthenticatedImportCreateRoute
+  '/import/stock': typeof AuthenticatedImportStockRoute
   '/orders/details': typeof AuthenticatedOrdersDetailsRoute
   '/orders/overview': typeof AuthenticatedOrdersOverviewRoute
   '/products/new': typeof AuthenticatedProductsNewRoute
   '/products/overview': typeof AuthenticatedProductsOverviewRoute
+  '/review/reviewPage': typeof AuthenticatedReviewReviewPageRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/apps': typeof AuthenticatedAppsIndexRoute
+  '/change-password': typeof AuthenticatedChangePasswordIndexRoute
   '/chats': typeof AuthenticatedChatsIndexRoute
+  '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/help-center': typeof AuthenticatedHelpCenterIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
@@ -716,6 +808,7 @@ export interface FileRoutesByTo {
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
+  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
@@ -728,22 +821,26 @@ export interface FileRoutesById {
   '/(errors)/404': typeof errors404Route
   '/(errors)/500': typeof errors500Route
   '/(errors)/503': typeof errors503Route
-  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/categories/overview': typeof AuthenticatedCategoriesOverviewRoute
   '/_authenticated/coupons/new': typeof AuthenticatedCouponsNewRoute
   '/_authenticated/coupons/overview': typeof AuthenticatedCouponsOverviewRoute
   '/_authenticated/discounts/new': typeof AuthenticatedDiscountsNewRoute
   '/_authenticated/discounts/overview': typeof AuthenticatedDiscountsOverviewRoute
+  '/_authenticated/import/create': typeof AuthenticatedImportCreateRoute
+  '/_authenticated/import/stock': typeof AuthenticatedImportStockRoute
   '/_authenticated/orders/details': typeof AuthenticatedOrdersDetailsRoute
   '/_authenticated/orders/overview': typeof AuthenticatedOrdersOverviewRoute
   '/_authenticated/products/new': typeof AuthenticatedProductsNewRoute
   '/_authenticated/products/overview': typeof AuthenticatedProductsOverviewRoute
+  '/_authenticated/review/reviewPage': typeof AuthenticatedReviewReviewPageRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/settings/appearance': typeof AuthenticatedSettingsAppearanceRoute
   '/_authenticated/settings/display': typeof AuthenticatedSettingsDisplayRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/apps/': typeof AuthenticatedAppsIndexRoute
+  '/_authenticated/change-password/': typeof AuthenticatedChangePasswordIndexRoute
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
+  '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/help-center/': typeof AuthenticatedHelpCenterIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
@@ -758,6 +855,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | ''
     | '/settings'
     | '/forgot-password'
@@ -770,22 +868,26 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
-    | '/'
     | '/categories/overview'
     | '/coupons/new'
     | '/coupons/overview'
     | '/discounts/new'
     | '/discounts/overview'
+    | '/import/create'
+    | '/import/stock'
     | '/orders/details'
     | '/orders/overview'
     | '/products/new'
     | '/products/overview'
+    | '/review/reviewPage'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
     | '/settings/notifications'
     | '/apps'
+    | '/change-password'
     | '/chats'
+    | '/dashboard'
     | '/help-center'
     | '/settings/'
     | '/tasks'
@@ -797,6 +899,8 @@ export interface FileRouteTypes {
     | '/products/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
+    | ''
     | '/forgot-password'
     | '/otp'
     | '/sign-in'
@@ -807,22 +911,26 @@ export interface FileRouteTypes {
     | '/404'
     | '/500'
     | '/503'
-    | '/'
     | '/categories/overview'
     | '/coupons/new'
     | '/coupons/overview'
     | '/discounts/new'
     | '/discounts/overview'
+    | '/import/create'
+    | '/import/stock'
     | '/orders/details'
     | '/orders/overview'
     | '/products/new'
     | '/products/overview'
+    | '/review/reviewPage'
     | '/settings/account'
     | '/settings/appearance'
     | '/settings/display'
     | '/settings/notifications'
     | '/apps'
+    | '/change-password'
     | '/chats'
+    | '/dashboard'
     | '/help-center'
     | '/settings'
     | '/tasks'
@@ -834,6 +942,7 @@ export interface FileRouteTypes {
     | '/products/$id/edit'
   id:
     | '__root__'
+    | '/'
     | '/_authenticated'
     | '/_authenticated/settings'
     | '/(auth)/forgot-password'
@@ -846,22 +955,26 @@ export interface FileRouteTypes {
     | '/(errors)/404'
     | '/(errors)/500'
     | '/(errors)/503'
-    | '/_authenticated/'
     | '/_authenticated/categories/overview'
     | '/_authenticated/coupons/new'
     | '/_authenticated/coupons/overview'
     | '/_authenticated/discounts/new'
     | '/_authenticated/discounts/overview'
+    | '/_authenticated/import/create'
+    | '/_authenticated/import/stock'
     | '/_authenticated/orders/details'
     | '/_authenticated/orders/overview'
     | '/_authenticated/products/new'
     | '/_authenticated/products/overview'
+    | '/_authenticated/review/reviewPage'
     | '/_authenticated/settings/account'
     | '/_authenticated/settings/appearance'
     | '/_authenticated/settings/display'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/apps/'
+    | '/_authenticated/change-password/'
     | '/_authenticated/chats/'
+    | '/_authenticated/dashboard/'
     | '/_authenticated/help-center/'
     | '/_authenticated/settings/'
     | '/_authenticated/tasks/'
@@ -875,6 +988,7 @@ export interface FileRouteTypes {
 }
 
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   authForgotPasswordRoute: typeof authForgotPasswordRoute
   authOtpRoute: typeof authOtpRoute
@@ -889,6 +1003,7 @@ export interface RootRouteChildren {
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   authForgotPasswordRoute: authForgotPasswordRoute,
   authOtpRoute: authOtpRoute,
@@ -912,6 +1027,7 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
+        "/",
         "/_authenticated",
         "/(auth)/forgot-password",
         "/(auth)/otp",
@@ -925,22 +1041,29 @@ export const routeTree = rootRoute
         "/(errors)/503"
       ]
     },
+    "/": {
+      "filePath": "index.tsx"
+    },
     "/_authenticated": {
       "filePath": "_authenticated/route.tsx",
       "children": [
         "/_authenticated/settings",
-        "/_authenticated/",
         "/_authenticated/categories/overview",
         "/_authenticated/coupons/new",
         "/_authenticated/coupons/overview",
         "/_authenticated/discounts/new",
         "/_authenticated/discounts/overview",
+        "/_authenticated/import/create",
+        "/_authenticated/import/stock",
         "/_authenticated/orders/details",
         "/_authenticated/orders/overview",
         "/_authenticated/products/new",
         "/_authenticated/products/overview",
+        "/_authenticated/review/reviewPage",
         "/_authenticated/apps/",
+        "/_authenticated/change-password/",
         "/_authenticated/chats/",
+        "/_authenticated/dashboard/",
         "/_authenticated/help-center/",
         "/_authenticated/tasks/",
         "/_authenticated/users/",
@@ -992,10 +1115,6 @@ export const routeTree = rootRoute
     "/(errors)/503": {
       "filePath": "(errors)/503.tsx"
     },
-    "/_authenticated/": {
-      "filePath": "_authenticated/index.tsx",
-      "parent": "/_authenticated"
-    },
     "/_authenticated/categories/overview": {
       "filePath": "_authenticated/categories/overview.tsx",
       "parent": "/_authenticated"
@@ -1016,6 +1135,14 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/discounts/overview.tsx",
       "parent": "/_authenticated"
     },
+    "/_authenticated/import/create": {
+      "filePath": "_authenticated/import/create.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/import/stock": {
+      "filePath": "_authenticated/import/stock.tsx",
+      "parent": "/_authenticated"
+    },
     "/_authenticated/orders/details": {
       "filePath": "_authenticated/orders/details.tsx",
       "parent": "/_authenticated"
@@ -1030,6 +1157,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/products/overview": {
       "filePath": "_authenticated/products/overview.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/review/reviewPage": {
+      "filePath": "_authenticated/review/reviewPage.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/settings/account": {
@@ -1052,8 +1183,16 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/apps/index.tsx",
       "parent": "/_authenticated"
     },
+    "/_authenticated/change-password/": {
+      "filePath": "_authenticated/change-password/index.tsx",
+      "parent": "/_authenticated"
+    },
     "/_authenticated/chats/": {
       "filePath": "_authenticated/chats/index.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/dashboard/": {
+      "filePath": "_authenticated/dashboard/index.tsx",
       "parent": "/_authenticated"
     },
     "/_authenticated/help-center/": {

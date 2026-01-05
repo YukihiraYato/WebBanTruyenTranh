@@ -15,7 +15,7 @@ import { ThemeProvider } from './context/theme-context'
 import './index.css'
 // Generated Routes
 import { routeTree } from './routeTree.gen'
-
+import { useEffect } from 'react'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -51,7 +51,7 @@ const queryClient = new QueryClient({
       if (error instanceof AxiosError) {
         if (error.response?.status === 401) {
           toast.error('Session expired!')
-          useAuthStore.getState().auth.reset()
+          useAuthStore.getState().hydrate()
           const redirect = `${router.history.location.href}`
           router.navigate({ to: '/sign-in', search: { redirect } })
         }
@@ -70,7 +70,9 @@ const queryClient = new QueryClient({
 // Create a new router instance
 const router = createRouter({
   routeTree,
-  context: { queryClient },
+  context: { queryClient,
+    auth: undefined!
+   },
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
 })
@@ -80,6 +82,28 @@ declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
   }
+}
+// TẠO COMPONENT APP ĐỂ QUẢN LÝ STATE VÀ CONTEXT 
+function App() {
+  // Lấy toàn bộ state từ store
+  const authStore = useAuthStore()
+
+
+  // Gom dữ liệu auth để truyền vào Router
+  const authContext = {
+    isAuthenticated: authStore.isAuthenticated,
+    user: authStore.user,
+    role: authStore.user?.role || null, 
+  }
+
+  return (
+    <RouterProvider 
+      router={router} 
+      context={{ 
+        auth: authContext 
+      }} 
+    />
+  )
 }
 
 // Render the app
@@ -91,7 +115,7 @@ if (!rootElement.innerHTML) {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme='light' storageKey='vite-ui-theme'>
           <FontProvider>
-            <RouterProvider router={router} />
+            <App />
           </FontProvider>
         </ThemeProvider>
       </QueryClientProvider>
