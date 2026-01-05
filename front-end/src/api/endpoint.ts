@@ -30,7 +30,7 @@ const API_ENDPOINTS = {
     VERIFY_OTP: "/api/v1/auth/register/verify-otp",
     DETAILS: {
       GET: "/api/user-details",
-      ADD: "/api/user-details/add",
+      CHANGE_PASSWORD: "/admin/user/reset-password",
     },
     ADDRESS: {
       ADD: "/api/user/addresses",
@@ -56,7 +56,7 @@ const API_ENDPOINTS = {
         return `/api/collections/${collectionId}`;
       },
       UPDATE: (collectionId: number) => {
-        return `/api/collections/${collectionId}`;
+        return `/api/collections/update/${collectionId}`;
       },
       ADD_BOOK_TO_BOOK_COLLECTION: (collectionId: number) => {
         return `/api/collections/${collectionId}/books`;
@@ -69,7 +69,8 @@ const API_ENDPOINTS = {
       },
       FIND_BOOKCOLLECTION_BY_NAME: (page: number, name: string) => {
         return `/api/collections/search?name=${name}&page=${page}`
-      }
+      },
+      
     },
     CHAT: {
       GET_CONVERSATIONS: (userId: number) => {
@@ -93,6 +94,11 @@ const API_ENDPOINTS = {
     REQUEST_REFUND:{
       CREATE: "/api/book/refund-items/request-create",
       GET: (orderId: number) => `/api/book/refund-items/get-by-order-id/${orderId}`,
+    },
+    NOTIFICATIONS:{
+      GET:(userId: number) => `/api/notifications/user/${userId}`,
+      COUNT_UN_READ: (userId: number) => `/api/notifications/unread-count/${userId}`,
+      MARK_READED: (notificationId: number) => `/api/notifications/read/${notificationId}`,
     }
 
   },

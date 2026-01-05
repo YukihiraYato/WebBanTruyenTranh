@@ -135,7 +135,7 @@ export function BottomDrawer({
                 sx={{ fontWeight: 700, fontSize: 18, color: red["900"] }}
               >
                 {
-              totalPrice.toLocaleString("vi-VN") + " đ"}
+              (totalPrice - (amountDiscounted ? Number(amountDiscounted) : 0)).toLocaleString("vi-VN") + " đ"}
               </Typography>
             </Box>
           </Box>

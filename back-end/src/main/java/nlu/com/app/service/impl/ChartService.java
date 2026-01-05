@@ -15,6 +15,7 @@ import nlu.com.app.repository.OrderItemRepository;
 import nlu.com.app.repository.OrderRepository;
 import nlu.com.app.repository.UserRepository;
 import nlu.com.app.service.IChartService;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -30,13 +31,15 @@ public class ChartService implements IChartService {
     UserRepository userRepository;
     ChartMapper chartMapper;
     OrderItemRepository orderItemRepository;
-    @Override
-    public SalesMonthlyReportResponseDTO getSalesMonthlyReport() {
-        List<Order> completedOrders = orderRepository.findByStatus(EOrderStatus.DELIVERED);
 
+    @Override
+    public SalesMonthlyReportResponseDTO getSalesMonthlyReport(Integer reqYear) {
+        // Nếu không truyền năm, lấy năm hiện tại
+        int year = (reqYear != null) ? reqYear : LocalDate.now().getYear();
         String[] months = {"Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"};
         double[] monthlyTotals = new double[12];
 
+        List<Order> completedOrders = orderRepository.findByStatusAndYear(EOrderStatus.DELIVERED, year);
         for (Order order : completedOrders) {
             int monthIndex = order.getDeliveredDate().getMonthValue() - 1;
             monthlyTotals[monthIndex] += order.getTotalAmount();
@@ -57,15 +60,15 @@ public class ChartService implements IChartService {
 
     @Override
     public RecentlyOrderResponseDTO getRecentlyOrder() {
-        LocalDate now = LocalDate.now();
-        int currentMonth = now.getMonthValue();
-        int currentYear = now.getYear();
-
-        // Lấy tổng số đơn hàng trong tháng hiện tại
-        int totalOrdersInMonth = orderRepository.countByOrderDateMonthAndYear(currentMonth, currentYear, EOrderStatus.DELIVERED);
-
+        // Query này của bạn đã tốt rồi (có lọc theo month/year), chỉ cần truyền biến vào là xong
+        int totalOrdersInMonth = orderRepository.countByOrderDateMonthAndYear(LocalDate.now().getMonthValue(), LocalDate.now().getYear(), EOrderStatus.DELIVERED);
         // Lấy 5 đơn hàng gần nhất có trạng thái "Hoàn thành"
-        List<Order> recentOrders = orderRepository.findTop5ByStatusOrderByDeliveredDateDesc(EOrderStatus.DELIVERED);
+        List<Order> recentOrders = orderRepository.findRecentOrdersInMonth(
+                EOrderStatus.DELIVERED,
+                LocalDate.now().getMonthValue(),
+                LocalDate.now().getYear(),
+                PageRequest.of(0, 5)
+        );
 
         List<RecentlyOrderResponseDTO.Order> dtoOrders = new ArrayList<>();
         for (Order order : recentOrders) {
@@ -82,112 +85,97 @@ public class ChartService implements IChartService {
                 .totalOrdersInMonth(totalOrdersInMonth)
                 .build();
     }
-    @Override
-    public SummaryDashboardResponseDTO getSummaryDashboard() {
-        LocalDate now = LocalDate.now();
-        int month = now.getMonthValue();
-        int year = now.getYear();
 
-        // Tháng trước
-        LocalDate prevMonthDate = now.minusMonths(1);
-        int prevMonth = prevMonthDate.getMonthValue();
-        int prevYear = prevMonthDate.getYear();
+    public SummaryDashboardResponseDTO getSummaryDashboard(Integer reqMonth, Integer reqYear) {
+        // 1. Xác định thời gian
+        LocalDate targetDate = (reqMonth != null && reqYear != null)
+                ? LocalDate.of(reqYear, reqMonth, 1)
+                : LocalDate.now();
 
-        // 1. Profit
-        List<Order> completedOrders = orderRepository.findByStatus(EOrderStatus.DELIVERED);
+        int thisMonth = targetDate.getMonthValue();
+        int thisYear = targetDate.getYear();
 
-        long totalProfit = Math.round(completedOrders.stream()
-                .mapToDouble(Order::getTotalAmount)
-                .sum());
+        LocalDate prevDate = targetDate.minusMonths(1);
+        int prevMonth = prevDate.getMonthValue();
+        int prevYear = prevDate.getYear();
 
-        long thisMonthProfit = Math.round(completedOrders.stream()
-                .filter(o -> o.getDeliveredDate().getMonthValue() == month && o.getDeliveredDate().getYear() == year)
-                .mapToDouble(Order::getTotalAmount)
-                .sum());
+        // ==========================================
+        // 1. PROFIT (Doanh thu)
+        // ==========================================
 
-        long prevMonthProfit = Math.round(completedOrders.stream()
-                .filter(o -> o.getDeliveredDate().getMonthValue() == prevMonth && o.getDeliveredDate().getYear() == prevYear)
-                .mapToDouble(Order::getTotalAmount)
-                .sum());
+        long totalProfit = orderRepository.sumTotalRevenue(EOrderStatus.DELIVERED);
+        long thisMonthProfit = orderRepository.sumRevenueByMonth(thisMonth, thisYear, EOrderStatus.DELIVERED);
+        long prevMonthProfit = orderRepository.sumRevenueByMonth(prevMonth, prevYear, EOrderStatus.DELIVERED);
 
-        float profitDiffPercent = prevMonthProfit == 0
-                ? 0f
+        float profitDiff = prevMonthProfit == 0 ? 0f
                 : ((float) (thisMonthProfit - prevMonthProfit) / prevMonthProfit) * 100;
 
-        // 2. Customer
-        List<User> customers = userRepository.findByRole(UserRole.CUSTOMER);
+        // ==========================================
+        // 2. ORDER (Số lượng đơn)
+        // ==========================================
+        long totalOrders = orderRepository.countByStatus(EOrderStatus.DELIVERED); // Hàm có sẵn của JPA
+        long thisMonthOrder = orderRepository.countOrdersByMonth(thisMonth, thisYear, EOrderStatus.DELIVERED);
+        long prevMonthOrder = orderRepository.countOrdersByMonth(prevMonth, prevYear, EOrderStatus.DELIVERED);
 
-        long totalCustomer = customers.size();
+        float orderDiff = prevMonthOrder == 0 ? 0f
+                : ((float) (thisMonthOrder - prevMonthOrder) / prevMonthOrder) * 100;
 
-        long thisMonthCustomer = customers.stream()
-                .filter(u -> u.getCreated_date().getMonthValue() == month && u.getCreated_date().getYear() == year)
-                .count();
+        // ==========================================
+        // 3. CUSTOMER (Khách hàng)
+        // ==========================================
+        long totalCustomer = userRepository.countByRole(UserRole.CUSTOMER);
+        long thisMonthCustomer = userRepository.countNewCustomers(thisMonth, thisYear, UserRole.CUSTOMER);
+        long prevMonthCustomer = userRepository.countNewCustomers(prevMonth, prevYear, UserRole.CUSTOMER);
 
-        long prevMonthCustomer = customers.stream()
-                .filter(u -> u.getCreated_date().getMonthValue() == prevMonth && u.getCreated_date().getYear() == prevYear)
-                .count();
-
-        float customerDiffPercent = prevMonthCustomer == 0
-                ? 0f
+        float customerDiff = prevMonthCustomer == 0 ? 0f
                 : ((float) (thisMonthCustomer - prevMonthCustomer) / prevMonthCustomer) * 100;
 
-        // 3. Most Sold Product in Month
-        List<Order> completedOrdersThisMonth = completedOrders.stream()
-                .filter(o -> o.getDeliveredDate().getMonthValue() == month && o.getDeliveredDate().getYear() == year)
-                .toList();
+        // ==========================================
+        // 4. MOST SOLD PRODUCT (Chỉ load đơn tháng này)
+        // ==========================================
+        // Ở đây chúng ta mới cần load List<Order>, nhưng chỉ load ĐÚNG tháng được chọn
+        List<Order> ordersThisMonth = orderRepository.findByStatusAndMonth(EOrderStatus.DELIVERED, thisMonth, thisYear);
 
-        Map<Book, Integer> bookSoldMap = new HashMap<>();
-        for (Order order : completedOrdersThisMonth) {
-            for (OrderItem item : order.getOrderItems()) {
-                Book book = item.getBook();
-                bookSoldMap.put(book, bookSoldMap.getOrDefault(book, 0) + item.getQuantity());
+        SummaryDashboardResponseDTO.Product mostSellProduct = null;
+
+        // Logic tìm sản phẩm bán chạy giữ nguyên, nhưng giờ nó chạy trên tập dữ liệu rất nhỏ (chỉ 1 tháng) -> Rất nhanh
+        if (!ordersThisMonth.isEmpty()) {
+            Map<Book, Integer> bookSoldMap = new HashMap<>();
+            for (Order order : ordersThisMonth) {
+                for (OrderItem item : order.getOrderItems()) {
+                    Book book = item.getBook();
+                    bookSoldMap.put(book, bookSoldMap.getOrDefault(book, 0) + item.getQuantity());
+                }
+            }
+            if (!bookSoldMap.isEmpty()) {
+                var maxEntry = Collections.max(bookSoldMap.entrySet(), Map.Entry.comparingByValue());
+                Book bestBook = maxEntry.getKey();
+                mostSellProduct = SummaryDashboardResponseDTO.Product.builder()
+                        .title(maxEntry.getKey().getTitle())
+                        .soldAmount(maxEntry.getValue())
+                        .thumbnail(bestBook.getImages().isEmpty() ? null : bestBook.getImages().get(0).getImageUrl())
+                        .build();
             }
         }
 
-        SummaryDashboardResponseDTO.Product mostSellProduct = null;
-        if (!bookSoldMap.isEmpty()) {
-            Map.Entry<Book, Integer> maxEntry = Collections.max(bookSoldMap.entrySet(), Map.Entry.comparingByValue());
-            Book bestBook = maxEntry.getKey();
-            mostSellProduct = SummaryDashboardResponseDTO.Product.builder()
-                    .title(bestBook.getTitle())
-                    .thumbnail(bestBook.getImages().isEmpty() ? null : bestBook.getImages().get(0).getImageUrl())
-                    .soldAmount(maxEntry.getValue())
-                    .build();
-        }
-
-        // 4. Order
-        long totalOrder = completedOrders.size();
-
-        long thisMonthOrder = completedOrders.stream()
-                .filter(o -> o.getDeliveredDate().getMonthValue() == month && o.getDeliveredDate().getYear() == year)
-                .count();
-
-        long prevMonthOrder = completedOrders.stream()
-                .filter(o -> o.getDeliveredDate().getMonthValue() == prevMonth && o.getDeliveredDate().getYear() == prevYear)
-                .count();
-
-        float orderDiffPercent = prevMonthOrder == 0
-                ? 0f
-                : ((float) (thisMonthOrder - prevMonthOrder) / prevMonthOrder) * 100;
-
-        // Build response
+        // Build Response
         return SummaryDashboardResponseDTO.builder()
                 .profit(SummaryDashboardResponseDTO.Profit.builder()
                         .total(totalProfit)
                         .thisMonth(thisMonthProfit)
-                        .diffPercent(profitDiffPercent)
+                        .diffPercent(profitDiff)
+                        .build())
+                .order(SummaryDashboardResponseDTO.Order.builder()
+                        .total(totalOrders)
+                        .thisMonth(thisMonthOrder)
+                        .diffPercent(orderDiff)
                         .build())
                 .customer(SummaryDashboardResponseDTO.Customer.builder()
                         .total(totalCustomer)
                         .thisMonth(thisMonthCustomer)
-                        .diffPercent(customerDiffPercent)
+                        .diffPercent(customerDiff)
                         .build())
                 .mostSellInMonth(mostSellProduct)
-                .order(SummaryDashboardResponseDTO.Order.builder()
-                        .total(totalOrder)
-                        .thisMonth(thisMonthOrder)
-                        .diffPercent(orderDiffPercent)
-                        .build())
                 .build();
     }
 
@@ -226,8 +214,8 @@ public class ChartService implements IChartService {
     }
 
     @Override
-    public TopSellingProductDTO getTopSellingProducts() {
-        List<Object[]> raw = orderItemRepository.findTopSellingBooks();
+    public TopSellingProductDTO getTopSellingProducts(int year, int month) {
+        List<Object[]> raw = orderItemRepository.findTopSellingBooks(year, month);
 
         List<TopSellingProductDTO.Element> elements = new ArrayList<>();
         int total = Math.min(raw.size(), 5);
@@ -239,7 +227,7 @@ public class ChartService implements IChartService {
             String thumbnail = (String) row[2];
             Integer quantity = ((Number) row[3]).intValue();
             Long lastOrderId = (Long) row[4];
-            LocalDate lastSellDate =  ((LocalDateTime)row[5]).toLocalDate();
+            LocalDate lastSellDate = ((LocalDateTime) row[5]).toLocalDate();
 
             if (i < 4) {
                 elements.add(

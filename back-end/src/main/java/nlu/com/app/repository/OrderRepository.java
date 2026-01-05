@@ -30,7 +30,15 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     @Query("SELECT COUNT(o) FROM Order o WHERE MONTH(o.deliveredDate) = :month AND YEAR(o.deliveredDate) = :year and o.status = :status")
     int countByOrderDateMonthAndYear(@Param("month") int month, @Param("year") int year, @Param("status") EOrderStatus status);
 
-    List<Order> findTop5ByStatusOrderByDeliveredDateDesc(EOrderStatus status);
+    @Query("SELECT o FROM Order o " +
+            "WHERE o.status = :status " +
+            "AND MONTH(o.deliveredDate) = :month " +
+            "AND YEAR(o.deliveredDate) = :year " +
+            "ORDER BY o.deliveredDate DESC")
+    List<Order> findRecentOrdersInMonth(@Param("status") EOrderStatus status,
+                                        @Param("month") int month,
+                                        @Param("year") int year,
+                                        Pageable pageable);
 
     // Đếm số đơn hàng đã giao thành công
     @Query("SELECT COUNT(o) FROM Order o WHERE o.user.userId = :userId AND o.status = 'DELIVERED'")
@@ -48,4 +56,39 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     @Query("SELECT COUNT(o) FROM Order o WHERE o.status = :status")
     Long countQualityOrderBaseOnStatus(EOrderStatus status);
+
+    @Query("SELECT o FROM Order o WHERE o.status = :status AND YEAR(o.deliveredDate) = :year")
+    List<Order> findByStatusAndYear(@Param("status") EOrderStatus status, @Param("year") int year);
+
+    Long countByStatus(EOrderStatus status);
+
+    // 1. Tính tổng doanh thu theo tháng/năm
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o " +
+            "WHERE o.status = :status " +
+            "AND MONTH(o.deliveredDate) = :month " +
+            "AND YEAR(o.deliveredDate) = :year")
+    Long sumRevenueByMonth(@Param("month") int month,
+                           @Param("year") int year,
+                           @Param("status") EOrderStatus status);
+
+    // 2. Đếm số lượng đơn hàng theo tháng/năm
+    @Query("SELECT COUNT(o) FROM Order o " +
+            "WHERE o.status = :status " +
+            "AND MONTH(o.deliveredDate) = :month " +
+            "AND YEAR(o.deliveredDate) = :year")
+    Long countOrdersByMonth(@Param("month") int month,
+                            @Param("year") int year,
+                            @Param("status") EOrderStatus status);
+
+
+    @Query("SELECT o FROM Order o " +
+            "WHERE o.status = :status " +
+            "AND MONTH(o.deliveredDate) = :month " +
+            "AND YEAR(o.deliveredDate) = :year")
+    List<Order> findByStatusAndMonth(@Param("status") EOrderStatus status,
+                                     @Param("month") int month,
+                                     @Param("year") int year);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.status = :status")
+    Long sumTotalRevenue(@Param("status") EOrderStatus status);
 }

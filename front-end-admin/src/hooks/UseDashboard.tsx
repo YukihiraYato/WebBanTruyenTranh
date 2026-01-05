@@ -23,15 +23,17 @@ export function useDashboard() {
   const [topSell, setTopSell] = useState<TopSellingProductsResponseDTO | null>(
     null
   )
+    const [month, setMonth] = useState(new Date().getMonth()+1)
+  const [year, setYear] = useState(new Date().getFullYear())
 
   useEffect(() => {
     const fetchChart = async () => {
       try {
         const [mSale, rOrder, sum, topSelling] = await Promise.all([
-          getSalesMonthlyReport(),
+          getSalesMonthlyReport(year),
           getRecentlyOrder(),
-          getSummaryDashboard(),
-          getTopSellingProducts(),
+          getSummaryDashboard(month, year),
+          getTopSellingProducts(year,month),
         ])
         setMonthlySales(mSale.result)
         setRecentlyOrder(rOrder.result)
@@ -42,7 +44,7 @@ export function useDashboard() {
       }
     }
     fetchChart()
-  }, [])
+  }, [month, year])
 
   return {
     summary,
@@ -53,5 +55,9 @@ export function useDashboard() {
     setRecentlyOrder,
     topSell,
     setTopSell,
+    month,
+    setMonth,
+    year,
+    setYear
   }
 }

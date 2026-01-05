@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -165,9 +166,9 @@ public class DiscountServiceImpl implements IDiscountService {
                 .user(user)
                 .discount(discount)
                 .isUsed(false) // Mới đổi, chưa xài
-                .redeemedAt(LocalDateTime.now())
+                .redeemedAt(LocalDate.now())
                 // Nếu muốn set hạn dùng 30 ngày kể từ lúc đổi, hoặc lấy theo endDate của discount
-                .expiredAt(LocalDateTime.now().plusDays(30))
+                .expiredAt(discount.getEndDate())
                 .build();
 
         userCouponRepository.save(userCoupon);

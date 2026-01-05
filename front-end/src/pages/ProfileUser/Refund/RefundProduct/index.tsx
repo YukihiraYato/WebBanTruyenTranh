@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Box, Container, Typography, Button,
   Grid, TextField, IconButton, Dialog, DialogTitle,
-  DialogContent, DialogActions, Chip, Paper, Pagination,
+  DialogContent, DialogActions, Chip, Paper, Pagination, CircularProgress
 } from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -22,8 +22,10 @@ export default function ReturnRequestPage() {
   const userDetails = JSON.parse(localStorage.getItem("userDetails") || "{}");
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  // Thêm loading đợi xử lý yêu cầu hoàn đơn
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const itemsPerPage = 10;
-    // 1. Tạo state để kích hoạt refresh cho con
+  // 1. Tạo state để kích hoạt refresh cho con
   const [refreshKey, setRefreshKey] = useState(0);
   const fetchOrders = async (page: number) => {
     try {
@@ -50,7 +52,7 @@ export default function ReturnRequestPage() {
       console.error("Lỗi khi fetch đơn hàng", error);
     }
   };
- 
+
   const convertStatus = (status: string) => {
     switch (status) {
       case "Chờ xác nhận":
@@ -77,10 +79,10 @@ export default function ReturnRequestPage() {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       setImages((prev) => [...prev, ...filesArray]);
-
       // Tạo URL preview
       const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
       setPreviewUrls((prev) => [...prev, ...newPreviews]);
+
     }
   };
 
@@ -95,9 +97,11 @@ export default function ReturnRequestPage() {
     setReason("");
     setImages([]);
     setPreviewUrls([]);
+    setIsSubmitting(false);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // 1. Validate
     if (!selectedOrderId || selectedOrderId === "") return;
     if (!reason.trim()) {
       alert("Vui lòng nhập lý do hoàn trả");
@@ -108,26 +112,42 @@ export default function ReturnRequestPage() {
       return;
     }
 
-    // --- LOGIC GỬI API (FormData) ---
+    // 2. Bắt đầu Loading
+    setIsSubmitting(true);
+
+    // 3. Chuẩn bị dữ liệu
     const formData = new FormData();
-    formData.append("orderId", selectedOrderId); // TODO: Thay bằng selectedOrderId khi có API đúng
+    formData.append("orderId", selectedOrderId);
     formData.append("reason", reason);
     images.forEach((image) => {
       formData.append("image", image);
     });
 
     console.log("Submitting Return Request...", formData);
-    const response = createRefundRequest(formData);
 
-    response.then(async (data) => {
-      if(data.code === 1000){
-        setRefreshKey(prev => prev + 1);
+    try {
+      // 4. Gọi API và ĐỢI (await) kết quả
+      const data = await createRefundRequest(formData);
+
+      // 5. Xử lý kết quả sau khi API chạy xong
+      if (data.code === 1000) {
+        setRefreshKey((prev) => prev + 1);
         await fetchOrders(page);
-      }else {
-        alert(data.message)
+        alert("Tạo yêu cầu hoàn đơn thành công");
+
+        // CHỈ ĐÓNG DIALOG KHI THÀNH CÔNG
+        setOpenDialog(false);
+      } else {
+        alert(data.message || "Có lỗi xảy ra");
+        // Không đóng Dialog để người dùng sửa lại nếu cần
       }
-    })
-    setOpenDialog(false);
+    } catch (error) {
+      console.error(error);
+      alert("Lỗi kết nối đến máy chủ.");
+    } finally {
+      // 6. Tắt Loading (Dù thành công hay thất bại đều tắt)
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -146,7 +166,7 @@ export default function ReturnRequestPage() {
             refreshOrders={() => fetchOrders(page)}
             handleOpenRequest={handleOpenRequest}
             setSelectedOrderId={setSelectedOrderId}
-             refreshKey={refreshKey}
+            refreshKey={refreshKey}
           />
         ))}
       </Box>
@@ -161,22 +181,22 @@ export default function ReturnRequestPage() {
         sx={{ display: "flex", justifyContent: "center", marginTop: 2 }}
       />
       {/* DIALOG FORM GỬI YÊU CẦU */}
-    <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ borderBottom: '1px solid #eee', bgcolor: '#f9f9f9' }}>
           {`Yêu cầu hoàn trả / đổi hàng - Đơn hàng #${selectedOrderId}`}
         </DialogTitle>
-        
+
         <DialogContent sx={{ mt: 2 }}>
-          
+
           <Typography fontWeight="bold" gutterBottom>1. Nội dung yêu cầu (*):</Typography>
-          
+
           {/* PHẦN HƯỚNG DẪN NGƯỜI DÙNG */}
           <Box bgcolor="#e3f2fd" p={2} borderRadius={1} mb={2} display="flex" gap={1} alignItems="flex-start">
             <InfoIcon color="info" fontSize="small" sx={{ mt: 0.3 }} />
             <Typography variant="body2" color="text.secondary">
-              Để được hỗ trợ nhanh nhất, vui lòng ghi rõ:<br/>
-              • <b>Tên sản phẩm & Số lượng</b> cần trả.<br/>
-              • <b>Lý do</b> (Hư hỏng, sai mẫu, lỗi NSX...).<br/>
+              Để được hỗ trợ nhanh nhất, vui lòng ghi rõ:<br />
+              • <b>Tên sản phẩm & Số lượng</b> cần trả.<br />
+              • <b>Lý do</b> (Hư hỏng, sai mẫu, lỗi NSX...).<br />
               • <b>Mong muốn hoàn trả</b> (Hoàn điểm WB / Chuyển khoản / Đổi mới).
             </Typography>
           </Box>
@@ -195,7 +215,7 @@ export default function ReturnRequestPage() {
           <Typography variant="caption" color="text.secondary" display="block" mb={2}>
             Vui lòng chụp rõ chỗ hư hỏng, mã vận đơn dán trên hộp và tình trạng bao bì.
           </Typography>
-          
+
           <Button
             component="label"
             variant="outlined"
@@ -210,17 +230,17 @@ export default function ReturnRequestPage() {
           <Box display="flex" gap={1.5} flexWrap="wrap">
             {previewUrls.map((url, index) => (
               <Box key={index} position="relative" width={100} height={100} border="1px solid #ddd" borderRadius={2} overflow="hidden">
-                <img 
-                  src={url} 
-                  alt="preview" 
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                <img
+                  src={url}
+                  alt="preview"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
-                <IconButton 
-                  size="small" 
-                  sx={{ 
-                    position: "absolute", top: 2, right: 2, 
-                    bgcolor: "rgba(255,255,255,0.9)", 
-                    '&:hover': { bgcolor: '#ffebee' } 
+                <IconButton
+                  size="small"
+                  sx={{
+                    position: "absolute", top: 2, right: 2,
+                    bgcolor: "rgba(255,255,255,0.9)",
+                    '&:hover': { bgcolor: '#ffebee' }
                   }}
                   onClick={() => handleRemoveImage(index)}
                 >
@@ -232,16 +252,20 @@ export default function ReturnRequestPage() {
 
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: '1px solid #eee' }}>
-          <Button onClick={() => setOpenDialog(false)} color="inherit" variant="outlined" sx={{ textTransform: 'none' }}>
+          <Button
+            disabled={isSubmitting}
+            onClick={() => setOpenDialog(false)} color="inherit" variant="outlined" sx={{ textTransform: 'none' }}>
             Hủy bỏ
           </Button>
-          <Button 
-            onClick={handleSubmit} 
-            variant="contained" 
-            color="error" 
-            sx={{ px: 4, textTransform: 'none' }}
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            color="error"
+            disabled={isSubmitting} // Disable nút để tránh spam click
+            sx={{ px: 4, textTransform: 'none', minWidth: '140px' }} // minWidth để nút không bị co lại khi hiện loading
+            startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
           >
-            Gửi yêu cầu
+            {isSubmitting ? "Đang xử lý..." : "Gửi yêu cầu"}
           </Button>
         </DialogActions>
       </Dialog>

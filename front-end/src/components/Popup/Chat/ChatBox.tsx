@@ -9,11 +9,13 @@ import { getConversation } from "~/api/user/chat/chat";
 import { getUserDetails } from "~/api/user/userDetails";
 import { useAuthContext } from "~/context/AuthContext";
 import CircularProgress from '@mui/material/CircularProgress';
+
 export default function ChatBox({ botAvatar, userAvatar, width = 340, height = 460 }: { botAvatar: string; userAvatar: string; width?: number; height?: number }) {
     const [open, setOpen] = useState(false);
     const [isLoanding, setIsLoading] = useState(false);
     const [isWattingMessageFromServer, setIsWattingMessageFromServer] = useState(false);
     const token = localStorage.getItem("access_token");
+    const waitingReplyRef = useRef(false);
     const [intrdouction, setIntroduction] = useState([
         {
             sender: "BOT", text: "Xin chào! Mình là trợ lý AI (Thử nghiệm) từ Wibu Bookstore.", sentAt: new Date().toLocaleString("vi-VN", {
@@ -41,8 +43,16 @@ export default function ChatBox({ botAvatar, userAvatar, width = 340, height = 4
     const [input, setInput] = useState("");
     const listRef = useRef<HTMLDivElement>(null);
     const [conversationId, setConversationId] = useState<number>(0);
-    const { sendMessage } = useChat(setMessages, setIsWattingMessageFromServer, conversationId as number, token as string);
+    const { sendMessage } = useChat(setMessages, setIsWattingMessageFromServer,waitingReplyRef ,conversationId as number, token as string);
     const { jwtToken } = useAuthContext();
+    // Auto-scroll khi messages thay đổi HOẶC khi loading bật lên
+    useEffect(() => {
+        
+        if (listRef.current) {
+            listRef.current.scrollTop = listRef.current.scrollHeight;
+        }
+    }, [messages]);
+
     useEffect(() => {
         // auto-scroll khi messages thay đổi
         if (listRef.current) {
@@ -54,7 +64,6 @@ export default function ChatBox({ botAvatar, userAvatar, width = 340, height = 4
             console.log("JWT in chatbox:", jwtToken);
             try {
                 if (open && jwtToken) {
-
                     setIsLoading(true);
                     const userDetails = (await getUserDetails()).result;
                     const userId = userDetails.userId;
@@ -95,8 +104,12 @@ export default function ChatBox({ botAvatar, userAvatar, width = 340, height = 4
             return;
         }
         if (!input.trim()) return;
-        const newMsg = {
-            sender: "USER", text: input.trim(), sentAt: new Date().toLocaleString("vi-VN", {
+
+        sendMessage({
+            message: input.trim(),
+            // Format ngày tháng nên để ISO string gửi lên server cho chuẩn, 
+            // nhưng nếu BE bạn nhận String thì giữ nguyên cũng được
+            timeSendMessage: new Date().toLocaleString("vi-VN", {
                 timeZone: "Asia/Ho_Chi_Minh",
                 hour: "2-digit",
                 minute: "2-digit",
@@ -104,39 +117,10 @@ export default function ChatBox({ botAvatar, userAvatar, width = 340, height = 4
                 month: "2-digit",
                 year: "numeric"
             })
-        };
-        setMessages(prev => [...prev, newMsg]);
+        });
         setInput("");
-        // Gửi tin nhắn lên server qua websocket
-        setTimeout(() => {
-            sendMessage({
-                message: input.trim(),
-                timeSendMessage: new Date().toLocaleString("vi-VN", {
-                    timeZone: "Asia/Ho_Chi_Minh",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric"
-                })
-            });
-            // Tin nhắn phản hồi giả lập từ bot
-            setMessages(prev => [
-                ...prev,
-                {
-                    sender: "BOT", text: "Cảm ơn! Mình đã nhận được tin nhắn của bạn, hãy đợi mình 1 chút nhé !", sentAt: new Date().toLocaleString("vi-VN", {
-                        timeZone: "Asia/Ho_Chi_Minh",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric"
-                    })
-                }
-            ]);
-            setIsWattingMessageFromServer(true);
-
-        }, 700);
+        setIsWattingMessageFromServer(true);
+        waitingReplyRef.current = true;
     };
 
     return (

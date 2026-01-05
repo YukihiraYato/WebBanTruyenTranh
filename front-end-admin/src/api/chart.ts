@@ -9,23 +9,23 @@ import {
 import axiosInstance from './axios'
 import API_ENDPOINTS from './endpoint'
 
-export const getSalesMonthlyReport = async () => {
+export const getSalesMonthlyReport = async (year: number) => {
   const res = await axiosInstance.get<
     ApiResponse<SalesMonthlyReportResponseDTO>
-  >(API_ENDPOINTS.CHART.GET_SALES_MONTHLY)
+  >(API_ENDPOINTS.CHART.GET_SALES_MONTHLY(year))
   return res.data
 }
 
 export const getRecentlyOrder = async () => {
   const res = await axiosInstance.get<ApiResponse<RecentlyOrderResponseDTO>>(
-    API_ENDPOINTS.CHART.GET_RECENTLY_ORDERS
+    API_ENDPOINTS.CHART.GET_RECENTLY_ORDERS()
   )
   return res.data
 }
 
-export const getSummaryDashboard = async () => {
+export const getSummaryDashboard = async (month: number, year: number) => {
   const res = await axiosInstance.get<ApiResponse<SummaryDashboardResponseDTO>>(
-    API_ENDPOINTS.CHART.GET_SUMMARY_DASHBOARD
+    API_ENDPOINTS.CHART.GET_SUMMARY_DASHBOARD(month, year)
   )
   return res.data
 }
@@ -37,9 +37,9 @@ export const getSummaryAboutCustomer = async (customerId: number) => {
   return res.data
 }
 
-export const getTopSellingProducts = async () => {
+export const getTopSellingProducts = async (year: number, month: number) => {
   const res = await axiosInstance.get<
     ApiResponse<TopSellingProductsResponseDTO>
-  >(`${API_ENDPOINTS.CHART.GET_TOP_SELLING_PRODUCT}`)
+  >(`${API_ENDPOINTS.CHART.GET_TOP_SELLING_PRODUCT(year, month)}`)
   return res.data
 }

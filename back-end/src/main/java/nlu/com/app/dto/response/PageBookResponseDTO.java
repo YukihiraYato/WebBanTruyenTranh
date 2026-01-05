@@ -4,11 +4,7 @@ package nlu.com.app.dto.response;
  * @author VuLuu
  */
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Data
@@ -17,12 +13,13 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PageBookResponseDTO {
-  Long bookId;
-  String title;
-  double price;
-  double discountedPrice;
-  double discountPercentage;
-  double averageRating;
-  String imageUrl;
-  String typePurchase;
+    Long bookId;
+    String title;
+    double price;
+    double discountedPrice;
+    double discountPercentage;
+    double averageRating;
+    String imageUrl;
+    String typePurchase;
+    double quantityInStock;
 }

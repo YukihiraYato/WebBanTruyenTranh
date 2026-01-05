@@ -21,6 +21,7 @@ import nlu.com.app.service.RefundItemsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -34,7 +35,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-
+@Transactional
 
 public class RefundItemsServiceImpl implements RefundItemsService {
     private static final double EXCHANGE_RATE = 26040.0;
@@ -48,13 +49,14 @@ public class RefundItemsServiceImpl implements RefundItemsService {
     private final PaypalServerSdkClient paypalClient;
     private final UserPointRepository userPointRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
+    private final NotificationRepository notificationRepository;
     @Value("${app.aws.bucket.name}")
     private String bucketName;
 
     @Override
     public RefundItemsResponseDTO createRefundItems(RefundItemsRequestFromClientDTO requestDTO, MultipartFile[] images) {
         try {
-            RefundItems refundItems = refundItemsRepository.findByOrder_OrderId(Long.valueOf(requestDTO.getOrderId())).orElse(new RefundItems());
+            RefundItems refundItems = new RefundItems();
             List<String> imageUrls = new ArrayList<>();
             for (MultipartFile image : images) {
                 String imageUrlFromS3 = uploadFile(image);
@@ -63,14 +65,13 @@ public class RefundItemsServiceImpl implements RefundItemsService {
             refundItems.setOrder(orderRepository.findById(Long.valueOf(requestDTO.getOrderId())).orElse(null));
             refundItems.setReason(requestDTO.getReason());
             refundItems.setStatus(ERefundStatus.PENDING_REFUND);
-            List<RefundImage> refundImages = new ArrayList<>();
+            List<RefundImage> refundImages = refundItems.getImages();
             for (String imageUrl : imageUrls) {
                 RefundImage refundImage = new RefundImage();
                 refundImage.setImageUrl(imageUrl);
                 refundImage.setRefundRequest(refundItems);
                 refundImages.add(refundImage);
             }
-            refundItems.setImages(refundImages);
             refundItemsRepository.save(refundItems);
             RefundItemsResponseDTO refundItemsResponseDTO = new RefundItemsResponseDTO();
             refundItemsResponseDTO.setStatus(refundItems.getStatus().toString());
@@ -115,6 +116,11 @@ public class RefundItemsServiceImpl implements RefundItemsService {
         RefundItems refundItem = refundItemsRepository.findByOrder_OrderId(order.getOrderId()).orElse(null);
         HandleRefundRequestResponseDTO handleRefundRequestResponseDTO = new HandleRefundRequestResponseDTO();
         String message = "";
+        //        Tạo thông báo cho người dùng
+        Notifications notifications = new Notifications();
+        notifications.setUser(user);
+        notifications.setRead(false);
+        notifications.setTitle("Thông báo từ admin");
         switch (refundItemsResponseDTO.getStatus()) {
             case "APPROVED":
                 boolean isRestock = handleStockFromRefundItems(refundItemsResponseDTO);
@@ -164,6 +170,7 @@ public class RefundItemsServiceImpl implements RefundItemsService {
                                     "Yêu cầu hoàn tiền PayPal thành công",
                                     "Số tiền " + amountStr + " USD đang được xử lý về ví của bạn.");
 
+
                         } catch (Exception e) {
                             e.printStackTrace();
                             // Có thể ném lỗi ra hoặc update status DB là REFUND_FAILED để Admin biết
@@ -188,6 +195,7 @@ public class RefundItemsServiceImpl implements RefundItemsService {
                     refundItemsRepository.save(refundItem);
                 }
                 message = "Xử lý hoàn trả thành công.";
+                notifications.setMessage("Chúng tôi đã xử lý yêu cầu hoàn trả của bạn thành công vơi đơn hàng có mã là #" + refundItemsResponseDTO.getOrderId() + ". Vui lòng kiểm tra lại email của bạn: " + user.getEmail());
                 break;
 
             case "REJECTED":
@@ -200,10 +208,14 @@ public class RefundItemsServiceImpl implements RefundItemsService {
                 String emailUser = user.getEmail();
                 emailService.sendNotifyAboutRefundProduct(emailUser, "Thông báo về yêu cầu hoàn trả của bạn", refundItemsResponseDTO.getAdminNote());
                 message = "Từ chối hoàn trả thành công";
+                notifications.setMessage("Chúng tôi đã từ chối xử lý yêu cầu hoàn trả của bản với đơn hàng có mả so #" + refundItemsResponseDTO.getOrderId() + ". Vui lòng kiểm tra lại email của bạn để biết thông tin chi tiết: " + user.getEmail());
                 break;
         }
+
+
         handleRefundRequestResponseDTO.setMessage(message);
         handleRefundRequestResponseDTO.setStatus(refundItem.getStatus().toString());
+        notificationRepository.save(notifications);
         return handleRefundRequestResponseDTO;
     }
 

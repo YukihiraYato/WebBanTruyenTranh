@@ -163,8 +163,11 @@ const UserRankCard: React.FC<UserRankCardProps> = () => {
         : Math.min((dataUserPoint.lifetimePoint / dataUserPoint.nextRankPoint) * 100, 100);
 
       const nextRankLabel = getNextRankLabel(dataUserPoint.userRank);
-
-      return (
+      const user= localStorage.getItem("access_token");
+      if(!user){
+        return null;
+      }else{
+        return (
         <Card
           elevation={4}
           sx={{
@@ -309,6 +312,8 @@ const UserRankCard: React.FC<UserRankCardProps> = () => {
           </CardContent>
         </Card>
       );
+      }
+      
     };
   }
 }

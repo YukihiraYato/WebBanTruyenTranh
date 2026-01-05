@@ -14,7 +14,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader></SidebarHeader>
       <SidebarContent>
         {sidebarData.navGroups.map((props) => (
-          <NavGroup key={props.title} {...props} onClick={props.onClick} />
+          <NavGroup key={props.title} {...props} />
         ))}
       </SidebarContent>
       <SidebarRail />

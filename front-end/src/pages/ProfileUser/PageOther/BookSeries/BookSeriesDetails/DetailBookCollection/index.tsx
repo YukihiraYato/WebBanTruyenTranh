@@ -14,7 +14,7 @@ import { useParams } from "react-router-dom";
 import { BookCard } from "~/components/BookCard";
 import EditIcon from '@mui/icons-material/Edit';
 import IosShareIcon from '@mui/icons-material/IosShare';
-import { getUserDetails } from "~/api/user/userDetails";
+
 import EditBookCollectionDialog from "~/pages/BookDetails/SaveBookDialog/EditBookCollectionDialog";
 import { Swiper, SwiperSlide } from "swiper/react";
 interface Book {
@@ -80,11 +80,10 @@ export default function BookCollectionDetailView() {
     const fetchBookCollectionDetails = async () => {
       try {
         const bookCollectionDetails = await getListBookFromCollection(idBookCollection);
-        const userDetails = await getUserDetails();
-        if (userDetails) {
-          setUserIdCurrent(userDetails.result.userId);
+       
+        if(localStorage.getItem('userId')){
+          setUserIdCurrent(parseInt(localStorage.getItem('userId') as string));
         }
-        setUserIdOfBookCollection(bookCollectionDetails.userId);
         console.log("Book collection details:", bookCollectionDetails);
         setFullNameUser(bookCollectionDetails.userName);
         setListBook(bookCollectionDetails.books);

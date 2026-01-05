@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
-
+import { useAuthStore } from '@/stores/authStore'
+import {getUserDetails} from '@/api/user'
 type UserAuthFormProps = HTMLAttributes<HTMLFormElement>
 
 const formSchema = z.object({
@@ -50,14 +51,18 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const handleProccessLogin = async (username: string, password: string, e: React.FormEvent<HTMLFormElement>) => {
     try {
       const response = await login(username, password)
+      
       console.log('Đăng nhập thành công:', response)
       if (response.code === 1000) {
-        await localStorage.setItem('access_token_admin', response.result)
-        window.location.href = '/'
+         localStorage.setItem('access_token_admin', response.result)
       } else {
         alert(response.message)
         e.preventDefault()
       }
+      const userResponse = await getUserDetails()
+       useAuthStore.getState().login(userResponse.result  ,  response.result)
+              
+        window.location.href = '/dashboard'
     } catch (error) {
       console.error('Đăng nhập thất bại:', error)
     }

@@ -7,6 +7,7 @@ import lombok.experimental.FieldDefaults;
 import nlu.com.app.constant.ERole;
 import nlu.com.app.constant.EStatusMessage;
 import nlu.com.app.dto.request.MessageRequestDTO;
+import nlu.com.app.dto.response.AdminConversationInboxResponseDTO;
 import nlu.com.app.dto.response.CanChatUserResponseDTO;
 import nlu.com.app.dto.response.MessageResponseDTO;
 import nlu.com.app.entity.ChatHistory;
@@ -18,6 +19,7 @@ import nlu.com.app.service.ConversationService;
 import nlu.com.app.service.IChatService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,130 +30,247 @@ import java.time.LocalDateTime;
 @Transactional
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ChatFacade {
+    static final String CHAT_KEY_PREFIX = "chat:history:";
     final ChatHistoryRepository chatHistoryRepository;
     final SimpMessagingTemplate simpMessagingTemplate;
     final ConversationRepository conversationRepository;
     final ConversationService conversationService;
     final IChatService chatService;
-     final StringRedisTemplate redisTemplate;
-     static final String CHAT_KEY_PREFIX = "chat:history:";
+    final StringRedisTemplate redisTemplate;
+
+    // Trong ChatFacade.java
 
     public void handleUserMessage(User user, MessageRequestDTO messageRequestDTO) {
-        ChatHistory chatHistory = new ChatHistory();
 
-        MessageResponseDTO messageOfBot = new MessageResponseDTO();
-        if (user != null) {
-            chatHistory = new ChatHistory();
-            chatHistory.setUser(user);
-            chatHistory.setRole(ERole.USER);
-            chatHistory.setMessage(messageRequestDTO.getMessage());
-            chatHistory.setCreatedDate(LocalDateTime.now());
-            chatHistory.setIsRead(false);
-            chatHistory.setSenderId(user.getUserId().toString());
-            chatHistoryRepository.save(chatHistory);
-            String chatBotReply;
-            Conversation conversation = conversationRepository.findByClient_UserId(user.getUserId()).orElse(null);
-            if (conversation == null) {
-                conversationService.createNewConversation(user.getUserId());
-                Conversation conversation1 = (conversationRepository.findByClient_UserId(user.getUserId())).get();
-                redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), messageRequestDTO.getMessage());
-                chatBotReply = chatService.reply(user.getUserId());
-                redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), chatBotReply);
-                chatHistory = new ChatHistory();
-                chatHistory.setUser(user);
-                chatHistory.setRole(ERole.BOT);
-                chatHistory.setMessage(chatBotReply);
-                chatHistory.setCreatedDate(LocalDateTime.now());
-                chatHistory.setIsRead(false);
-                chatHistory.setSenderId("BOTCHAT");
-                chatHistory.setConversation_chat_history(conversation1);
-                conversation1.getChatHistory().add(chatHistory);
-                chatHistoryRepository.save(chatHistory);
-                messageOfBot.setSender("BOT");
-                messageOfBot.setText(chatBotReply);
-                messageOfBot.setSentAt(LocalDateTime.now());
-
-                simpMessagingTemplate.convertAndSend("/receive/message/conversation/" + conversation1.getId(), messageOfBot);
-
-
-            }else {
-                if(conversation.getCurrentAdmin() != null){
-                    redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), messageRequestDTO.getMessage());
-
-                }else {
-                    redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), messageRequestDTO.getMessage());
-                    chatBotReply = chatService.reply(user.getUserId());
-                    redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ user.getUserId(), chatBotReply);
-                    chatHistory = new ChatHistory();
-                    chatHistory.setUser(user);
-                    chatHistory.setRole(ERole.BOT);
-                    chatHistory.setMessage(chatBotReply);
-                    chatHistory.setCreatedDate(LocalDateTime.now());
-                    chatHistory.setIsRead(false);
-                    chatHistory.setSenderId("BOTCHAT");
-                    chatHistory.setConversation_chat_history(conversation);
-                    conversation.getChatHistory().add(chatHistory);
-                    chatHistoryRepository.save(chatHistory);
-
-                    messageOfBot.setSender("BOT");
-                    messageOfBot.setText(chatBotReply);
-                    messageOfBot.setSentAt(LocalDateTime.now());
-                    simpMessagingTemplate.convertAndSend("/receive/message/conversation/" + conversation.getId(), messageOfBot);
-
-                }
-            }
-
-        }else{
+        if (user == null) {
             throw new RuntimeException("User not found");
         }
 
+        // 1️⃣ Lấy hoặc tạo conversation
+        Conversation conversation = conversationRepository.findByClient_UserId(user.getUserId()).orElse(null);
+        if (conversation == null) {
+            conversationService.createNewConversation(user.getUserId());
+        }
+        // Refresh lại entity để đảm bảo đồng bộ
+        conversation = conversationRepository.findByClient_UserId(user.getUserId()).get();
+
+        // 2️⃣ Lưu USER message vào DB
+        ChatHistory userMessage = saveUserMessage(user, conversation, messageRequestDTO.getMessage()); // Lưu ý: hàm saveUserMessage nên return về entity vừa lưu
+
+        // 3️⃣ Push USER message vào Redis (GPT context)
+        redisTemplate.opsForList()
+                .leftPush(CHAT_KEY_PREFIX + user.getUserId(), messageRequestDTO.getMessage());
+
+        // --- 🔥 FIX QUAN TRỌNG: Gửi tin nhắn của USER ra Socket ngay tại đây ---
+        // Để Admin đang xem cuộc hội thoại này sẽ thấy tin nhắn của User hiện lên ngay lập tức
+        MessageResponseDTO userResponse = MessageResponseDTO.builder()
+                .sender("USER") // Hoặc "USER" tùy quy ước FE
+                .text(messageRequestDTO.getMessage())
+                .sentAt(userMessage.getCreatedDate())
+                .build();
+
+        simpMessagingTemplate.convertAndSend(
+                "/receive/message/conversation/" + conversation.getId(),
+                userResponse
+        );
+        // -----------------------------------------------------------------------
+
+        // 4️⃣ Nếu target là ADMIN → dừng tại đây (Admin tự trả lời, Bot không rep)
+        if (conversation.getTarget() == ERole.ADMIN) {
+            // Vì đã gửi socket ở trên rồi, nên return ở đây là an toàn, Admin đã nhận được tin nhắn User
+            return;
+        }
+
+        // 5️⃣ BOT trả lời (Logic cũ giữ nguyên)
+        String botReply = chatService.reply(user.getUserId());
+
+        // 6️⃣ Push BOT reply vào Redis
+        redisTemplate.opsForList()
+                .leftPush(CHAT_KEY_PREFIX + user.getUserId(), botReply);
+
+        // 7️⃣ Lưu BOT message
+        ChatHistory botMessage = saveBotMessage(user, conversation, botReply);
+
+        // 8️⃣ Gửi tin nhắn BOT ra Socket
+        MessageResponseDTO botResponse = MessageResponseDTO.builder()
+                .sender("BOT")
+                .text(botReply)
+                .sentAt(botMessage.getCreatedDate())
+                .build();
+
+        simpMessagingTemplate.convertAndSend(
+                "/receive/message/conversation/" + conversation.getId(),
+                botResponse
+        );
+
+        // Notify inbox update (để danh sách bên trái nhảy lên đầu)
+        notifyAdminInbox(conversation, botMessage);
     }
-    public void handleAdminMessage(User admin, MessageRequestDTO dto, Long userId) {
-        Conversation conversation = conversationRepository.findByClient_UserId(userId)
+
+    private ChatHistory saveBotMessage(User user, Conversation conversation, String botReply) {
+        ChatHistory botMessage = new ChatHistory();
+        botMessage.setUser(user);
+        botMessage.setRole(ERole.BOT);
+        botMessage.setMessage(botReply);
+        botMessage.setCreatedDate(LocalDateTime.now());
+        botMessage.setIsRead(false);
+        botMessage.setSenderId("BOTCHAT");
+        botMessage.setConversation_chat_history(conversation);
+
+        chatHistoryRepository.save(botMessage);
+        conversation.getChatHistory().add(botMessage);
+
+        return botMessage;
+    }
+
+    private ChatHistory saveUserMessage(User user, Conversation conversation, String message) {
+        ChatHistory chatHistory = new ChatHistory();
+        chatHistory.setUser(user);
+        chatHistory.setRole(ERole.USER);
+        chatHistory.setMessage(message);
+        chatHistory.setCreatedDate(LocalDateTime.now());
+        chatHistory.setIsRead(false);
+        chatHistory.setSenderId(user.getUserId().toString());
+        chatHistory.setConversation_chat_history(conversation);
+
+        chatHistoryRepository.save(chatHistory);
+        conversation.getChatHistory().add(chatHistory);
+
+        notifyAdminInbox(conversation, chatHistory);
+
+        return chatHistory; // <--- Return entity
+    }
+
+    public void handleAdminMessage(
+            User admin,
+            MessageRequestDTO dto,
+            Long conversationId
+    ) throws AccessDeniedException {
+        Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new EntityNotFoundException("Conversation not found"));
 
+        if (
+                conversation.getCurrentAdmin() == null ||
+                        !conversation.getCurrentAdmin().getUserId().equals(admin.getUserId())
+        ) {
+            MessageResponseDTO response = new MessageResponseDTO();
+            response.setSender("INVALID_HANDLE_CHAT");
+            response.setText("Admin không sở hữu conversation này để chat với user");
+            response.setSentAt(LocalDateTime.now());
+
+            simpMessagingTemplate.convertAndSend(
+                    "/receive/message/conversation/" + conversation.getId(),
+                    response
+            );
+        }
+
+        conversation.setStatus(EStatusMessage.HAS_ADMIN);
+        conversation.setTarget(ERole.ADMIN);
+        User user = conversation.getClient();
         ChatHistory chatHistory = new ChatHistory();
-        chatHistory.setUser(admin);
+        chatHistory.setUser(user);
         chatHistory.setRole(ERole.ADMIN);
         chatHistory.setMessage(dto.getMessage());
         chatHistory.setCreatedDate(LocalDateTime.now());
         chatHistory.setIsRead(false);
-        chatHistory.setSenderId("ADMIN");
+        chatHistory.setSenderId(admin.getUserId().toString());
         chatHistory.setConversation_chat_history(conversation);
 
+        conversation.getChatHistory().add(chatHistory);
         chatHistoryRepository.save(chatHistory);
-        redisTemplate.opsForList().leftPush(CHAT_KEY_PREFIX+ userId, dto.getMessage());
-        MessageResponseDTO messageResponseDTO = new MessageResponseDTO();
-        messageResponseDTO.setSender("ADMIN");
-        messageResponseDTO.setText(dto.getMessage());
-        messageResponseDTO.setSentAt(LocalDateTime.now());
 
-        simpMessagingTemplate.convertAndSend("/receive/message/conversation/" + conversation.getId(),messageResponseDTO);
+
+        redisTemplate.opsForList().leftPush(
+                CHAT_KEY_PREFIX + conversation.getClient().getUserId(),
+                dto.getMessage()
+        );
+
+        MessageResponseDTO response = new MessageResponseDTO();
+        response.setSender("ADMIN");
+        response.setText(dto.getMessage());
+        response.setSentAt(LocalDateTime.now());
+
+        simpMessagingTemplate.convertAndSend(
+                "/receive/message/conversation/" + conversation.getId(),
+                response
+        );
+        notifyAdminInbox(conversation, chatHistory);
     }
-    public CanChatUserResponseDTO setConversationWithAdmin(User admin, Long userId){
-       try{
-           CanChatUserResponseDTO canChatUserResponseDTO = new CanChatUserResponseDTO();
-           Conversation conversation = conversationRepository.findByClient_UserId(userId).orElse(null);
-           if(conversation.getCurrentAdmin() == null && conversation.getStatus().equals(EStatusMessage.WAITING_ADMIN)){
-               conversation.setCurrentAdmin(admin);
-               conversation.setStatus(EStatusMessage.HAS_ADMIN);
-               conversationRepository.save(conversation);
-               canChatUserResponseDTO.setCode(1000L);
-               canChatUserResponseDTO.setStatus("Success");
-               canChatUserResponseDTO.setMessage("Có thể chat với user với id: "+userId);
-               return canChatUserResponseDTO;
-           }else {
-               User anotherAdmin = conversation.getCurrentAdmin();
-               canChatUserResponseDTO.setCode(9999L);
-               canChatUserResponseDTO.setStatus("Fail");
-               canChatUserResponseDTO.setMessage("User với id: "+userId+" đang trong trò chuyện với admin "+ anotherAdmin.getUsername());
-               return canChatUserResponseDTO;
-           }
 
-       } catch (Exception e) {
-           throw new RuntimeException(e);
-       }
+    //    admin nhường chat cho BOT
+    public CanChatUserResponseDTO leaveConversation(
+            Long conversationId,
+            User admin
+    ) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new EntityNotFoundException("Conversation not found"));
 
+        if (
+                conversation.getCurrentAdmin() == null ||
+                        !conversation.getCurrentAdmin().getUserId().equals(admin.getUserId())
+        ) {
+            return CanChatUserResponseDTO.builder()
+                    .code(9999L)
+                    .status("FAIL")
+                    .message("Bạn không phải admin đang xử lý conversation này")
+                    .build();
+        }
 
+        conversation.setCurrentAdmin(null);
+        conversation.setStatus(EStatusMessage.WAITING_ADMIN);
+        conversation.setTarget(ERole.BOT);
+        conversationRepository.save(conversation);
+
+        // (Optional) gửi system message
+        MessageResponseDTO systemMsg = new MessageResponseDTO();
+        systemMsg.setSender("SYSTEM");
+        systemMsg.setText(admin.getRole() + " " + admin.getUsername().toUpperCase() + " đã rời cuộc trò chuyện. BOT sẽ tiếp tục hỗ trợ.");
+        systemMsg.setSentAt(LocalDateTime.now());
+
+        simpMessagingTemplate.convertAndSend(
+                "/receive/message/conversation/" + conversation.getId(),
+                systemMsg
+        );
+        simpMessagingTemplate.convertAndSend(
+                "/topic/admin/inbox",
+                "AMIN_LEAVED"
+        );
+        
+        String text = admin.getRole() + " " + admin.getUsername().toUpperCase() + " đã rời cuộc trò chuyện. BOT sẽ tiếp tục hỗ trợ.";
+        User user = conversation.getClient();
+        ChatHistory systemMessage = new ChatHistory();
+        systemMessage.setUser(user);
+        systemMessage.setRole(ERole.SYSTEM); // Hoặc set Role riêng nếu muốn
+        systemMessage.setMessage(text);
+        systemMessage.setCreatedDate(LocalDateTime.now());
+        systemMessage.setIsRead(true);
+        systemMessage.setSenderId("SYSTEM"); // Đánh dấu đây là System message
+        systemMessage.setConversation_chat_history(conversation);
+
+        chatHistoryRepository.save(systemMessage);
+
+        return CanChatUserResponseDTO.builder()
+                .code(1000L)
+                .status("Fail")
+                .message("Đã nhường conversation cho BOT")
+                .build();
+    }
+
+    private void notifyAdminInbox(Conversation conversation, ChatHistory lastMessage) {
+        AdminConversationInboxResponseDTO dto = new AdminConversationInboxResponseDTO();
+        dto.setConversationId(conversation.getId());
+        dto.setUserId(conversation.getClient().getUserId());
+        dto.setUsername(conversation.getClient().getUsername());
+        dto.setLastMessage(lastMessage.getMessage());
+        dto.setLastMessageTime(lastMessage.getCreatedDate());
+        dto.setStatus(
+                conversation.getCurrentAdmin() == null ? "BOT" : "ADMIN"
+        );
+        dto.setCurrentAdmin(
+                conversation.getCurrentAdmin() == null
+                        ? null
+                        : conversation.getCurrentAdmin().getUsername()
+        );
+        simpMessagingTemplate.convertAndSend("/topic/admin/inbox", dto);
     }
 }

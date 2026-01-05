@@ -11,6 +11,7 @@ import { Piechart } from './components/pie-chart'
 import { RecentSales } from './components/recent-sales'
 import { SaleChart } from './components/sale-chart'
 import { DashboardSummary } from './components/summary'
+import { DateFilter } from './components/date-filter'
 
 export default function Dashboard() {
   return (
@@ -31,6 +32,7 @@ export default function Dashboard() {
             <h1 className='text-2xl font-bold tracking-tight'>Thống kê</h1>
             <div className='flex items-center space-x-2'>
               <Button>Tải xuống</Button>
+              <DateFilter />
             </div>
           </div>
           <Tabs

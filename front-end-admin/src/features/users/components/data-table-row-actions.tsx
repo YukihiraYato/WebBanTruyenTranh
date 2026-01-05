@@ -17,7 +17,7 @@ interface DataTableRowActionsProps {
   row: Row<User>
 }
 
-export function DataTableRowActions({ row }: DataTableRowActionsProps) {
+export function DataTableRowActions({ row }: any) {
   const { setOpen, setCurrentRow } = useUsers()
   return (
     <>

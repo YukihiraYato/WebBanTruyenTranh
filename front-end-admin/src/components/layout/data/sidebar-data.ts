@@ -5,11 +5,14 @@ import {
   IconShoppingBag,
   IconDeviceDesktopAnalytics,
   IconTicket,
-  IconLogout
+  IconLogout,
+  IconEdit,
+  IconBuildingWarehouse,
+  IconPasswordUser
 } from '@tabler/icons-react'
 import { AudioWaveform, Command, GalleryVerticalEnd } from 'lucide-react'
 import { type SidebarData } from '../types'
-
+import { useAuthStore } from '@/stores/authStore'
 export const sidebarData: SidebarData = {
   user: {
     name: 'admin',
@@ -39,7 +42,7 @@ export const sidebarData: SidebarData = {
       items: [
         {
           title: 'Dashboard',
-          url: '/',
+          url: '/dashboard',
           icon: IconDeviceDesktopAnalytics,
         },
         {
@@ -56,11 +59,27 @@ export const sidebarData: SidebarData = {
           ],
           icon: IconBooks,
         },
-        // {
-        //   title: 'Danh mục',
-        //   url: '/categories/overview',
-        //   icon: IconCategory,
-        // },
+        {
+          title: 'Kho hàng',
+          items: [
+             {
+              title: 'Nhập kho',
+              url: '/import/create',
+             },
+             {
+              title: 'Dach sách đơn nhập kho',
+              url: '/import/stock',
+              role: ['ADMIN']
+             }
+          ],
+          icon: IconBuildingWarehouse,
+        },
+        {
+          title: 'Đánh giá',
+          url: '/review/reviewPage',
+          icon: IconEdit,
+        },
+
         {
           title: 'Đơn hàng',
           url: '/orders/overview',
@@ -104,14 +123,21 @@ export const sidebarData: SidebarData = {
           title: 'Người dùng',
           url: '/users',
           icon: IconUsers,
+          role: ['ADMIN']
+        },
+        {
+          title: 'Đổi mật khẩu',
+          url: '/change-password',
+          icon: IconPasswordUser,
         },
         {
           title: 'Đăng xuất',
           url: '/sign-in',
           icon: IconLogout,
           onClick: () => {
-            localStorage.clear()
-          }
+            useAuthStore.getState().logout()
+          },
+
 
         }
       ],

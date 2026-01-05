@@ -8,10 +8,13 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.Optional;
+
 // Cần phải import JpaSpecificationExecutor
 public interface RedeemRepository extends JpaRepository<RedeemReward, Long>, JpaSpecificationExecutor<RedeemReward> {
     List<RedeemReward> findAllBy();
+
     Optional<RedeemReward> findByRewardId(Long rewardId);
+
     Page<RedeemReward> findByTitleContainingIgnoreCase(String keyword, Pageable pageable);
 
 }

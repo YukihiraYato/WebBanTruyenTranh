@@ -1,9 +1,14 @@
-import { LogIn } from "lucide-react"
-
+import { Leaf, LogIn } from "lucide-react"
+import { use } from "react"
+import {ReviewTypeEnum} from "@/types/review"
 const API_ENDPOINTS = {
   USER: {
     LOGIN: '/api/v1/auth/login/admin',
     DETAILS: `/api/user-details`,
+    GET_ALL_USERS: (page: number, size: number, keyword: string | "", status: string | null, role: string | null) => `/admin/user/get-all?page=${page}&size=${size}&keyword=${keyword}&status=${status}&role=${role}`,
+    CREATE_NEW_USER: '/admin/user/create',
+    UPDATE_USER: (userId: number) => `/admin/user/${userId}`,
+    RESET_PASSWORD: () => `/admin/user/reset-password`,
   },
   BOOK: {
     GET_DETAILS: (id: number) => `/admin/api/book/${id}`,
@@ -33,16 +38,34 @@ const API_ENDPOINTS = {
     GET_DETAILS: (id: number) => `/api/discount/detail/${id}`,
   },
   CHART: {
-    GET_SALES_MONTHLY: '/admin/api/chart/monthly-sales',
-    GET_RECENTLY_ORDERS: '/admin/api/chart/recently-order',
-    GET_SUMMARY_DASHBOARD: '/admin/api/chart/summary-dashboard',
-    GET_SUMMARY_ABOUT_CUSTOMER: '/admin/api/chart/summary-about-customer',
-    GET_TOP_SELLING_PRODUCT: '/admin/api/chart/top-selling',
+    GET_SALES_MONTHLY:(year: number) => `/admin/api/chart/monthly-sales?year=${year}`,
+    GET_RECENTLY_ORDERS:() => `/admin/api/chart/recently-order`,
+    GET_SUMMARY_DASHBOARD: (month: number, year: number) => `/admin/api/chart/summary-dashboard?month=${month}&year=${year}`,
+    GET_SUMMARY_ABOUT_CUSTOMER: (userId: number) => `/admin/api/chart/summary-about-customer?userId=${userId}`,
+    GET_TOP_SELLING_PRODUCT: (year: number, month: number) => `/admin/api/chart/top-selling?year=${year}&month=${month}`,
   },
   REFUND:{
       GET: (orderId: number) => `/api/book/refund-items/get-by-order-id/${orderId}`,
       HANDEL_REFUND_REQUEST: "/api/book/refund-items/handle-request-refund-items",
-    }
+    },
+  CONVERSATION: {
+    GET_ALL: "/load-conversation/admin/inbox",
+    GET_A_CONVERSATION: (conversationId: number) => `/load-conversation/admin/conversation/${conversationId}`,
+    JOIN_A_CONVERSATION: (userId: number) => `/load-conversation/admin/join_conversation/userId/${userId}`,
+    LEAVE_A_CONVERSATION: (conversationId: number) => `/load-conversation/admin/leave_conversation/${conversationId}`,
+  },
+  REVIEW: {
+    GET_ALL : (page: number, size: number, keyword: string, type: ReviewTypeEnum | '', minRating: number | '', fromDate: string, toDate: string ) => `/admin/user-review?page=${page}&size=${size}&keyword=${keyword}&type=${type}&minRating=${minRating}&fromDate=${fromDate}&toDate=${toDate}`,
+    DELETE: (id: number) => `/admin/user-review/${id}`,
+  },
+  IMPORT :{
+     GET_ALL: (page: number, size: number, status: string | null, keyword: string | null) => `/admin/import-product/get-all?page=${page}&size=${size}&status=${status}&keyword=${keyword}`,
+     GET_DETAILS: (id: number) => `/admin/import-product/${id}`,
+     CREATE_RECEIPT: '/admin/import-product/create',
+     APPROVE_RECEIPT: (id: number) => `/admin/import-product/approve/${id}`,
+     CANCEL_RECEIPT: (id: number) => `/admin/import-product/cancel/${id}`,
+     SEARCH: (keyword: string, type: string, page: number) => `/admin/import-product/search-product?keyword=${keyword}&typeProduct=${type}&page=${page}`,
+  }
 }
 
 export default API_ENDPOINTS

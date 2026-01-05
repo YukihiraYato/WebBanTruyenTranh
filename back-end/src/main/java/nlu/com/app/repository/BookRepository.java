@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -36,4 +38,11 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     Optional<Book> findByBookId(Long id);
 
     List<Book> findTop5ByOrderByBookIdDesc();
+
+    @Query(
+            """
+                    select  b from Book b where b.title like %:title%
+                    """
+    )
+    Page<Book> findBooksForImportStockByName(@Param("title") String title, Pageable pageable);
 }

@@ -1,55 +1,60 @@
-import Cookies from 'js-cookie'
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
-const ACCESS_TOKEN = 'thisisjustarandomstring'
 
-interface AuthUser {
-  accountNo: string
+interface User {
+  userId: number
+  username: string
   email: string
-  role: string[]
-  exp: number
+  fullName: string
+  role: string,
+  dateOfBirth: string,
+  gender: string,
+  phoneNum: string,
+  verify: boolean
 }
 
 interface AuthState {
-  auth: {
-    user: AuthUser | null
-    setUser: (user: AuthUser | null) => void
-    accessToken: string
-    setAccessToken: (accessToken: string) => void
-    resetAccessToken: () => void
-    reset: () => void
-  }
+  user: User | null
+  accessToken: string | null
+  isAuthenticated: boolean
+
+  login: (user: User, token: string) => void
+  logout: () => void
 }
 
-export const useAuthStore = create<AuthState>()((set) => {
-  const cookieState = Cookies.get(ACCESS_TOKEN)
-  const initToken = cookieState ? JSON.parse(cookieState) : ''
-  return {
-    auth: {
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      // State mặc định (ban đầu là rỗng, Middleware sẽ tự điền vào sau)
       user: null,
-      setUser: (user) =>
-        set((state) => ({ ...state, auth: { ...state.auth, user } })),
-      accessToken: initToken,
-      setAccessToken: (accessToken) =>
-        set((state) => {
-          Cookies.set(ACCESS_TOKEN, JSON.stringify(accessToken))
-          return { ...state, auth: { ...state.auth, accessToken } }
-        }),
-      resetAccessToken: () =>
-        set((state) => {
-          Cookies.remove(ACCESS_TOKEN)
-          return { ...state, auth: { ...state.auth, accessToken: '' } }
-        }),
-      reset: () =>
-        set((state) => {
-          Cookies.remove(ACCESS_TOKEN)
-          return {
-            ...state,
-            auth: { ...state.auth, user: null, accessToken: '' },
-          }
-        }),
-    },
-  }
-})
+      accessToken: null,
+      isAuthenticated: false,
 
-// export const useAuth = () => useAuthStore((state) => state.auth)
+      // Hàm Login: Chỉ cần set state, Middleware tự lưu vào LocalStorage
+      login: (user, token) => {
+        // Log ra để chắc chắn data đầu vào đúng
+        set({
+          user,
+          accessToken: token,
+          isAuthenticated: true,
+        })
+      },
+
+      // Hàm Logout: Reset state, Middleware tự xóa LocalStorage
+      logout: () => {
+        set({
+          user: null,
+          accessToken: null,
+          isAuthenticated: false,
+        })
+        localStorage.clear() 
+        window.location.href = '/sign-in'
+      },
+    }),
+    {
+      name: 'admin-storage', 
+      storage: createJSONStorage(() => localStorage), // Định nghĩa nơi lưu
+    }
+  )
+)

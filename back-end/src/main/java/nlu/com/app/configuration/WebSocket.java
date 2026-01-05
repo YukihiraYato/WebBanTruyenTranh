@@ -29,7 +29,8 @@ public class WebSocket implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker(
                 "/notifyOrderStatus",
                 "/receive/message/conversation",
-                "/notifyForAdminAboutOrder"
+                "/notifyForAdminAboutOrder",
+                "/topic/admin/inbox"
         );
 
     }

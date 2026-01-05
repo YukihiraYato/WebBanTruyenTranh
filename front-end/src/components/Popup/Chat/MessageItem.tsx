@@ -6,8 +6,30 @@ export interface Message {
   text: string;
   sentAt: string;
 }
+
 export default function MessageItem({ msg, isUser, avatarSrc }: { msg: Message, isUser: boolean, avatarSrc?: string }) {
-  const time = msg.sentAt
+
+  if (msg.sender === "SYSTEM") {
+    return (
+      <ListItem sx={{ display: "flex", justifyContent: "center", py: 1, mb: 1 }}>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            color: "text.secondary", // Màu xám
+            fontStyle: "italic",     // In nghiêng
+            textAlign: "center",
+            fontSize: "0.75rem"      // Chữ nhỏ
+          }}
+        >
+          {msg.text}
+        </Typography>
+      </ListItem>
+    );
+  }
+
+  // --- Logic cũ cho tin nhắn USER và BOT/ADMIN ---
+
+  const time = msg.sentAt;
   // bubble corner styling: make a little "tail" effect by changing one corner radius
   const bubbleStyle = isUser
     ? { borderRadius: "16px 16px 4px 16px" } // user: smaller bottom-right corner
@@ -45,7 +67,7 @@ export default function MessageItem({ msg, isUser, avatarSrc }: { msg: Message, 
           ...bubbleStyle,
           boxShadow: 1,
           whiteSpace: "pre-line",
-         
+          
         }}
       >
         <Typography  variant="body2">{msg.text}</Typography>

@@ -54,7 +54,7 @@ export function useWebsocket(userId: number, onMessage: (message: string) => voi
 
 }
 
-export function useChat(setMessage: Dispatch<SetStateAction<Message[]>>, setIsWattingMessageFromServer: Dispatch<SetStateAction<boolean>>,conversationId: number, token: string) {
+export function useChat(setMessage: Dispatch<SetStateAction<Message[]>>, setIsWattingMessageFromServer: Dispatch<SetStateAction<boolean>>,waitingReplyRef: React.MutableRefObject<boolean>,conversationId: number, token: string) {
     const clientRef = useRef<Client | null>(null);
 
     const sendMessage = useCallback((payload: MessageRequest) => {
@@ -98,7 +98,11 @@ export function useChat(setMessage: Dispatch<SetStateAction<Message[]>>, setIsWa
                                 year: "numeric"
                             })
                         }
+                       if(mapMessage.sender === "BOT" || mapMessage.sender === "ADMIN" || mapMessage.sender === "SYSTEM" || mapMessage.sender === "MANAGER"){
+                         waitingReplyRef.current = false; 
                         setIsWattingMessageFromServer(false);
+                       }
+                      
                         setMessage(prev => [...prev, mapMessage]);
                     }
                 );

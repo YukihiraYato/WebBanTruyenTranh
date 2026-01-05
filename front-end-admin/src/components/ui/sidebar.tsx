@@ -350,6 +350,7 @@ function SidebarFooter({ className, ...props }: React.ComponentProps<'div'>) {
     const fetchUserDetails = async (): Promise<void> => {
       try {
         const userDetails = (await getUserDetails()).result;
+        localStorage.setItem('admin_info', JSON.stringify(userDetails));
         setFullName(userDetails.fullName);
         setIsLoading(false);
         console.log('User details fetched:', userDetails.fullName);

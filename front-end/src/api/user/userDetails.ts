@@ -15,3 +15,10 @@ export const addUserDetails = async (fullName: string, phoneNum: string, dateOfB
   });
   return res.data;
 };
+export const changeUserPassword = async (newPassword: string, confirmPassword: string): Promise<void> => {
+  const url = API_ENDPOINTS.USER.DETAILS.CHANGE_PASSWORD;
+  await axiosInstance.put(url, {
+    newPassword,
+    confirmPassword
+  });
+};

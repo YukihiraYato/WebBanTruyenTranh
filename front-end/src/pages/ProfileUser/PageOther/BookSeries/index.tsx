@@ -126,6 +126,7 @@ export default function BookSeries() {
             sx={{
               flex: '0 0 20%',
               maxWidth: '20%',
+              marginRight:"30px"
             }}
           >
             <SwipeProvider>

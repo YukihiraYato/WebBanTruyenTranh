@@ -34,6 +34,7 @@ export function CollectionCard(collection: CollectionCardProps) {
                 padding: 1,
                 width: 210,
                 borderRadius: 2,
+                cursor: 'pointer',
                 transition: "box-shadow 0.3s ease-in-out",
                 '&:hover': {
                     boxShadow: 4,

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Fragment } from 'react/jsx-runtime'
 import { format } from 'date-fns'
 import {
@@ -25,43 +25,78 @@ import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { NewChat } from './components/new-chat'
-import { type ChatUser, type Convo } from './data/chat-types'
+import { MessageUserResponse } from "@/hooks/useAdminConversation";
 // Fake Data
 import { conversations } from './data/convo.json'
+import { useAdminInbox } from "@/hooks/useAdminInbox";
+import { useAdminConversation } from "@/hooks/useAdminConversation";
+import { useAdminChatSocket } from "@/hooks/useWebsocket";
 
 export default function Chats() {
   const [search, setSearch] = useState('')
-  const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null)
-  const [mobileSelectedUser, setMobileSelectedUser] = useState<ChatUser | null>(
-    null
-  )
+  const [activeConversationId, setActiveConversationId] = useState<number>()
+  const [selectedInboxItem, setSelectedInboxItem] = useState<any>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [conversationStatus, setConversationStatus] = useState<string>("")
   const [createConversationDialogOpened, setCreateConversationDialog] =
     useState(false)
-
-  // Filtered data based on the search query
-  const filteredChatList = conversations.filter(({ fullName }) =>
-    fullName.toLowerCase().includes(search.trim().toLowerCase())
-  )
-
-  const currentMessage = selectedUser?.messages.reduce(
-    (acc: Record<string, Convo[]>, obj) => {
-      const key = format(obj.timestamp, 'd MMM, yyyy')
-
-      // Create an array for the category if it doesn't exist
-      if (!acc[key]) {
-        acc[key] = []
-      }
-
-      // Push the current object to the array
-      acc[key].push(obj)
-
-      return acc
+  const { inbox, loading, refreshInbox, joinAConversation, leaveAConversation } = useAdminInbox()
+  const {
+    messages,
+    setMessages,
+    loading: conversationLoading,
+    conversation
+  } = useAdminConversation(activeConversationId)
+  const sortMessage = useMemo(() => {
+    // Tạo bản sao bằng [...messages] trước khi sort để không làm hỏng state gốc
+    return [...messages].sort((a, b) => new Date(a.createdDate).getTime() - new Date(b.createdDate).getTime())
+  }, [messages])
+  const { sendAdminMessage } = useAdminChatSocket(
+    activeConversationId,
+    (msg: MessageUserResponse) => {
+      setMessages(prev => [...prev, msg])
     },
-    {}
+    () => {
+      refreshInbox()
+    }
   )
-
+  // Filtered data based on the search query
+  const filteredChatList = inbox.filter(item =>
+    item.username.toLowerCase().includes(search.toLowerCase())
+  )
+  const [canChat, setCanChat] = useState(false)
+  // Mặc định reset về false trước.
+  // Sau đó kiểm tra nếu server báo là "HAS_ADMIN" thì mới set thành true.
+  useEffect(() => {
+    if (selectedInboxItem?.status === 'HAS_ADMIN') {
+      setCanChat(true)
+    } else {
+      setCanChat(false)
+    }
+  }, [selectedInboxItem]) // Chạy lại mỗi khi chọn inbox item mới hoặc list được refresh
   const users = conversations.map(({ messages, ...user }) => user)
+  // Xu ly gui tin nhan 
+  const handleSendMessage = (e?: React.FormEvent) => {
+    e?.preventDefault(); // Chặn reload trang
 
+    const content = inputRef.current?.value || "";
+    if (!content.trim()) return;
+
+    sendAdminMessage(content);
+
+    if (inputRef.current) {
+      inputRef.current.value = "";
+      // Quan trọng: Focus lại vào input sau khi gửi để không bị mất trỏ chuột
+      inputRef.current.focus();
+    }
+  }
+  // Thêm useEffect để auto scroll khi sortMessage thay đổi
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [sortMessage]);
   return (
     <>
       {/* ===== Top Heading ===== */}
@@ -108,54 +143,117 @@ export default function Chats() {
             </div>
 
             <ScrollArea className='-mx-3 h-full p-3'>
-              {filteredChatList.map((chatUsr) => {
-                const { id, profile, username, messages, fullName } = chatUsr
-                const lastConvo = messages[0]
-                const lastMsg =
-                  lastConvo.sender === 'You'
-                    ? `You: ${lastConvo.message}`
-                    : lastConvo.message
-                return (
-                  <Fragment key={id}>
-                    <button
-                      type='button'
-                      className={cn(
-                        `hover:bg-secondary/75 -mx-1 flex w-full rounded-md px-2 py-2 text-left text-sm`,
-                        selectedUser?.id === id && 'sm:bg-muted'
+              {filteredChatList.map((item) => (
+                <Fragment key={item.conversationId}>
+                  <button
+                    className={cn(
+                      "hover:bg-secondary/75 -mx-1 flex w-full rounded-md px-2 py-2 text-left text-sm",
+                      selectedInboxItem?.conversationId === item.conversationId && "sm:bg-muted"
+                    )}
+                    onClick={() => {
+                      setSelectedInboxItem(item)
+                      setActiveConversationId(item.conversationId)
+
+                    }}
+                  >
+                    <div className="flex gap-2">
+                      {item.status === "WAITING_ADMIN" ? (
+                        <Button
+                          size="sm"
+                          onClick={async (e) => {
+                            e.stopPropagation(); // Chặn click lan ra ngoài
+
+                            try {
+                              // 1. Gọi API và hứng kết quả trả về
+                              // Giả định hook joinAConversation trả về đúng DTO: { code, status, message }
+                              const response = (await joinAConversation(item.userId)).result;
+
+                              // 2. Kiểm tra điều kiện SUCCESS từ DTO
+                              if (response && response.status === "Success") {
+
+                                // 3. Nếu đang mở cuộc hội thoại này -> Cập nhật ngay state local để mở khóa Input
+                                if (selectedInboxItem?.conversationId === item.conversationId) {
+                                  setSelectedInboxItem((prev: any) => ({
+                                    ...prev,
+                                    status: "HAS_ADMIN" // Đổi trạng thái để khớp logic mở khóa
+                                  }));
+                                }
+                                setCanChat(true)
+
+                                // 4. Refresh lại list tổng để đồng bộ dữ liệu
+                                refreshInbox();
+
+                              } else {
+                                // Xử lý lỗi (VD: hiện thông báo lỗi từ message API trả về)
+                                alert(response?.message || "Không thể tham gia cuộc hội thoại");
+                              }
+                            } catch (error) {
+                              console.error("Lỗi khi join:", error);
+                            }
+                          }}
+                        >
+                          Tham gia chat
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+
+                            try {
+                              // Gọi API rời cuộc trò chuyện
+                              const response = (await leaveAConversation(activeConversationId!)).result;
+
+                              // Kiểm tra status SUCCESS
+                              if (response && response.status === "Fail") {
+
+                                // Nếu đang mở chat này -> Cập nhật state để KHÓA Input lại
+                                if (selectedInboxItem?.conversationId === item.conversationId) {
+                                  setSelectedInboxItem((prev: any) => ({
+                                    ...prev,
+                                    status: "BOT" // Hoặc trạng thái nào đó không phải HAS_ADMIN
+                                  }));
+                                }
+                                setCanChat(false)
+                                refreshInbox();
+
+                              } else {
+                                alert(response?.message || "Không thể rời cuộc hội thoại");
+                              }
+                            } catch (error) {
+                              console.error("Lỗi khi leave:", error);
+                            }
+                          }}
+                        >
+                          Rời chat
+                        </Button>
                       )}
-                      onClick={() => {
-                        setSelectedUser(chatUsr)
-                        setMobileSelectedUser(chatUsr)
-                      }}
-                    >
-                      <div className='flex gap-2'>
-                        <Avatar>
-                          <AvatarImage src={profile} alt={username} />
-                          <AvatarFallback>{username}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <span className='col-start-2 row-span-2 font-medium'>
-                            {fullName}
-                          </span>
-                          <span className='text-muted-foreground col-start-2 row-span-2 row-start-2 line-clamp-2 text-ellipsis'>
-                            {lastMsg}
-                          </span>
+                      <Avatar>
+                        <AvatarFallback>{item.username[0]}</AvatarFallback>
+                      </Avatar>
+
+                      <div style={{ maxWidth: "300px", maxHeight: "60px" }}>
+                        <span className="font-medium">{item.username}</span>
+                        <div className="text-muted-foreground text-xs line-clamp-1 break-all">
+                          {item.lastMessage || ""}
                         </div>
                       </div>
-                    </button>
-                    <Separator className='my-1' />
-                  </Fragment>
-                )
-              })}
+                    </div>
+                  </button>
+                  <Separator className="my-1" />
+                </Fragment>
+              ))}
+
             </ScrollArea>
           </div>
 
           {/* Right Side */}
-          {selectedUser ? (
+          {selectedInboxItem ? (
             <div
               className={cn(
                 'bg-primary-foreground absolute inset-0 left-full z-50 hidden w-full flex-1 flex-col rounded-md border shadow-xs transition-all duration-200 sm:static sm:z-auto sm:flex',
-                mobileSelectedUser && 'left-0 flex'
+                'left-0 flex'
               )}
             >
               {/* Top Part */}
@@ -166,25 +264,29 @@ export default function Chats() {
                     size='icon'
                     variant='ghost'
                     className='-ml-2 h-full sm:hidden'
-                    onClick={() => setMobileSelectedUser(null)}
+                  // onClick={() => {
+                  //   if (!messageInput.trim()) return
+                  //   sendAdminMessage(messageInput)
+                  //   setMessageInput("")
+                  // }}
                   >
                     <IconArrowLeft />
                   </Button>
                   <div className='flex items-center gap-2 lg:gap-4'>
-                    <Avatar className='size-9 lg:size-11'>
+                    {/* <Avatar className='size-9 lg:size-11'>
                       <AvatarImage
                         src={selectedUser.profile}
                         alt={selectedUser.username}
                       />
                       <AvatarFallback>{selectedUser.username}</AvatarFallback>
-                    </Avatar>
+                    </Avatar> */}
                     <div>
                       <span className='col-start-2 row-span-2 text-sm font-medium lg:text-base'>
-                        {selectedUser.fullName}
+                        {conversation?.userName}
                       </span>
-                      <span className='text-muted-foreground col-start-2 row-span-2 row-start-2 line-clamp-1 block max-w-32 text-xs text-nowrap text-ellipsis lg:max-w-none lg:text-sm'>
+                      {/* <span className='text-muted-foreground col-start-2 row-span-2 row-start-2 line-clamp-1 block max-w-32 text-xs text-nowrap text-ellipsis lg:max-w-none lg:text-sm'>
                         {selectedUser.title}
-                      </span>
+                      </span> */}
                     </div>
                   </div>
                 </div>
@@ -219,38 +321,71 @@ export default function Chats() {
               <div className='flex flex-1 flex-col gap-2 rounded-md px-4 pt-0 pb-4'>
                 <div className='flex size-full flex-1'>
                   <div className='chat-text-container relative -mr-4 flex flex-1 flex-col overflow-y-hidden'>
-                    <div className='chat-flex flex h-40 w-full grow flex-col-reverse justify-start gap-4 overflow-y-auto py-2 pr-4 pb-4'>
-                      {currentMessage &&
-                        Object.keys(currentMessage).map((key) => (
-                          <Fragment key={key}>
-                            {currentMessage[key].map((msg, index) => (
+                    <div
+                    ref={scrollRef}
+                     className='chat-flex flex h-40 w-full grow flex-col justify-start gap-4 overflow-y-auto py-2 pr-4 pb-4'>
+                      {sortMessage.map((msg) => {
+                        // Hiển thị nằm giữa, chữ nhỏ, in nghiêng
+                        if (msg.sender === "SYSTEM") {
+                          return (
+                            <div key={msg.id} className="flex w-full justify-center my-2">
+                              <span className="text-xs text-muted-foreground italic bg-secondary/50 px-3 py-1 rounded-full text-center">
+                                {msg.message}
+                              </span>
+                            </div>
+                          );
+                        }
+                        const isUser = msg.sender === "USER"
+                        const isAdmin = msg.sender === "ADMIN"
+                        const isBot = msg.sender === "BOT"
+
+                        return (
+                          <div
+                            key={msg.id}
+                            className={cn(
+                              "flex w-full",
+                              isUser ? "justify-start" : "justify-end"
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                "max-w-72 px-3 py-2 rounded-lg shadow-md text-sm",
+                                isUser && "bg-secondary rounded-bl-none",
+                                isAdmin &&
+                                "bg-primary text-primary-foreground rounded-br-none",
+                                isBot &&
+                                "bg-emerald-500 text-white rounded-br-none"
+                              )}
+                            >
+                              {/* Sender label */}
+                              <div className="mb-1 text-xs font-semibold opacity-80">
+                                {isUser && "User"}
+                                {isAdmin && "Admin"}
+                                {isBot && "Bot"}
+                              </div>
+
+                              {/* Message content */}
+                              <div>{msg.message}</div>
+
+                              {/* Time */}
                               <div
-                                key={`${msg.sender}-${msg.timestamp}-${index}`}
                                 className={cn(
-                                  'chat-box max-w-72 px-3 py-2 break-words shadow-lg',
-                                  msg.sender === 'You'
-                                    ? 'bg-primary/85 text-primary-foreground/75 self-end rounded-[16px_16px_0_16px]'
-                                    : 'bg-secondary self-start rounded-[16px_16px_16px_0]'
+                                  "mt-1 text-xs opacity-70",
+                                  isUser ? "text-left" : "text-right"
                                 )}
                               >
-                                {msg.message}{' '}
-                                <span
-                                  className={cn(
-                                    'text-muted-foreground mt-1 block text-xs font-light italic',
-                                    msg.sender === 'You' && 'text-right'
-                                  )}
-                                >
-                                  {format(msg.timestamp, 'h:mm a')}
-                                </span>
+                                {format(new Date(msg.createdDate), "HH:mm")}
                               </div>
-                            ))}
-                            <div className='text-center text-xs'>{key}</div>
-                          </Fragment>
-                        ))}
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
-                <form className='flex w-full flex-none gap-2'>
+                <form
+                  onSubmit={handleSendMessage}
+                  className='flex w-full flex-none gap-2'>
                   <div className='border-input focus-within:ring-ring flex flex-1 items-center gap-2 rounded-md border px-2 py-1 focus-within:ring-1 focus-within:outline-hidden lg:gap-4'>
                     <div className='space-x-1'>
                       <Button
@@ -290,20 +425,23 @@ export default function Chats() {
                     <label className='flex-1'>
                       <span className='sr-only'>Chat Text Box</span>
                       <input
-                        type='text'
-                        placeholder='Type your messages...'
-                        className='h-8 w-full bg-inherit focus-visible:outline-hidden'
+                        autoComplete="off"
+                        ref={inputRef}
+                        disabled={!canChat}
+                        placeholder={canChat ? "Type your messages..." : "Bạn cần tham gia để chat"}
+                        className="h-8 w-full bg-inherit focus-visible:outline-hidden"
                       />
                     </label>
+                    {/* Nút gửi tin nhắn */}
                     <Button
-                      variant='ghost'
-                      size='icon'
-                      className='hidden sm:inline-flex'
+                      variant="ghost"
+                      size="icon"
+                      type="submit"
                     >
                       <IconSend size={20} />
                     </Button>
                   </div>
-                  <Button className='h-full sm:hidden'>
+                  <Button className='h-full sm:hidden' type="submit">
                     <IconSend size={18} /> Send
                   </Button>
                 </form>

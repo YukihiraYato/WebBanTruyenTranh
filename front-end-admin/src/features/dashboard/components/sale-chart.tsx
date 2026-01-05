@@ -11,6 +11,22 @@ import {
 } from 'recharts'
 import { useDashboardContext } from '@/context/DashboardContext'
 
+// 1️⃣ Hàm format số ngắn gọn cho trục Y
+const formatYAxis = (value: number) => {
+  if (value >= 1000000000) {
+    // Ví dụ: 3.500.000.000 -> 3.5 tỷ
+    return `${(value / 1000000000).toFixed(1).replace(/\.0$/, '')} tỷ`
+  }
+  if (value >= 1000000) {
+    // Ví dụ: 39.000.000 -> 39 tr
+    return `${(value / 1000000).toFixed(1).replace(/\.0$/, '')} triệu`
+  }
+  if (value >= 1000) {
+     return `${(value / 1000).toFixed(0)} k`
+  }
+  return value.toLocaleString('vi')
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomTooltip({ active, payload, label }: TooltipProps<any, any>) {
   if (active && payload && payload.length) {
@@ -20,6 +36,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps<any, any>) {
         <p>
           Đã mua{' '}
           <span className='font-normal text-[#8884d8]'>
+             {/* Tooltip vẫn giữ nguyên số đầy đủ cho chi tiết */}
             {payload[0].value.toLocaleString('vi')}đ
           </span>
         </p>
@@ -37,18 +54,24 @@ export function SaleChart() {
       <ResponsiveContainer width='100%' height='100%'>
         <LineChart
           data={monthlySales?.sales}
+          // 2️⃣ Margin giờ có thể để nhỏ lại chút vì chữ đã ngắn hơn
           margin={{
             top: 5,
-            left: 30,
+            left: 10, // Chỉnh tầm 10-20 là đẹp vì chữ "50 tr" nó ngắn
+            right: 10,
             bottom: 5,
           }}
         >
           <CartesianGrid strokeDasharray='5 5' />
           <XAxis dataKey='name' />
+          
+          {/* 3️⃣ Áp dụng hàm format vào đây */}
           <YAxis
-            tickFormatter={(v: number) => `${v.toLocaleString('vi')}đ`}
+            tickFormatter={formatYAxis} 
             yAxisId='left'
+            width={60} // Đặt chiều rộng cố định cho trục Y để thẳng hàng
           />
+          
           <YAxis yAxisId='right' orientation='right' />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
