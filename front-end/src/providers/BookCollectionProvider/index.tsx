@@ -28,10 +28,10 @@ export default function BookCollectionProvider({ children }: { children: React.R
     // Implement API call to create a book collection
     try {
       // Simulate API call
-       await createBookCollection(collectionData);
+      const response = await createBookCollection(collectionData);
       const res = await getUserBookCollections({ pageParam: 0 });
       setBookCollections(res.content);
-      return res.code
+      return response.code;
     } catch (error) {
       console.error("Error creating book collection:", error);
       throw error;

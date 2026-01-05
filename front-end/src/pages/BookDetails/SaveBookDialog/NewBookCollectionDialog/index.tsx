@@ -88,6 +88,7 @@ export function NewBookCollectionDialog(props: NewBookCollectionDialogProps) {
         setTotalPages(res.totalPages);
         setCurrentPage(res.pageable.pageNumber);
         console.log("Danh sách bộ sách:", res.content);
+      
       } else {
         console.error("Lỗi khi lấy danh sách bộ sách:", res);
       }
@@ -108,17 +109,15 @@ export function NewBookCollectionDialog(props: NewBookCollectionDialogProps) {
     formData.append("image", image );
     console.log("image", image);
     const res = await createBookCollectionForUser(formData);
-    if (res.code === 1000) {
+    if (res === 1000) {
       setMessageSnackbar("Tạo bộ sách thành công!");
       setOpenSnackbar(true);
-
       // Nếu có bookId thì chuyển sang bước thêm
       if (bookId) {
         await fetchBookCollections(0);
         setStep("select");
         return;
       }
-      onClose();
     } else {
       setMessageSnackbar("Tạo bộ sách thất bại!");
       setOpenSnackbar(true);
@@ -137,6 +136,7 @@ export function NewBookCollectionDialog(props: NewBookCollectionDialogProps) {
   };
 
   return (
+    <>
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         {step === "create" ? "Tạo bộ sách mới" : "Thêm sách vào bộ sưu tập"}
@@ -289,14 +289,14 @@ export function NewBookCollectionDialog(props: NewBookCollectionDialogProps) {
           </>
         )}
       </DialogActions>
-
-      <CustomSnackbar
+    </Dialog>
+     <CustomSnackbar
         open={onOpenSnackbar}
         onClose={() => setOpenSnackbar(false)}
         message={messageSnackbar}
         severity="success"
         duration={3000}
       />
-    </Dialog>
+      </>
   );
 }

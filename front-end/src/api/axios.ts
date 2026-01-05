@@ -49,6 +49,9 @@ axiosInstance.interceptors.response.use(
     if(status === 400 && data.message === "Đối với các sản phẩm bằng xu, vui lòng người dùng chọn thanh toán bằng xu WB Point"){
       alert(data.message);
     }
+    if(status == 403 && data.message === "Admin không sở hữu conversation này để chat với user"){
+      alert(data.message);
+    }
 
     return Promise.reject(error);
   }
