@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -213,9 +214,15 @@ public class OrderService implements IOrderService {
                     recordDiscountUsage(user, discount, userDiscountUsages);
                 }
                 //        Xác nhận discount đã sử dụng
-                UserCoupon userCoupon = userCouponRepository.findByUser_UserIdAndDiscount_DiscountIdAndIsUsedFalse(user.getUserId(), discount.getDiscountId()).get();
-                userCoupon.setUsed(true);
-                userCouponRepository.save(userCoupon);
+                UserCoupon userCoupon = userCouponRepository.findByUser_UserIdAndDiscount_DiscountIdAndIsUsedFalse(user.getUserId(), discount.getDiscountId()).orElse(null);
+                if (userCoupon != null && userCoupon.getIsUsed() == false) {
+                    userCoupon.setIsUsed(true);
+                    userCoupon.setRedeemedAt(LocalDate.now());
+                    userCoupon.setExpiredAt(discount.getEndDate());
+                    userCouponRepository.save(userCoupon);
+                } else {
+                    throw new ApplicationException(ErrorCode.DISCOUNT_LIMIT_REACHED);
+                }
             }
 
             // --- GIAI ĐOẠN 2: TÍNH TẠM TÍNH (SUBTOTAL) MỚI ---
@@ -249,9 +256,15 @@ public class OrderService implements IOrderService {
                     discount.setUseCount(discount.getUseCount() + 1);
                 }
                 //        Xác nhận discount đã sử dụng
-                UserCoupon userCoupon = userCouponRepository.findByUser_UserIdAndDiscount_DiscountIdAndIsUsedFalse(user.getUserId(), discount.getDiscountId()).get();
-                userCoupon.setUsed(true);
-                userCouponRepository.save(userCoupon);
+                UserCoupon userCoupon = userCouponRepository.findByUser_UserIdAndDiscount_DiscountIdAndIsUsedFalse(user.getUserId(), discount.getDiscountId()).orElse(null);
+                if (userCoupon != null && userCoupon.getIsUsed() == false) {
+                    userCoupon.setIsUsed(true);
+                    userCoupon.setRedeemedAt(LocalDate.now());
+                    userCoupon.setExpiredAt(discount.getEndDate());
+                    userCouponRepository.save(userCoupon);
+                } else {
+                    throw new ApplicationException(ErrorCode.DISCOUNT_LIMIT_REACHED);
+                }
             }
 
             // Đảm bảo không giảm quá số tiền hiện có
@@ -458,9 +471,15 @@ public class OrderService implements IOrderService {
                     recordDiscountUsage(user, discount, userDiscountUsages);
                 }
                 //        Xác nhận discount đã sử dụng
-                UserCoupon userCoupon = userCouponRepository.findByUser_UserIdAndDiscount_DiscountIdAndIsUsedFalse(user.getUserId(), discount.getDiscountId()).get();
-                userCoupon.setUsed(true);
-                userCouponRepository.save(userCoupon);
+                UserCoupon userCoupon = userCouponRepository.findByUser_UserIdAndDiscount_DiscountIdAndIsUsedFalse(user.getUserId(), discount.getDiscountId()).orElse(null);
+                if (userCoupon != null && userCoupon.getIsUsed() == false) {
+                    userCoupon.setIsUsed(true);
+                    userCoupon.setRedeemedAt(LocalDate.now());
+                    userCoupon.setExpiredAt(discount.getEndDate());
+                    userCouponRepository.save(userCoupon);
+                } else {
+                    throw new ApplicationException(ErrorCode.DISCOUNT_LIMIT_REACHED);
+                }
             }
 
             // --- GIAI ĐOẠN 2: TÍNH TẠM TÍNH (SUBTOTAL) MỚI ---
@@ -494,9 +513,15 @@ public class OrderService implements IOrderService {
                     discount.setUseCount(discount.getUseCount() + 1);
                 }
                 //        Xác nhận discount đã sử dụng
-                UserCoupon userCoupon = userCouponRepository.findByUser_UserIdAndDiscount_DiscountIdAndIsUsedFalse(user.getUserId(), discount.getDiscountId()).get();
-                userCoupon.setUsed(true);
-                userCouponRepository.save(userCoupon);
+                UserCoupon userCoupon = userCouponRepository.findByUser_UserIdAndDiscount_DiscountIdAndIsUsedFalse(user.getUserId(), discount.getDiscountId()).orElse(null);
+                if (userCoupon != null && userCoupon.getIsUsed() == false) {
+                    userCoupon.setIsUsed(true);
+                    userCoupon.setRedeemedAt(LocalDate.now());
+                    userCoupon.setExpiredAt(discount.getEndDate());
+                    userCouponRepository.save(userCoupon);
+                } else {
+                    throw new ApplicationException(ErrorCode.DISCOUNT_LIMIT_REACHED);
+                }
             }
 
             // Đảm bảo không giảm quá số tiền hiện có
@@ -1080,17 +1105,12 @@ public class OrderService implements IOrderService {
             nextRankTarget = 1000.0;
         }
 
-        // Cập nhật điểm cần thiết cho rank tiếp theo
-        if (newRank != EUserRank.Diamond) {
-            userPoint.setNextRankPoint(nextRankTarget - lifetime);
-        } else {
-            userPoint.setNextRankPoint(0.0);
-        }
 
         // Nếu rank thay đổi thì cập nhật thời gian
         if (newRank != currentRank) {
             userPoint.setUserRank(newRank);
             userPoint.setRankUpdatedAt(LocalDateTime.now());
+            userPoint.setNextRankPoint(nextRankTarget);
         }
     }
 

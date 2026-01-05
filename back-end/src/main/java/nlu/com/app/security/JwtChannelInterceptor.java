@@ -12,8 +12,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-
 @Component
 @RequiredArgsConstructor
 public class JwtChannelInterceptor implements ChannelInterceptor {
@@ -22,26 +20,43 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
+
         StompHeaderAccessor accessor =
                 MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-
-        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            // Lấy header Authorization từ STOMP
-            String authHeader = accessor.getFirstNativeHeader("Authorization");
-
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                String username = jwtService.extractUsername(token);
-                UserDetails userDetails = service.loadUserByUsername(username);
-                if (jwtService.validateToken(token,userDetails)) {
-                    UsernamePasswordAuthenticationToken user =
-                            new UsernamePasswordAuthenticationToken(
-                                    username, null, Collections.emptyList());
-                    // Gắn Authentication vào session
-                    accessor.setUser(user);
-                }
-            }
+        if (accessor == null) return message;
+        if (!StompCommand.CONNECT.equals(accessor.getCommand())) {
+            return message;
         }
+
+        String authHeader = accessor.getFirstNativeHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return message;
+        }
+
+        String token = authHeader.substring(7);
+        if (token.isBlank() || token.split("\\.").length != 3) {
+            return message;
+        }
+
+        try {
+            String username = jwtService.extractUsername(token);
+            if (username == null) return message;
+
+            UserDetails userDetails = service.loadUserByUsername(username);
+
+            if (jwtService.validateToken(token, userDetails)) {
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+                accessor.setUser(authentication);
+            }
+        } catch (Exception e) {
+            return message;
+        }
+
         return message;
     }
 }

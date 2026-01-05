@@ -43,7 +43,7 @@ public class RefundItems {
     private Order order;
 
 
-    @OneToMany(mappedBy = "refundRequest", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "refundRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<RefundImage> images = new ArrayList<>();
 
 

@@ -2,6 +2,7 @@ package nlu.com.app.controller;
 
 import lombok.RequiredArgsConstructor;
 import nlu.com.app.constant.EUserRank;
+import nlu.com.app.constant.EUserStatus;
 import nlu.com.app.dto.AppResponse;
 import nlu.com.app.dto.request.LoginUserDTO;
 import nlu.com.app.dto.request.RegisterUserDTO;
@@ -86,6 +87,7 @@ public class AuthController {
             otpService.clearOtp(request.getEmail());
             User user = userRepository.findByEmail(request.getEmail());
             user.setVerified(true);
+            user.setStatus(EUserStatus.ACTIVE);
             userRepository.save(user);
             UserPoint userPoint = userPointRepository.findByUser_UserId(user.getUserId()).orElseGet(
                     () -> {

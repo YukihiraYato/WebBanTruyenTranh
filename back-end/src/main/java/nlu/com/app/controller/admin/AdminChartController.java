@@ -19,23 +19,27 @@ public class AdminChartController {
     IChartService chartService;
 
     @GetMapping("/monthly-sales")
-    public AppResponse<SalesMonthlyReportResponseDTO> getMonthlyReport() {
+    public AppResponse<SalesMonthlyReportResponseDTO> getMonthlyReport(@RequestParam(required = false) Integer year) {
+
         return AppResponse.<SalesMonthlyReportResponseDTO>builder()
-                .result(chartService.getSalesMonthlyReport())
+                .result(chartService.getSalesMonthlyReport(year))
                 .build();
     }
 
     @GetMapping("/recently-order")
-    public AppResponse<RecentlyOrderResponseDTO> getRecentlyOrder() {
+    public AppResponse<RecentlyOrderResponseDTO> getRecentlyOrder(
+
+    ) {
+
         return AppResponse.<RecentlyOrderResponseDTO>builder()
                 .result(chartService.getRecentlyOrder())
                 .build();
     }
 
     @GetMapping("/summary-dashboard")
-    public AppResponse<SummaryDashboardResponseDTO> getSummaryDashboard() {
+    public AppResponse<SummaryDashboardResponseDTO> getSummaryDashboard(@RequestParam(required = false) Integer month, @RequestParam(required = false) Integer year) {
         return AppResponse.<SummaryDashboardResponseDTO>builder()
-                .result(chartService.getSummaryDashboard())
+                .result(chartService.getSummaryDashboard(month, year))
                 .build();
     }
 
@@ -47,9 +51,9 @@ public class AdminChartController {
     }
 
     @GetMapping("/top-selling")
-    public AppResponse<TopSellingProductDTO> getTopSellingProduct() {
+    public AppResponse<TopSellingProductDTO> getTopSellingProduct(@RequestParam(required = false) Integer year, @RequestParam(required = false) Integer month) {
         return AppResponse.<TopSellingProductDTO>builder()
-                .result(chartService.getTopSellingProducts())
+                .result(chartService.getTopSellingProducts(year, month))
                 .build();
     }
 }

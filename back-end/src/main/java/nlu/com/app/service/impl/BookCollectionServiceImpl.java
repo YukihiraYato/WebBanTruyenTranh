@@ -1,34 +1,14 @@
 package nlu.com.app.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
-import nlu.com.app.dto.request.AddBooksToCollectionRequestDTO;
-import nlu.com.app.dto.request.BookCollectionDetailsDTO;
-import nlu.com.app.dto.request.BookInCollectionDTO;
-import nlu.com.app.dto.request.CreateBookCollectionRequestDTO;
-import nlu.com.app.dto.request.UpdateBookCollectionRequestDTO;
+import nlu.com.app.dto.request.*;
 import nlu.com.app.dto.response.BookCollectionResponse;
 import nlu.com.app.entity.*;
 import nlu.com.app.exception.ApplicationException;
 import nlu.com.app.exception.ErrorCode;
 import nlu.com.app.mapper.BookMapper;
-import nlu.com.app.repository.BookCollectionItemRepository;
-import nlu.com.app.repository.BookCollectionRepository;
-import nlu.com.app.repository.BookImageRepository;
-import nlu.com.app.repository.BookRepository;
-import nlu.com.app.repository.CategoryRepository;
-import nlu.com.app.repository.GenreRepository;
-import nlu.com.app.repository.PromotionCategoriesRepository;
-import nlu.com.app.repository.UserRepository;
-import nlu.com.app.repository.UserReviewRepository;
+import nlu.com.app.repository.*;
 import nlu.com.app.service.BookCollectionService;
 import nlu.com.app.service.IUserDetailsService;
 import nlu.com.app.util.SecurityUtils;
@@ -41,6 +21,11 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -95,21 +80,21 @@ public class BookCollectionServiceImpl implements BookCollectionService {
 
             itemRepo.saveAll(items);
 
-            if(image == null){
-                coverImage ="https://www.nicepng.com/png/full/131-1310865_school-supply-list-school-book-icon-png.png";
+            if (image == null) {
+                coverImage = "https://www.nicepng.com/png/full/131-1310865_school-supply-list-school-book-icon-png.png";
                 savedCollection.setImage(coverImage);
-            }else {
+            } else {
                 coverImage = uploadFile(image, "khoAnhBoSachCuaUser");
                 savedCollection.setImage(coverImage);
             }
-        }else {
-           if(image != null){
-               coverImage = uploadFile(image, "khoAnhBoSachCuaUser");
-               savedCollection.setImage(coverImage);
-           }else{
-               coverImage ="https://www.nicepng.com/png/full/131-1310865_school-supply-list-school-book-icon-png.png";
-               savedCollection.setImage(coverImage);
-           }
+        } else {
+            if (image != null) {
+                coverImage = uploadFile(image, "khoAnhBoSachCuaUser");
+                savedCollection.setImage(coverImage);
+            } else {
+                coverImage = "https://www.nicepng.com/png/full/131-1310865_school-supply-list-school-book-icon-png.png";
+                savedCollection.setImage(coverImage);
+            }
 
         }
 
@@ -220,16 +205,16 @@ public class BookCollectionServiceImpl implements BookCollectionService {
                         .book(book)
                         .build())
                 .collect(Collectors.toList());
-       List<BookCollectionItem> containedItems = itemRepo.findAllByCollection_CollectionId(collectionId);
-       for(BookCollectionItem item : containedItems) {
-           if(item.getBook().getBookId().equals(books.get(0).getBookId())) {
-               return "Sách này đã tồn tại trong bộ sách. Xin hãy lưu sách khác";
-           }
-       }
-       if(itemRepo.saveAll(items).isEmpty()) {
-           return "Lưu sách bị lỗi. Vui lòng thử lại sau";
-       }
-       return "Lưu sách thành công";
+        List<BookCollectionItem> containedItems = itemRepo.findAllByCollection_CollectionId(collectionId);
+        for (BookCollectionItem item : containedItems) {
+            if (item.getBook().getBookId().equals(books.get(0).getBookId())) {
+                return "Sách này đã tồn tại trong bộ sách. Xin hãy lưu sách khác";
+            }
+        }
+        if (itemRepo.saveAll(items).isEmpty()) {
+            return "Lưu sách bị lỗi. Vui lòng thử lại sau";
+        }
+        return "Lưu sách thành công";
     }
 
     @Override
@@ -239,8 +224,8 @@ public class BookCollectionServiceImpl implements BookCollectionService {
                 .orElseThrow(() -> new ApplicationException(ErrorCode.UNKNOWN_EXCEPTION));
         List<BookCollectionItem> items = itemRepo.findAllByCollection_CollectionId(collectionId);
         List<Book> books = items.stream().map(BookCollectionItem::getBook).toList();
-        for(Book book :books){
-            System.out.println("-----------------------Giá của các bộ sách----------------------: "+book.getPrice());
+        for (Book book : books) {
+            System.out.println("-----------------------Giá của các bộ sách----------------------: " + book.getPrice());
         }
         List<Long> bookIds = books.stream().map(Book::getBookId).toList();
 
@@ -294,9 +279,9 @@ public class BookCollectionServiceImpl implements BookCollectionService {
             return BookInCollectionDTO.builder()
                     .bookId(book.getBookId())
                     .title(book.getTitle())
-                    .originalPrice(book.getPrice()*1000)
+                    .originalPrice(book.getPrice())
                     .discountPercentage(discount)
-                    .discountedPrice(finalPrice*1000)
+                    .discountedPrice(finalPrice)
                     .averageRating(rating)
                     .thumbnail(thumbnail)
                     .build();
@@ -325,7 +310,7 @@ public class BookCollectionServiceImpl implements BookCollectionService {
 
     @Override
     public void deleteBookFromCollectionItem(Long collectionId, Long bookId) {
-        try{
+        try {
             itemRepo.deleteByCollection_CollectionIdAndBook_BookId(collectionId, bookId);
         } catch (Exception e) {
             e.printStackTrace();
@@ -336,24 +321,24 @@ public class BookCollectionServiceImpl implements BookCollectionService {
 
     @Override
     public Page<BookCollectionResponse> findBookCollectionByName(String name, int page, int size) {
-    try {
-        User user = getCurrentUser();
-        Page<BookCollection> collections = collectionRepo.findByUser_UserIdAndNameContainingIgnoreCase(user.getUserId(), name , PageRequest.of(page, size));
-        if(collections.hasContent()){
-            return collections.map( collection ->
-                    BookCollectionResponse.builder()
-                            .id(collection.getCollectionId())
-                            .name(collection.getName())
-                            .description(collection.getDescription())
-                            .isPublic(collection.getIsPublic())
-                            .createdDate(collection.getCreatedDate().toString())
-                            .build()
-            );
+        try {
+            User user = getCurrentUser();
+            Page<BookCollection> collections = collectionRepo.findByUser_UserIdAndNameContainingIgnoreCase(user.getUserId(), name, PageRequest.of(page, size));
+            if (collections.hasContent()) {
+                return collections.map(collection ->
+                        BookCollectionResponse.builder()
+                                .id(collection.getCollectionId())
+                                .name(collection.getName())
+                                .description(collection.getDescription())
+                                .isPublic(collection.getIsPublic())
+                                .createdDate(collection.getCreatedDate().toString())
+                                .build()
+                );
+            }
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return null;
-    } catch (Exception e) {
-        throw new RuntimeException(e);
-    }
     }
 
     private List<Long> getAllRelatedCategoryIds(Category category) {
@@ -364,6 +349,7 @@ public class BookCollectionServiceImpl implements BookCollectionService {
         }
         return ids;
     }
+
     private String uploadFile(MultipartFile file, String folderName) {
         try {
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();

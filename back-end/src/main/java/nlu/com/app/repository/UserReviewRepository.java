@@ -1,36 +1,37 @@
 package nlu.com.app.repository;
 
-import java.util.List;
-
 import nlu.com.app.constant.ReviewType;
 import nlu.com.app.entity.Book;
 import nlu.com.app.entity.UserReview;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * @author VuLuu
  */
 @Repository
-public interface UserReviewRepository extends JpaRepository<UserReview, Long> {
+public interface UserReviewRepository extends JpaRepository<UserReview, Long>, JpaSpecificationExecutor<UserReview> {
 
-  List<UserReview> findByBookBookIdIn(List<Long> bookIds);
+    List<UserReview> findByBookBookIdIn(List<Long> bookIds);
 
-  List<UserReview> findAllByBook(Book book);
+    List<UserReview> findAllByBook(Book book);
 
-  Long countAllByBookBookId(Long bookId);
+    Long countAllByBookBookId(Long bookId);
 
-  Long countAllByBookBookIdAndReviewTypeAndRating(Long book_bookId, ReviewType reviewType, double rating);
+    Long countAllByBookBookIdAndReviewTypeAndRating(Long book_bookId, ReviewType reviewType, double rating);
 
-  @Query("""
-    SELECT SUM(r.rating)
-    FROM UserReview r
-    WHERE r.book.bookId = :bookId
-  """)
-  Long totalScoreByBookBookId(Long bookId);
+    @Query("""
+              SELECT SUM(r.rating)
+              FROM UserReview r
+              WHERE r.book.bookId = :bookId
+            """)
+    Long totalScoreByBookBookId(Long bookId);
 
-  Page<UserReview> findByBookBookIdOrderByReviewDateDesc(Long bookBookId, Pageable pageable);
+    Page<UserReview> findByBookBookIdOrderByReviewDateDesc(Long bookBookId, Pageable pageable);
 }

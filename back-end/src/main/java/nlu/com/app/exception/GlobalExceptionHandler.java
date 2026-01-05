@@ -2,7 +2,9 @@ package nlu.com.app.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import nlu.com.app.dto.AppResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -81,6 +83,17 @@ public class GlobalExceptionHandler {
 //    "message": "Đối với các sản phẩm bằng xu, vui lòng người dùng chọn thanh toán bằng xu WB Point"
 //}
         return new ResponseEntity<>(body, ex.getStatusCode());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException ex) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("errorCode", "INVALID_HANDLE_CHAT");
+        body.put("message", ex.getMessage());
+        body.put("timestamp", LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
 }

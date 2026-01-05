@@ -3,7 +3,7 @@ package nlu.com.app.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "user_coupon")
@@ -27,12 +27,12 @@ public class UserCoupon {
     private Discount discount;
 
     @Column(name = "is_used")
-    private boolean isUsed = false;
+    private Boolean isUsed = false;
 
     // Ngày đổi thành công
     @Column(name = "redeemed_at")
-    private LocalDateTime redeemedAt;
+    private LocalDate redeemedAt;
 
     @Column(name = "expired_at")
-    private LocalDateTime expiredAt;
+    private LocalDate expiredAt;
 }
