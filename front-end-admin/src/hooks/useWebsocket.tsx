@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { SocketMessageDTO, MessageUserResponse } from "../hooks/useAdminConversation";
 import { toast } from "sonner";
 import { useAdminInbox } from "../hooks/useAdminInbox";
+import { ms } from "date-fns/locale";
 export function useGetUpdatedOrder(onMessage: (message: string) => void) {
     const clientRef = useRef<Client | null>(null);
     useEffect(() => {
@@ -45,11 +46,9 @@ export function useGetUpdatedOrder(onMessage: (message: string) => void) {
 export const useAdminChatSocket = (
     conversationId: number | undefined,
     onMessage: (msg: any) => void,
-    onInboxUpdate: (data: any) => void
+    refreshInbox: () => Promise<void>
 ) => {
     const clientRef = useRef<Client | null>(null)
-    const {refreshInbox} = useAdminInbox();
-    const LEAVE_SUFFIX = "đã rời cuộc trò chuyện. BOT sẽ tiếp tục hỗ trợ.";
     useEffect(() => {
         if (!conversationId) return
 
@@ -87,8 +86,9 @@ export const useAdminChatSocket = (
                 // Inbox realtime
                 client.subscribe(
                     `/topic/admin/inbox`,
-                    msg => {
+                     msg => {
                         console.log("Inbox realtime msg: ", msg.body)
+                         refreshInbox()
                     }
                 )
             }

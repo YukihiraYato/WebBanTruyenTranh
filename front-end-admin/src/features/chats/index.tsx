@@ -57,9 +57,9 @@ export default function Chats() {
     (msg: MessageUserResponse) => {
       setMessages(prev => [...prev, msg])
     },
-    () => {
-      refreshInbox()
-    }
+
+     () => refreshInbox()
+  
   )
   // Filtered data based on the search query
   const filteredChatList = inbox.filter(item =>
