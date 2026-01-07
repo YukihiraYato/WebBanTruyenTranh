@@ -155,13 +155,14 @@ public class ChatFacade {
         ) {
             MessageResponseDTO response = new MessageResponseDTO();
             response.setSender("INVALID_HANDLE_CHAT");
-            response.setText("Admin không sở hữu conversation này để chat với user");
+            response.setText(admin.getRole() + " " + admin.getUsername().toUpperCase() + " không sở hữu conversation này để chat với user");
             response.setSentAt(LocalDateTime.now());
 
             simpMessagingTemplate.convertAndSend(
                     "/receive/message/conversation/" + conversation.getId(),
                     response
             );
+            return;
         }
 
         conversation.setStatus(EStatusMessage.HAS_ADMIN);
@@ -235,7 +236,7 @@ public class ChatFacade {
                 "/topic/admin/inbox",
                 "AMIN_LEAVED"
         );
-        
+
         String text = admin.getRole() + " " + admin.getUsername().toUpperCase() + " đã rời cuộc trò chuyện. BOT sẽ tiếp tục hỗ trợ.";
         User user = conversation.getClient();
         ChatHistory systemMessage = new ChatHistory();
